@@ -1,0 +1,337 @@
+const express = require('express');
+const router = express.Router();
+const staffController = require('../controllers/staff.controller');
+const { authenticateStaff } = require('../middlewares/auth.middleware');
+
+router.use(authenticateStaff(['CASHIER', 'MANAGER', 'ADMIN']));
+
+/**
+ * @swagger
+ * /staff/tables:
+ *   get:
+ *     tags: [Staff]
+ *     summary: Lấy danh sách bàn
+ *     security:
+ *       - StaffAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách bàn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       table_id:          { type: string, format: uuid }
+ *                       table_name:        { type: string, example: "Bàn 01" }
+ *                       zone:              { type: string, example: "Tầng 1" }
+ *                       capacity:          { type: integer }
+ *                       status:            { type: string, enum: [AVAILABLE, OCCUPIED, RESERVED, CLEANING] }
+ *                       active_session_id:
+ *                         type: string
+ *                         format: uuid
+ *                         nullable: true
+ *                         description: "null nếu bàn đang AVAILABLE"
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/tables', staffController.getTables);
+
+/**
+ * @swagger
+ * /staff/tables/{id}/session:
+ *   get:
+ *     tags: [Staff]
+ *     summary: Lấy session hiện tại của bàn
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Chi tiết session
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/tables/:id/session', staffController.getTableSession);
+
+/**
+ * @swagger
+ * /staff/sessions/{id}/checkout:
+ *   post:
+ *     tags: [Staff]
+ *     summary: Thanh toán bằng tiền mặt
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER hoặc ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             properties:
+ *               amount: { type: number }
+ *     responses:
+ *       200:
+ *         description: Thanh toán thành công
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/sessions/:id/checkout', staffController.checkoutCash);
+
+/**
+ * @swagger
+ * /staff/requests:
+ *   get:
+ *     tags: [Staff]
+ *     summary: Lấy danh sách yêu cầu của khách hàng
+ *     security:
+ *       - StaffAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách yêu cầu
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/requests', staffController.getRequests);
+
+/**
+ * @swagger
+ * /staff/requests/{id}/resolve:
+ *   patch:
+ *     tags: [Staff]
+ *     summary: Giải quyết yêu cầu
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Giải quyết thành công
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.patch('/requests/:id/resolve', staffController.resolveRequest);
+
+/**
+ * @swagger
+ * /staff/orders/items/{id}/cancel:
+ *   patch:
+ *     tags: [Staff]
+ *     summary: Hủy món ăn
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER hoặc ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             properties:
+ *               cancel_reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Hủy món thành công
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Không đủ quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Không tìm thấy resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.patch('/orders/items/:id/cancel', staffController.cancelItem);
+
+/**
+ * @swagger
+ * /staff/sessions/{id}/force-close:
+ *   post:
+ *     tags: [Staff]
+ *     summary: Đóng session khẩn cấp (không cần thanh toán)
+ *     description: "⚠️ Chỉ dành cho MANAGER và ADMIN. Dùng khi có sự cố cần giải phóng bàn."
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200: 
+ *         description: Đóng session thành công
+ *       401:
+ *         description: Token không hợp lệ hoặc hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403: 
+ *         description: Không đủ quyền (cần MANAGER hoặc ADMIN)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404: 
+ *         description: Session không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Lỗi server nội bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post(
+  '/sessions/:id/force-close',
+  authenticateStaff(['MANAGER', 'ADMIN']),
+  staffController.forceCloseSession
+);
+
+module.exports = router;

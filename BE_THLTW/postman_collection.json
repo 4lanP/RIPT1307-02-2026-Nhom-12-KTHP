@@ -1,0 +1,1092 @@
+{
+  "info": {
+    "name": "QR Ordering System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "kitchenToken",
+      "value": ""
+    },
+    {
+      "key": "sessionToken",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "orderItemId",
+      "value": ""
+    },
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "qrCode",
+      "value": "QR-Bàn-01"
+    },
+    {
+      "key": "menuItemId",
+      "value": ""
+    },
+    {
+      "key": "optionId",
+      "value": ""
+    },
+    {
+      "key": "tableId",
+      "value": ""
+    },
+    {
+      "key": "transactionId",
+      "value": "RES-12345"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Server is up\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.eql(\"ok\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@restaurant.com\",\n  \"password\": \"Password123!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login thành công\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có access_token\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data.accessToken).to.be.a('string');",
+                  "    pm.collectionVariables.set(\"accessToken\", body.data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", body.data.refreshToken);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"kitchen@restaurant.com\",\n  \"password\": \"Password123!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login bếp thành công\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"kitchenToken\", body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/refresh",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Refresh token thành công\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Logout thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Sai Password (Negative)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@restaurant.com\",\n  \"password\": \"SaiPassword\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Từ chối sai password\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Customer Flow",
+      "item": [
+        {
+          "name": "Scan QR",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/scan",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code\": \"{{qrCode}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tạo session thành công\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"sessionToken\", body.data.session_token);",
+                  "pm.collectionVariables.set(\"sessionId\", body.data.session_token);",
+                  "pm.test(\"Có session_token\", () => pm.expect(body.data.session_token).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Scan QR Lại (Negative)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/scan",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code\": \"{{qrCode}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Chặn scan bàn đang có khách\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Menu",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customer/menu",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Menu trả về đúng cấu trúc nested\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data).to.be.an('array');",
+                  "    pm.expect(body.data[0]).to.have.property('items');",
+                  "    pm.expect(body.data[0].items[0]).to.have.property('options');",
+                  "});",
+                  "const firstItem = pm.response.json().data[0].items[0];",
+                  "pm.collectionVariables.set(\"menuItemId\", firstItem.id);",
+                  "pm.collectionVariables.set(\"optionId\", firstItem.options[0]?.id || \"\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Menu by Station",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customer/menu?station=GRILL",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lọc menu thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customer/session",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy session thành công\", () => {",
+                  "   pm.response.to.have.status(200);",
+                  "   const body = pm.response.json();",
+                  "   pm.expect(body.data.status).to.eql('ACTIVE');",
+                  "   pm.expect(body.data).to.have.property('subtotal');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/orders",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_version\": 1,\n  \"items\": [\n    {\n      \"menu_item_id\": \"{{menuItemId}}\",\n      \"quantity\": 2,\n      \"note\": \"Ít cay\",\n      \"options\": [\n        {\n          \"option_id\": \"{{optionId}}\",\n          \"quantity\": 1\n        }\n      ]\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Đặt món thành công\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"orderId\", body.data.order_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add-on Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/orders",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_version\": 2,\n  \"items\": [\n    {\n      \"menu_item_id\": \"{{menuItemId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Đặt món lần 2 thành công\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order Sai Version (Negative)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/orders",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_version\": 1,\n  \"items\": [\n    {\n      \"menu_item_id\": \"{{menuItemId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"409 khi version sai\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customer/orders",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy danh sách đơn hàng thành công\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    const orders = pm.response.json().data;",
+                  "    pm.expect(orders).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Call Staff",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_type\": \"CALL_STAFF\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tạo request thành công\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"requestId\", pm.response.json().data.request_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request Bill",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_type\": \"REQUEST_BILL\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Xin thanh toán thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Payment VNPay",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customer/payment/vnpay",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tạo link VNPay thành công\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có payment_url\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.data.payment_url).to.include(\"vnpayment.vn\");",
+                  "    // Lay transaction_id de xai cho webhook test",
+                  "    const urlObj = new URL(body.data.payment_url);",
+                  "    pm.collectionVariables.set(\"transactionId\", urlObj.searchParams.get('vnp_TxnRef'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. KDS Flow",
+      "item": [
+        {
+          "name": "Get GRILL Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/kds/orders?station=GRILL",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{kitchenToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"KDS lấy được đơn chờ\", () => pm.response.to.have.status(200));",
+                  "const orders = pm.response.json().data;",
+                  "pm.test(\"Có đơn hàng PENDING/PREPARING\", () => pm.expect(orders.length).to.be.above(0));",
+                  "if (orders.length > 0 && orders[0].items.length > 0) {",
+                  "    const firstItemId = orders[0].items[0].order_item_id;",
+                  "    pm.collectionVariables.set(\"orderItemId\", firstItemId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Item PREPARING",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/kds/items/{{orderItemId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{kitchenToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_status\": \"PREPARING\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Update PREPARING thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Item READY",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/kds/items/{{orderItemId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{kitchenToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_status\": \"READY\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Update READY thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get BAR Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/kds/orders?station=BAR",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{kitchenToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy danh sách BAR thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Staff & Cashier",
+      "item": [
+        {
+          "name": "Get Tables",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/staff/tables",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy danh sách bàn\", () => pm.response.to.have.status(200));",
+                  "const tables = pm.response.json().data;",
+                  "const occupied = tables.find(t => t.status === 'OCCUPIED');",
+                  "pm.test(\"Có bàn đang OCCUPIED\", () => pm.expect(occupied).to.exist);",
+                  "if (occupied) {",
+                  "    pm.collectionVariables.set(\"tableId\", occupied.table_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Table Session",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/staff/tables/{{tableId}}/session",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy session bàn thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/staff/requests",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy requests thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve Request",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/staff/requests/{{requestId}}/resolve",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Resolve request thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Item",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/staff/orders/items/{{orderItemId}}/cancel",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason\": \"Hết nguyên liệu\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cancel item thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout Cash",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/staff/sessions/{{sessionId}}/checkout",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Checkout thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Tables (Verify Checkout)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/staff/tables",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bàn đã được giải phóng (AVAILABLE)\", () => {",
+                  "    const tables = pm.response.json().data;",
+                  "    const table = tables.find(t => t.table_id === pm.collectionVariables.get('tableId'));",
+                  "    if (table) { pm.expect(table.status).to.eql('AVAILABLE'); }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Admin & Reports",
+      "item": [
+        {
+          "name": "Reset Menu Quota",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/menu/reset-quota",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Reset quota thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revenue Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/reports/revenue?from=2025-01-01&to=2026-12-31&group_by=month",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy báo cáo doanh thu thành công\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có mảng dữ liệu\", () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Menu Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/reports/menu",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy báo cáo món ăn thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "KDS Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/reports/kds",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lấy báo cáo KDS thành công\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Excel",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/reports/export",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Xuất Excel thành công\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type là Excel\", () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Webhooks",
+      "item": [
+        {
+          "name": "VNPay Callback (Negative - Chữ ký sai)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/vnpay?vnp_TxnRef={{transactionId}}&vnp_ResponseCode=00&vnp_Amount=50000000&vnp_SecureHash=invalid_hash",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "vnpay"
+              ],
+              "query": [
+                {
+                  "key": "vnp_TxnRef",
+                  "value": "{{transactionId}}"
+                },
+                {
+                  "key": "vnp_ResponseCode",
+                  "value": "00"
+                },
+                {
+                  "key": "vnp_Amount",
+                  "value": "50000000"
+                },
+                {
+                  "key": "vnp_SecureHash",
+                  "value": "invalid_hash"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Từ chối chữ ký sai\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.RspCode).to.eql(\"97\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
