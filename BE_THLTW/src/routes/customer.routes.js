@@ -3,6 +3,8 @@ const router = express.Router();
 const customerController = require('../controllers/customer.controller');
 const { authenticateSession } = require('../middlewares/auth.middleware');
 const { scanRateLimiter } = require('../middlewares/rateLimit.middleware');
+const { validate } = require('../middlewares/validate.middleware');
+const { scanSchema, createOrderSchema, createRequestSchema } = require('../validators/customer.validator');
 
 /**
  * @swagger
@@ -36,7 +38,7 @@ const { scanRateLimiter } = require('../middlewares/rateLimit.middleware');
  *       409:
  *         description: Bàn đang có khách
  */
-router.post('/scan', scanRateLimiter, customerController.scan);
+router.post('/scan', scanRateLimiter, validate(scanSchema), customerController.scan);
 
 /**
  * @swagger
@@ -184,7 +186,7 @@ router.get('/menu', authenticateSession, customerController.getMenu);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/requests', authenticateSession, customerController.createRequest);
+router.post('/requests', authenticateSession, validate(createRequestSchema), customerController.createRequest);
 
 /**
  * @swagger
@@ -301,7 +303,7 @@ router.post('/requests', authenticateSession, customerController.createRequest);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/orders', authenticateSession, customerController.createOrder);
+router.post('/orders', authenticateSession, validate(createOrderSchema), customerController.createOrder);
 router.get('/orders', authenticateSession, customerController.getOrders);
 
 /**

@@ -33,7 +33,7 @@ async function createOrder(session_id, items, session_version) {
       if (itemRes.rows.length === 0) {
         throw { statusCode: 404, message: `Không tìm thấy món ăn (ID: ${item.menu_item_id})` };
       }
-      
+
       const menuItem = itemRes.rows[0];
       if (!menuItem.is_available) {
         throw { statusCode: 400, message: `Món [${menuItem.name}] hiện không phục vụ` };
@@ -42,12 +42,18 @@ async function createOrder(session_id, items, session_version) {
         throw { statusCode: 400, message: `Món [${menuItem.name}] không đủ số lượng phục vụ` };
       }
 
-      // Trừ daily_quota
-      await client.query(
-        `UPDATE MENU_ITEMS SET daily_quota = daily_quota - $1 WHERE id = $2`,
+      // Trừ daily_quota với constraint check để tránh race condition
+      const updateRes = await client.query(
+        `UPDATE MENU_ITEMS SET daily_quota = daily_quota - $1
+         WHERE id = $2 AND daily_quota >= $1
+         RETURNING daily_quota`,
         [item.quantity, item.menu_item_id]
       );
-      
+
+      if (updateRes.rows.length === 0) {
+        throw { statusCode: 400, message: `Món [${menuItem.name}] không đủ số lượng phục vụ (đã được đặt bởi khách khác)` };
+      }
+
       // Pass properties for later insert
       item._price = menuItem.price;
     }

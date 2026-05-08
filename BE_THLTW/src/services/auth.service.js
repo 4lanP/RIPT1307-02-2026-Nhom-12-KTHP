@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const { generateTokens } = require('../utils/jwt.util');
 
 async function login({ email, password }) {
@@ -25,8 +26,8 @@ async function login({ email, password }) {
     const payload = { id: user.id, role: user.role };
     const { accessToken, refreshToken } = generateTokens(payload);
 
-    // 4. Hash refresh token and store in DB
-    const tokenHash = await bcrypt.hash(refreshToken, 10);
+    // 4. Hash refresh token with SHA256 for fast lookup and store in DB
+    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     // Tính toán expires_at (VD: 7 ngày sau)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -60,14 +61,7 @@ async function refresh({ refreshToken }) {
   try {
     await client.query('BEGIN');
 
-    // Mặc dù ta có token_hash, việc query bằng bcrypt.compare trên toàn bảng là không khả thi.
-    // Vì vậy, ta cần decode token để lấy user_id trước, sau đó query REFRESH_TOKENS của user_id đó
-    // Tuy nhiên theo thiêt kế "Hash token đầu vào, SELECT FROM REFRESH_TOKENS WHERE token_hash = $1"
-    // Nếu thiết kế lưu Hash trực tiếp (SHA256) thì mới query where được. Còn bcrypt thì không.
-    // Ở đây tôi dùng SHA256 để băm refresh token dùng cho việc tra cứu nhanh thay vì bcrypt.
-    
-    // Đợi đã, để sửa lại dùng mã hóa SHA256 cho refresh token ở đây cho việc query:
-    const crypto = require('crypto');
+    // Hash refresh token with SHA256 for lookup (consistent with login)
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
     const { rows } = await client.query(
@@ -88,11 +82,10 @@ async function refresh({ refreshToken }) {
 
     const user = userRows.rows[0];
     const payload = { id: user.id, role: user.role };
-    
-    // Ta chỉ trả về access_token mới (giữ nguyên refresh token cũ)
-    const { generateTokens } = require('../utils/jwt.util');
+
+    // Generate new access token (keep refresh token unchanged)
     const tokens = generateTokens(payload);
-    
+
     await client.query('COMMIT');
 
     return { accessToken: tokens.accessToken };

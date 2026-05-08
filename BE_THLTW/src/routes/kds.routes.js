@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const kdsController = require('../controllers/kds.controller');
 const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { validate } = require('../middlewares/validate.middleware');
+const { updateItemStatusSchema, getOrdersSchema } = require('../validators/kds.validator');
 
 // Các endpoints KDS yêu cầu role KITCHEN
 router.use(authenticateStaff(['KITCHEN']));
@@ -78,7 +80,7 @@ router.use(authenticateStaff(['KITCHEN']));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/orders', kdsController.getOrders);
+router.get('/orders', validate(getOrdersSchema), kdsController.getOrders);
 
 /**
  * @swagger
@@ -130,6 +132,6 @@ router.get('/orders', kdsController.getOrders);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/items/:id/status', kdsController.updateItemStatus);
+router.patch('/items/:id/status', validate(updateItemStatusSchema), kdsController.updateItemStatus);
 
 module.exports = router;

@@ -51,7 +51,7 @@ exports.createPaymentUrl = (ipAddr, amount, orderInfo, txnRef) => {
 
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let hmac = crypto.createHmac('sha512', secretKey);
-  let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest('hex'); 
+  let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   vnp_Params['vnp_SecureHash'] = signed;
   vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
 
@@ -68,7 +68,7 @@ exports.verifyIPN = (vnp_Params) => {
   let secretKey = vnpayConfig.vnp_HashSecret;
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let hmac = crypto.createHmac('sha512', secretKey);
-  let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest('hex');
+  let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
   return secureHash === signed;
 };

@@ -12,6 +12,14 @@ exports.generateTokens = (payload) => {
   return { accessToken, refreshToken };
 };
 
+exports.generateSessionToken = (sessionId) => {
+  return jwt.sign(
+    { session_id: sessionId, type: 'session' },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: '24h' }
+  );
+};
+
 exports.verifyAccessToken = (token) => {
   try {
     return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
@@ -23,6 +31,18 @@ exports.verifyAccessToken = (token) => {
 exports.verifyRefreshToken = (token) => {
   try {
     return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+  } catch (error) {
+    return null;
+  }
+};
+
+exports.verifySessionToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (decoded.type !== 'session') {
+      return null;
+    }
+    return decoded;
   } catch (error) {
     return null;
   }

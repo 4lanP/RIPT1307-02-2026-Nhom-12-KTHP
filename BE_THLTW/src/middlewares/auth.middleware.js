@@ -1,4 +1,4 @@
-const { verifyAccessToken } = require('../utils/jwt.util');
+const { verifyAccessToken, verifySessionToken } = require('../utils/jwt.util');
 const { errorResponse } = require('../utils/response.util');
 const db = require('../config/db');
 
@@ -45,9 +45,14 @@ exports.authenticateSession = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    const decoded = verifySessionToken(token);
+
+    if (!decoded || !decoded.session_id) {
+      return errorResponse(res, 401, 'Session token không hợp lệ hoặc đã hết hạn');
+    }
 
     // Query DB to check session status
-    const { rows } = await db.query('SELECT * FROM SESSIONS WHERE id = $1 AND status = $2', [token, 'ACTIVE']);
+    const { rows } = await db.query('SELECT * FROM SESSIONS WHERE id = $1 AND status = $2', [decoded.session_id, 'ACTIVE']);
     if (rows.length === 0) {
       return errorResponse(res, 401, 'Session không tồn tại hoặc đã đóng');
     }

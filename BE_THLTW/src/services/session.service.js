@@ -1,5 +1,6 @@
 // ... existing imports
 const pool = require('../config/db');
+const { generateSessionToken } = require('../utils/jwt.util');
 
 // --- CÁC HÀM CUSTOMER ĐÃ CÓ ---
 async function scan(qr_code) {
@@ -32,7 +33,9 @@ async function scan(qr_code) {
     const io = getIO();
     io.of('/staff').emit('table_status_changed', { table_id: table.id, status: 'OCCUPIED' });
 
-    return { session_token: session_id, table_name: table.name };
+    // Generate JWT session token instead of returning plain ID
+    const session_token = generateSessionToken(session_id);
+    return { session_token, table_name: table.name };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -123,7 +126,7 @@ async function calculateSessionBill(session_id, client) {
   const subtotal = parseFloat(rows[0].subtotal);
 
   const sessionRes = await client.query('SELECT discount_amount FROM sessions WHERE id = $1', [session_id]);
-  const { discount_amount } = sessionRes.rows[0];
+  const discount_amount = parseFloat(sessionRes.rows[0].discount_amount);
   const TAX_RATE = process.env.TAX_RATE ? parseFloat(process.env.TAX_RATE) : 0.08;
   const tax_amount = parseFloat(((subtotal - discount_amount) * TAX_RATE).toFixed(2));
   const final_amount = parseFloat((subtotal - discount_amount + tax_amount).toFixed(2));

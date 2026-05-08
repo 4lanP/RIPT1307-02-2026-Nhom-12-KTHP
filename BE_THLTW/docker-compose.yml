@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./src/config/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Host port 5433 -> Container port 5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d restaurant_dbs"]
       interval: 10s
@@ -32,6 +32,18 @@ services:
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/restaurant_dbs
     restart: "no"
 
+  # ---- Index Applier ----
+  indexer:
+    build: .
+    container_name: restaurant_indexer
+    command: node src/config/applyIndexes.js
+    depends_on:
+      seeder:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/restaurant_dbs
+    restart: "no"
+
   # ---- Backend Node.js ----
   backend:
     build:
@@ -43,6 +55,8 @@ services:
       postgres:
         condition: service_healthy
       seeder:
+        condition: service_completed_successfully
+      indexer:
         condition: service_completed_successfully
     environment:
       NODE_ENV: production
