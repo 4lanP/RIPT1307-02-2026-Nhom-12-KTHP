@@ -3,21 +3,43 @@ const cors = require('cors');
 const helmet = require('helmet');
 const routes = require('./routes');
 const errorHandler = require('./middlewares/error.middleware');
+const logger = require('./utils/logger');
 
 const app = express();
 
-// Global Middlewares
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-}));
+
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : [];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS blocked request', { origin });
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
-// API Routes
 app.use('/api', routes);
 
 if (process.env.NODE_ENV !== 'production') {
@@ -28,7 +50,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 app.get('/api/docs.json', (req, res) => res.json(swaggerSpec));
 
-// Global Error Handler
 app.use(errorHandler);
 
 module.exports = app;
