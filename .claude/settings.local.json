@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test *)",
+      "Bash(node -c src/services/auth.service.js)",
+      "Bash(node -c src/utils/jwt.util.js)",
+      "Bash(node -c src/middlewares/auth.middleware.js)",
+      "Bash(node -c src/services/session.service.js)",
+      "Bash(node -c src/services/order.service.js)",
+      "Bash(node -c src/middlewares/validate.middleware.js)",
+      "Bash(node -c src/validators/auth.validator.js)",
+      "Bash(node -c src/validators/customer.validator.js)",
+      "Bash(node -c src/validators/kds.validator.js)",
+      "Bash(node -c src/config/applyIndexes.js)",
+      "Bash(docker version *)",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(npm install *)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(curl -s http://localhost:5000/api/health)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('✅ dotenv loaded'\\); const logger = require\\('./src/utils/logger'\\); logger.info\\('✅ Logger works'\\); console.log\\('✅ All imports successful'\\)\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const logger = require\\('./src/utils/logger'\\); logger.info\\('Test logging'\\); console.log\\('✅ Logger works'\\)\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const logger = require\\('./src/utils/logger'\\); logger.info\\('✅ Logger test'\\); const { NotFoundError } = require\\('./src/utils/errors'\\); console.log\\('✅ Errors loaded'\\); const { validateEnv } = require\\('./src/utils/validateEnv'\\); console.log\\('✅ ValidateEnv loaded'\\); console.log\\('✅ All modules working!'\\)\")",
+      "Bash(timeout 5 npm start)"
+    ]
+  }
+}
