@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_order_items_status ON ORDER_ITEMS(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_table_id ON SESSIONS(table_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON SESSIONS(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON SESSIONS(started_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_sessions_one_active_per_table ON SESSIONS(table_id) WHERE status = 'ACTIVE';
 
 -- Index for REFRESH_TOKENS table
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON REFRESH_TOKENS(user_id);

@@ -1,167 +1,150 @@
 # Setup Guide
 
-Hướng dẫn cài đặt và chạy backend cho cả hai môi trường: **Docker** (khuyên dùng) và **Local**.
+Hướng dẫn chạy backend `src/BE_THLTW`.
 
 ## Yêu cầu
 
 | Môi trường | Yêu cầu |
 |---|---|
-| Docker | Docker Desktop (bật trước khi chạy lệnh) |
-| Local | Node.js >= 20, PostgreSQL 16, Redis |
+| Docker | Docker Desktop đang chạy Linux engine |
+| Local | Node.js 20+, PostgreSQL 16, Redis nếu cần webhook lock |
 
----
+## Chạy bằng Docker
 
-## Chạy bằng Docker (khuyên dùng)
+Docker là cách khuyến nghị cho máy mới.
 
-Phù hợp cho cả backend dev và frontend dev muốn chạy nhanh.
-
-**Bước 1:** Copy file cấu hình môi trường:
-```bash
-cp .env.docker .env
+```powershell
+cd src/BE_THLTW
+docker compose up -d --build
+docker compose ps
 ```
 
-**Bước 2:** Build và khởi động toàn bộ stack:
-```bash
-docker compose up --build -d
+Compose sẽ chạy:
+
+1. PostgreSQL 16 trên host port `5433`.
+2. Redis trên host port `6379`.
+3. `seeder` để nạp dữ liệu mẫu.
+4. `indexer` để áp dụng indexes.
+5. Backend trên host port `5000`.
+
+Các URL chính:
+
+```text
+API:     http://localhost:5000/api
+Health:  http://localhost:5000/api/health
+Swagger: http://localhost:5000/api/docs
+DB:      localhost:5433
 ```
 
-Docker Compose sẽ tự động:
-1. Khởi động PostgreSQL (port 5433)
-2. Chạy seeder — nạp dữ liệu mẫu
-3. Chạy indexer — áp dụng 30+ DB indexes
-4. Khởi động API server (port 5000)
+### Không có `.env` vẫn chạy được
 
-**Reset hoàn toàn (xóa data):**
-```bash
-docker compose down -v && docker compose up --build -d
+`docker-compose.yml` đã có default local cho:
+
+- `DB_USER=restaurant_user`
+- `DB_PASSWORD=strongpassword123`
+- JWT dev secrets
+- VNPay placeholder
+- `FRONTEND_URL=http://localhost:3000`
+
+Nếu muốn override, copy `.env.example` thành `.env` và chỉnh lại:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-**Các lệnh Docker thường dùng:**
-```bash
-docker compose up -d          # Khởi động nền
-docker compose logs -f backend # Xem logs
-docker compose down           # Dừng
-docker compose ps             # Kiểm tra status
+### Reset DB Docker
+
+Seeder chỉ chạy lại dữ liệu sạch khi volume bị xóa:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
 ```
 
----
+### Xem log
 
-## Chạy Local
+```powershell
+docker compose logs backend
+docker compose logs postgres
+docker compose logs seeder
+docker compose logs indexer
+```
 
-**Bước 1:** Cài dependencies:
-```bash
+## Chạy local không Docker
+
+```powershell
+cd src/BE_THLTW
 npm install
+Copy-Item .env.example .env
 ```
 
-**Bước 2:** Copy và chỉnh sửa `.env`:
-```bash
-cp .env.example .env
-# Điền DATABASE_URL, JWT secrets, VNPay keys
+Chỉnh `.env` để dùng PostgreSQL local, thường là:
+
+```env
+DATABASE_URL=postgres://restaurant_user:strongpassword123@localhost:5432/restaurant_dbs
+REDIS_URL=redis://localhost:6379
 ```
 
-**Bước 3:** Setup database:
-```bash
-psql -U postgres -c "CREATE DATABASE restaurant_dbs;"
-psql -U postgres -d restaurant_dbs -f src/config/schema.sql
+Tạo DB và schema:
+
+```powershell
+psql -U postgres -f setup_local_db.sql
+psql -U restaurant_user -d restaurant_dbs -f src/config/schema.sql
 node src/config/seed.js
 node src/config/applyIndexes.js
 ```
 
-**Bước 4:** Chạy server:
-```bash
-npm run dev   # development (hot reload)
-npm start     # production
+Chạy server:
+
+```powershell
+npm run dev
 ```
 
-**Chuyển đổi môi trường (Windows):**
-```bash
-switch-to-local.bat    # Dùng PostgreSQL local (port 5432)
-switch-to-docker.bat   # Dùng PostgreSQL Docker (port 5433)
+## Tài khoản mẫu
+
+Mật khẩu chung:
+
+```text
+Password123!
 ```
-
----
-
-## Endpoints
-
-| | Docker | Local |
-|---|---|---|
-| API | http://localhost:5000/api | http://localhost:5000/api |
-| Health | http://localhost:5000/api/health | http://localhost:5000/api/health |
-| Swagger | http://localhost:5000/api/docs | http://localhost:5000/api/docs |
-| PostgreSQL | localhost:**5433** | localhost:**5432** |
-
----
-
-## Tài khoản mặc định
-
-### Nhân viên — mật khẩu: `Password123!`
 
 | Role | Email |
 |---|---|
-| Admin | admin@restaurant.com |
-| Quản lý | manager@restaurant.com |
-| Thu ngân | cashier@restaurant.com |
-| Bếp | kitchen@restaurant.com |
-| Phục vụ | waiter@restaurant.com |
+| ADMIN | `admin@restaurant.com` |
+| MANAGER | `manager@restaurant.com` |
+| CASHIER | `cashier@restaurant.com` |
+| KITCHEN | `kitchen@restaurant.com` |
+| WAITER | `waiter@restaurant.com` |
 
-### Khách hàng (QR)
+## QR mẫu
 
-Hệ thống có sẵn 8 bàn. Mã QR test cho Bàn 01: `QR-Bàn-01`
+QR code được seed có suffix random, ví dụ `QR-Bàn-01-ABC123`. Lấy QR hiện có bằng:
 
-```bash
-# Tạo session khách hàng
-POST /api/customer/scan
-{ "qr_code": "QR-Bàn-01" }
-# → trả về session_token (JWT, hết hạn sau 24h)
+```powershell
+docker compose exec -T postgres psql -U restaurant_user -d restaurant_dbs -c "SELECT id, code, table_id FROM qr_codes ORDER BY id;"
 ```
 
-### Database (Docker)
+## Kiểm tra nhanh
 
-| | Giá trị |
-|---|---|
-| User | restaurant_user |
-| Password | strongpassword123 |
-| Database | restaurant_dbs |
-
----
-
-## Dữ liệu mẫu (Menu)
-
-| Danh mục | Món |
-|---|---|
-| Đồ Nướng (GRILL) | Thịt Bò Nướng Tảng, Sườn Heo... |
-| Đồ Uống (BAR) | Coca, Bia Tiger, Sinh tố xoài... |
-| Món Nguội (COLD) | Salad, Nem cuốn... |
-
----
-
-## Biến môi trường
-
-### Bắt buộc
-```bash
-DATABASE_URL=postgres://user:pass@host:port/dbname
-JWT_ACCESS_SECRET=min_32_chars
-JWT_REFRESH_SECRET=min_32_chars
-VNPAY_TMNCODE=your_tmn_code
-VNPAY_HASHSECRET=your_hash_secret
-VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-VNPAY_RETURN_URL=https://your-frontend.com/payment-result
-FRONTEND_URL=https://your-frontend.com  # Không được là "*" trong production
+```powershell
+Invoke-WebRequest -UseBasicParsing http://localhost:5000/api/health
 ```
 
-### Tuỳ chọn
-```bash
-REDIS_URL=redis://localhost:6379  # Cho webhook idempotency
-LOG_LEVEL=info                    # error | warn | info | http | debug
-PORT=5000
-NODE_ENV=production
+Login:
+
+```powershell
+Invoke-RestMethod -Method Post http://localhost:5000/api/auth/login `
+  -ContentType 'application/json' `
+  -Body '{"email":"admin@restaurant.com","password":"Password123!"}'
 ```
 
-### Files .env
+## Lỗi thường gặp
 
-| File | Mục đích |
+| Lỗi | Cách xử lý |
 |---|---|
-| `.env` | File active (được load khi chạy) |
-| `.env.local` | Config cho local PostgreSQL |
-| `.env.docker` | Config cho Docker PostgreSQL |
-| `.env.example` | Template cho setup mới |
+| Không connect Docker engine | Mở Docker Desktop và chờ engine chạy xong |
+| Port `5000`, `5433`, `6379` bị chiếm | Đổi port trong `docker-compose.yml` hoặc tắt service đang chiếm |
+| Backend unhealthy sau khi sửa code | Chạy `docker compose up -d --build` |
+| Seeder/indexer không chạy lại | Chạy `docker compose down -v` để xóa volume DB |
+| Swagger không mở | Đảm bảo backend `NODE_ENV=development` trong compose |
+| Frontend CORS lỗi | Thêm origin vào `FRONTEND_URL` |

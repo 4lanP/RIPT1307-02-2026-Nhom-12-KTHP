@@ -94,6 +94,21 @@ describe('Order Service', () => {
         .rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('hiện không phục vụ') });
     });
 
+    it('option không thuộc món ném lỗi 400', async () => {
+      mockClient.query.mockResolvedValueOnce({}); // BEGIN
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'sess_1', table_id: 1, status: 'ACTIVE' }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bò', price: 100, is_available: true, daily_quota: 10 }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [{ daily_quota: 9 }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'order_1' }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'item_1' }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [] }); // SELECT option scoped by menu item
+      mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
+
+      const items = [{ menu_item_id: 1, quantity: 1, options: [{ option_id: 99 }] }];
+      await expect(orderService.createOrder('sess_1', items, 1))
+        .rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('Invalid option') });
+    });
+
     it('DB lỗi giữa chừng gọi ROLLBACK', async () => {
       mockClient.query.mockResolvedValueOnce({}); // BEGIN
       mockClient.query.mockRejectedValueOnce(new Error('DB Error')); // Lỗi khi select session

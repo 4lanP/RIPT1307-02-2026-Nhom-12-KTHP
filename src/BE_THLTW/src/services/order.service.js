@@ -1,8 +1,11 @@
 const pool = require('../config/db');
 const { calculateSessionBill } = require('./session.service');
 const { NotFoundError, ConflictError, ValidationError, AuthorizationError } = require('../utils/errors');
+const { getIO } = require('../sockets/io');
+const logger = require('../utils/logger');
 
 async function createOrder(session_id, items, session_version) {
+  let order_id, table_id;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -62,7 +65,8 @@ async function createOrder(session_id, items, session_version) {
        VALUES ($1, $2, 'PENDING', 1, NOW()) RETURNING id`,
       [session_id, session.table_id]
     );
-    const order_id = orderRes.rows[0].id;
+    order_id = orderRes.rows[0].id;
+    table_id = session.table_id;
 
     // 4. Tạo ORDER_ITEMS và ORDER_ITEM_OPTIONS
     for (const item of items) {
@@ -76,10 +80,13 @@ async function createOrder(session_id, items, session_version) {
       if (item.options && Array.isArray(item.options)) {
         for (const option of item.options) {
           const optionRes = await client.query(
-            `SELECT extra_price FROM MENU_ITEM_OPTIONS WHERE id = $1`,
-            [option.option_id]
+            `SELECT extra_price FROM MENU_ITEM_OPTIONS
+             WHERE id = $1 AND menu_item_id = $2 AND is_available = true`,
+            [option.option_id, item.menu_item_id]
           );
-          if (optionRes.rows.length === 0) continue;
+          if (optionRes.rows.length === 0) {
+            throw new ValidationError(`Invalid option for menu item ${item.menu_item_id}`);
+          }
 
           const extra_price = optionRes.rows[0].extra_price;
 
@@ -102,45 +109,51 @@ async function createOrder(session_id, items, session_version) {
     );
 
     await client.query('COMMIT');
-
-    // 7. Emit socket cho Kitchen (chỉ sau khi COMMIT thành công)
-    const { getIO } = require('../sockets/io');
-    const io = getIO();
-
-    // Group items theo station (cần query DB)
-    const { rows: groupedItems } = await pool.query(
-      `SELECT mc.station, json_agg(json_build_object(
-        'order_item_id', oi.id,
-        'menu_item_id', mi.id,
-        'name', mi.name,
-        'quantity', oi.quantity,
-        'note', oi.note
-      )) as station_items
-       FROM ORDER_ITEMS oi
-       JOIN MENU_ITEMS mi ON mi.id = oi.menu_item_id
-       JOIN MENU_CATEGORIES mc ON mc.id = mi.category_id
-       WHERE oi.order_id = $1
-       GROUP BY mc.station`,
-      [order_id]
-    );
-
-    const tableRes = await pool.query(`SELECT name FROM TABLES WHERE id = $1`, [session.table_id]);
-    const table_name = tableRes.rows[0]?.name;
-
-    for (const group of groupedItems) {
-      io.of('/kitchen').to(group.station).emit('new_order', {
-        order_id,
-        table_name,
-        items: group.station_items,
-      });
-    }
-
-    return { order_id };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();
+  }
+
+  // 7. Emit socket sau khi client đã release — lỗi socket không ảnh hưởng response
+  try {
+    await emitNewOrder(order_id, table_id);
+  } catch (err) {
+    logger.error('Failed to emit new_order socket event', { order_id, err: err.message });
+  }
+
+  return { order_id };
+}
+
+async function emitNewOrder(order_id, table_id) {
+  const io = getIO();
+
+  const { rows: groupedItems } = await pool.query(
+    `SELECT mc.station, json_agg(json_build_object(
+      'order_item_id', oi.id,
+      'menu_item_id', mi.id,
+      'name', mi.name,
+      'quantity', oi.quantity,
+      'note', oi.note
+    )) as station_items
+     FROM ORDER_ITEMS oi
+     JOIN MENU_ITEMS mi ON mi.id = oi.menu_item_id
+     JOIN MENU_CATEGORIES mc ON mc.id = mi.category_id
+     WHERE oi.order_id = $1
+     GROUP BY mc.station`,
+    [order_id]
+  );
+
+  const tableRes = await pool.query(`SELECT name FROM TABLES WHERE id = $1`, [table_id]);
+  const table_name = tableRes.rows[0]?.name;
+
+  for (const group of groupedItems) {
+    io.of('/kitchen').to(group.station).emit('new_order', {
+      order_id,
+      table_name,
+      items: group.station_items,
+    });
   }
 }
 

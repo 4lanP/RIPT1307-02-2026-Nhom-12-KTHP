@@ -62,7 +62,6 @@ async function refresh({ refreshToken }) {
   try {
     await client.query('BEGIN');
 
-    // Hash refresh token with SHA256 for lookup (consistent with login)
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
     const { rows } = await client.query(
@@ -74,7 +73,7 @@ async function refresh({ refreshToken }) {
       throw new AuthenticationError('Refresh token không hợp lệ hoặc đã hết hạn');
     }
 
-    const { user_id } = rows[0];
+    const { user_id, id: tokenId } = rows[0];
 
     const userRows = await client.query('SELECT * FROM USERS WHERE id = $1 AND is_active = true', [user_id]);
     if (userRows.rows.length === 0) {
@@ -83,13 +82,27 @@ async function refresh({ refreshToken }) {
 
     const user = userRows.rows[0];
     const payload = { id: user.id, role: user.role };
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(payload);
 
-    // Generate new access token (keep refresh token unchanged)
-    const tokens = generateTokens(payload);
+    // Revoke token cũ
+    await client.query(
+      'UPDATE REFRESH_TOKENS SET revoked_at = NOW() WHERE id = $1',
+      [tokenId]
+    );
+
+    // Lưu token mới
+    const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await client.query(
+      'INSERT INTO REFRESH_TOKENS (user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [user_id, newTokenHash, expiresAt]
+    );
 
     await client.query('COMMIT');
 
-    return { accessToken: tokens.accessToken };
+    return { accessToken, refreshToken: newRefreshToken };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
