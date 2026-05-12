@@ -13,7 +13,7 @@ async function scan(qr_code) {
     if (qrRes.rows.length === 0) throw new NotFoundError('Mã QR không hợp lệ hoặc đã bị vô hiệu hóa');
     const qr = qrRes.rows[0];
 
-    const tableRes = await client.query('SELECT * FROM TABLES WHERE id = $1', [qr.table_id]);
+    const tableRes = await client.query('SELECT * FROM TABLES WHERE id = $1 FOR UPDATE', [qr.table_id]);
     const table = tableRes.rows[0];
 
     if (table.status === 'OCCUPIED') {
@@ -173,9 +173,18 @@ async function checkoutCash(session_id, amount) {
   try {
     await client.query('BEGIN');
     
-    const sessionRes = await client.query(`SELECT table_id FROM SESSIONS WHERE id = $1 FOR UPDATE`, [session_id]);
+    const sessionRes = await client.query(`SELECT table_id, status, final_amount FROM SESSIONS WHERE id = $1 FOR UPDATE`, [session_id]);
     if (sessionRes.rows.length === 0) throw new NotFoundError('Session không tồn tại');
-    const table_id = sessionRes.rows[0].table_id;
+    const session = sessionRes.rows[0];
+    if (session.status !== 'ACTIVE') {
+      throw new ConflictError('Session is already closed');
+    }
+    const paidAmount = Number(amount);
+    const finalAmount = Number(session.final_amount);
+    if (!Number.isFinite(paidAmount) || paidAmount < finalAmount) {
+      throw new ConflictError('Invalid payment amount');
+    }
+    const table_id = session.table_id;
 
     // 1. Tạo PAYMENT
     await client.query(

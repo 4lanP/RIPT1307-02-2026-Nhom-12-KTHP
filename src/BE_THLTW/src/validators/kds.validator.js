@@ -11,7 +11,7 @@ const updateItemStatusSchema = z.object({
 
 const getOrdersSchema = z.object({
   query: z.object({
-    station: z.enum(['GRILL', 'BAR', 'COLD', 'KITCHEN']),
+    station: z.enum(['GRILL', 'BAR', 'COLD']),
   }),
 });
 

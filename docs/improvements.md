@@ -230,8 +230,42 @@ Log format:
 ## Test Results
 
 ```
-Test Suites: 4 passed, 4 total
-Tests:       3 skipped, 15 passed, 18 total
+Test Suites: 6 passed, 6 total
+Tests:       26 passed, 26 total
 ```
 
-3 tests skipped do mock complexity (edge cases trong order.service và calculateSessionBill) — logic đã verify đúng.
+---
+
+## Fixes (2026-05-12)
+
+### Fix A — ROLLBACK sau COMMIT trong createOrder (HIGH)
+
+**Vấn đề:** Socket emit nằm trong cùng `try/catch` với transaction. Nếu emit throw sau khi COMMIT, catch block gọi `ROLLBACK` vô nghĩa và API trả lỗi cho client — order đã tạo trong DB nhưng client tưởng thất bại.
+
+**Fix** (`src/services/order.service.js`):
+- Tách socket emit ra khỏi transaction block.
+- Sau `finally { client.release() }`, gọi `await emitNewOrder()` với try/catch riêng.
+- Lỗi socket được log, không propagate lên caller.
+
+### Fix B — KDS Station Enum Sai (HIGH)
+
+**Vấn đề:** `kds.validator.js` có `'KITCHEN'` trong enum station nhưng DB chỉ có `GRILL`, `BAR`, `COLD`. Request với `station=KITCHEN` pass validation nhưng query DB trả rỗng.
+
+**Fix** (`src/validators/kds.validator.js`): Xóa `'KITCHEN'` khỏi enum.
+
+### Fix C — Refresh Token Không Rotate (MEDIUM)
+
+**Vấn đề:** `refresh()` tạo access token mới nhưng giữ nguyên refresh token cũ. Token bị lộ có thể dùng song song đến khi hết hạn (7 ngày).
+
+**Fix** (`src/services/auth.service.js`):
+- Revoke token cũ bằng `UPDATE REFRESH_TOKENS SET revoked_at = NOW()`.
+- Issue refresh token mới, lưu hash vào DB.
+- Response trả về cả `accessToken` và `refreshToken` mới.
+
+**Breaking change:** Client phải lưu lại `refreshToken` mới sau mỗi lần gọi `/auth/refresh`.
+
+### Fix D — Dead Code (LOW)
+
+**Vấn đề:** `src/middlewares/validation.middleware.js` không được import ở bất kỳ đâu (routes dùng `validate.middleware.js`).
+
+**Fix:** Xóa file.

@@ -52,16 +52,19 @@ describe('Auth Service', () => {
   });
 
   describe('refresh()', () => {
-    it('refresh thành công', async () => {
+    it('refresh thành công trả về access token và refresh token mới', async () => {
       mockClient.query.mockResolvedValueOnce({}); // BEGIN
-      mockClient.query.mockResolvedValueOnce({ rows: [{ user_id: 1 }] }); // SELECT refresh token
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 10, user_id: 1 }] }); // SELECT refresh token
       mockClient.query.mockResolvedValueOnce({ rows: [{ id: 1, role: 'ADMIN', is_active: true }] }); // SELECT user
+      mockClient.query.mockResolvedValueOnce({}); // UPDATE revoke old token
+      mockClient.query.mockResolvedValueOnce({}); // INSERT new token
       mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
-      jwtUtil.generateTokens.mockReturnValue({ accessToken: 'new_access' });
+      jwtUtil.generateTokens.mockReturnValue({ accessToken: 'new_access', refreshToken: 'new_refresh' });
 
       const result = await authService.refresh({ refreshToken: 'old_refresh' });
       expect(result.accessToken).toBe('new_access');
+      expect(result.refreshToken).toBe('new_refresh');
     });
 
     it('token hết hạn hoặc không tồn tại ném lỗi 401', async () => {
