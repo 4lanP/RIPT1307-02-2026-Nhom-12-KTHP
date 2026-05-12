@@ -1,9 +1,9 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const logger = require('../utils/logger');
 
 // Request ID middleware
 const requestId = (req, res, next) => {
-  req.id = uuidv4();
+  req.id = randomUUID();
   res.setHeader('X-Request-ID', req.id);
 
   // Attach to logger context

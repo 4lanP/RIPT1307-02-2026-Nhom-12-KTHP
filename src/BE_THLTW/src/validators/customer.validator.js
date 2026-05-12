@@ -1,35 +1,35 @@
 const { z } = require('zod');
 
+const positiveInt = (message) => z.coerce.number().int().positive(message);
+
 const scanSchema = z.object({
   body: z.object({
-    qr_code: z.string().min(1, 'Mã QR là bắt buộc'),
+    qr_code: z.string().min(1, 'QR code is required'),
   }),
 });
 
 const createOrderSchema = z.object({
   body: z.object({
-    session_version: z.number().int().positive('Session version phải là số nguyên dương'),
+    session_version: positiveInt('Session version must be a positive integer'),
     items: z.array(
       z.object({
-        menu_item_id: z.string().uuid('Menu item ID không hợp lệ'),
-        quantity: z.number().int().min(1, 'Số lượng phải ít nhất là 1').max(99, 'Số lượng tối đa là 99'),
-        note: z.string().max(500, 'Ghi chú không được quá 500 ký tự').optional(),
+        menu_item_id: positiveInt('Menu item ID is invalid'),
+        quantity: z.coerce.number().int().min(1, 'Quantity must be at least 1').max(99, 'Quantity must be at most 99'),
+        note: z.string().max(500, 'Note must be at most 500 characters').optional(),
         options: z.array(
           z.object({
-            option_id: z.string().uuid('Option ID không hợp lệ'),
-            quantity: z.number().int().min(1).max(10).optional(),
+            option_id: positiveInt('Option ID is invalid'),
+            quantity: z.coerce.number().int().min(1).max(10).optional(),
           })
         ).optional(),
       })
-    ).min(1, 'Phải có ít nhất 1 món'),
+    ).min(1, 'At least one item is required'),
   }),
 });
 
 const createRequestSchema = z.object({
   body: z.object({
-    request_type: z.enum(['CALL_STAFF', 'REQUEST_BILL', 'OTHER'], {
-      errorMap: () => ({ message: 'Loại yêu cầu không hợp lệ' }),
-    }),
+    request_type: z.enum(['CALL_STAFF', 'REQUEST_BILL', 'OTHER']),
   }),
 });
 
