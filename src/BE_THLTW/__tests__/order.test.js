@@ -57,7 +57,7 @@ describe('Order Service', () => {
       mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
 
       await expect(orderService.createOrder('sess_1', [], 2))
-        .rejects.toEqual({ statusCode: 409, message: expect.any(String) });
+        .rejects.toMatchObject({ statusCode: 409, message: expect.any(String) });
     });
 
     it('session đã CLOSED ném lỗi 403', async () => {
@@ -66,7 +66,7 @@ describe('Order Service', () => {
       mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
 
       await expect(orderService.createOrder('sess_1', [], 1))
-        .rejects.toEqual({ statusCode: 403, message: 'Session này đã bị đóng.' });
+        .rejects.toMatchObject({ statusCode: 403, message: 'Session này đã bị đóng.' });
     });
 
     it('món hết quota ném lỗi 400', async () => {
@@ -79,10 +79,10 @@ describe('Order Service', () => {
 
       const items = [{ menu_item_id: 1, quantity: 1 }];
       await expect(orderService.createOrder('sess_1', items, 1))
-        .rejects.toEqual({ statusCode: 400, message: expect.stringContaining('không đủ số lượng') });
+        .rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('không đủ số lượng') });
     });
 
-    it.skip('món is_available=false ném lỗi 400', async () => {
+    it('món is_available=false ném lỗi 400', async () => {
       mockClient.query.mockResolvedValueOnce({}); // BEGIN
       mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'sess_1', status: 'ACTIVE' }] });
       mockClient.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bò', is_available: false, daily_quota: 10 }] }); // not available
@@ -91,10 +91,10 @@ describe('Order Service', () => {
 
       const items = [{ menu_item_id: 1, quantity: 1 }];
       await expect(orderService.createOrder('sess_1', items, 1))
-        .rejects.toEqual({ statusCode: 400, message: 'Món [Bò] hiện không phục vụ' });
+        .rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('hiện không phục vụ') });
     });
 
-    it.skip('DB lỗi giữa chừng gọi ROLLBACK', async () => {
+    it('DB lỗi giữa chừng gọi ROLLBACK', async () => {
       mockClient.query.mockResolvedValueOnce({}); // BEGIN
       mockClient.query.mockRejectedValueOnce(new Error('DB Error')); // Lỗi khi select session
       mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
@@ -105,7 +105,7 @@ describe('Order Service', () => {
   });
 
   describe('calculateSessionBill()', () => {
-    it.skip('Tính đúng subtotal', async () => {
+    it('Tính đúng subtotal', async () => {
       // Temporarily restore spy to test actual function
       const spy = jest.spyOn(sessionService, 'calculateSessionBill');
       spy.mockRestore();

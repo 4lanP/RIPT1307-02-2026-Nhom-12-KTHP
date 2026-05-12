@@ -9,8 +9,13 @@ const mockPool = {
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
-  // Default: Trả về object có properties cơ bản
+  mockClient.query.mockReset();
+  mockClient.release.mockReset();
+  mockPool.connect.mockReset();
+  mockPool.query.mockReset();
+
+  // Default response shape for DB calls that a test does not explicitly mock.
+  mockPool.connect.mockResolvedValue(mockClient);
   mockClient.query.mockResolvedValue({ rows: [] });
   mockPool.query.mockResolvedValue({ rows: [] });
 });

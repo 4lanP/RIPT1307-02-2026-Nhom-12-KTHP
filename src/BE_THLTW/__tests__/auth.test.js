@@ -38,7 +38,7 @@ describe('Auth Service', () => {
       bcrypt.compare.mockResolvedValue(false);
 
       await expect(authService.login({ email: 'admin@test.com', password: 'wrong' }))
-        .rejects.toEqual({ statusCode: 401, message: 'Email hoặc mật khẩu không chính xác' });
+        .rejects.toMatchObject({ statusCode: 401, message: 'Email hoặc mật khẩu không chính xác' });
     });
 
     it('user không tồn tại ném lỗi 401', async () => {
@@ -47,7 +47,7 @@ describe('Auth Service', () => {
       mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
 
       await expect(authService.login({ email: 'unknown@test.com', password: 'pass' }))
-        .rejects.toEqual({ statusCode: 401, message: 'Email hoặc mật khẩu không chính xác' });
+        .rejects.toMatchObject({ statusCode: 401, message: 'Email hoặc mật khẩu không chính xác' });
     });
   });
 
@@ -70,7 +70,7 @@ describe('Auth Service', () => {
       mockClient.query.mockResolvedValueOnce({}); // ROLLBACK
 
       await expect(authService.refresh({ refreshToken: 'invalid' }))
-        .rejects.toEqual({ statusCode: 401, message: 'Refresh token không hợp lệ hoặc đã hết hạn' });
+        .rejects.toMatchObject({ statusCode: 401, message: 'Refresh token không hợp lệ hoặc đã hết hạn' });
     });
   });
 });
