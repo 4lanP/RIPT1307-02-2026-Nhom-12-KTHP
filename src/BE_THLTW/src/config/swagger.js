@@ -47,8 +47,8 @@ const options = {
         OrderItem: {
           type: 'object',
           properties: {
-            id:           { type: 'string', format: 'uuid' },
-            menu_item_id: { type: 'string', format: 'uuid' },
+            id:           { type: 'integer' },
+            menu_item_id: { type: 'integer' },
             name:         { type: 'string' },
             quantity:     { type: 'integer' },
             unit_price:   { type: 'number' },
@@ -59,7 +59,7 @@ const options = {
         Session: {
           type: 'object',
           properties: {
-            id:              { type: 'string', format: 'uuid' },
+            id:              { type: 'integer' },
             table_name:      { type: 'string' },
             status:          { type: 'string', enum: ['ACTIVE','CLOSED','CANCELLED'] },
             subtotal:        { type: 'number' },
@@ -85,3 +85,4 @@ const options = {
 };
 
 module.exports = swaggerJsdoc(options);
+

@@ -66,10 +66,8 @@ Request ID dùng `crypto.randomUUID()` để tránh lỗi `uuid@14` ESM-only tro
 | `/api/customer` | `routes/customer.routes.js` | Scan QR, menu, session, order, request, VNPay URL |
 | `/api/kds` | `routes/kds.routes.js` | Chỉ role `KITCHEN` cho HTTP endpoints |
 | `/api/staff` | `routes/staff.routes.js` | CASHIER/MANAGER/ADMIN |
-| `/api/admin` | `routes/admin.routes.js` | Report, export, reset quota |
+| `/api/admin` | `routes/admin.routes.js` | Report, export, reset quota, CRUD users/tables/QR/menu |
 | `/api/webhooks` | `routes/webhook.routes.js` | VNPay IPN |
-
-Lưu ý: một số Admin CRUD vẫn chỉ nằm trong Swagger comments cũ, chưa có route handler thật.
 
 ## Services
 
@@ -81,6 +79,7 @@ Lưu ý: một số Admin CRUD vẫn chỉ nằm trong Swagger comments cũ, ch�
 | KDS | `services/kds.service.js` | Queue theo station, cập nhật item/order status |
 | Payment | `services/payment.service.js` | Tạo VNPay URL, xử lý webhook |
 | Report | `services/report.service.js` | Revenue/menu/KDS report, Excel export, reset quota |
+| Admin | `services/admin.service.js` | CRUD users, tables, QR codes, menu categories/items/options |
 
 ## Database
 
@@ -145,6 +144,21 @@ Backend hiện kiểm tra:
 
 Sau đó tạo payment `CASH`, đóng session và giải phóng bàn.
 
+## Admin CRUD
+
+Tất cả Admin CRUD endpoints yêu cầu access token role `ADMIN`.
+
+| Resource | Endpoints | Hành vi xóa |
+|---|---|---|
+| Users | `GET/POST /api/admin/users`, `PUT/DELETE /api/admin/users/:id` | Soft delete bằng `is_active = false` |
+| Tables | `GET/POST /api/admin/tables`, `PUT/DELETE /api/admin/tables/:id` | Chỉ xóa bàn `AVAILABLE`, đồng thời xóa QR của bàn |
+| QR codes | `GET/POST /api/admin/qr_codes`, `PATCH /api/admin/qr_codes/:id/toggle`, `DELETE /api/admin/qr_codes/:id` | Hard delete QR |
+| Categories | `GET/POST /api/admin/menu/categories`, `PUT/DELETE /api/admin/menu/categories/:id` | Soft delete bằng `is_active = false`; không cho xóa nếu còn item active |
+| Items | `GET/POST /api/admin/menu/items`, `PUT/DELETE /api/admin/menu/items/:id` | Soft delete bằng `is_available = false` |
+| Options | `GET/POST /api/admin/menu/items/:id/options`, `PUT/DELETE /api/admin/menu/options/:id` | Soft delete bằng `is_available = false` |
+
+Validator: `src/validators/admin.validator.js`. Service cast enum PostgreSQL rõ ràng (`user_role`, `table_status`, `kds_station`) để tránh lỗi node-postgres gửi enum dưới dạng text.
+
 ## Auth
 
 Staff access token dùng `JWT_ACCESS_SECRET`.
@@ -169,7 +183,7 @@ Customer session token dùng JWT access secret và payload:
 
 Validators dùng Zod v4. Error middleware đọc `error.issues`.
 
-Do DB dùng `SERIAL`, các validator customer/KDS nhận positive integer cho các ID.
+Do DB dung `SERIAL`, cac validator customer/KDS/staff/admin nhan positive integer cho cac ID. `GET /customer/menu` validate `station` chi nhan `GRILL`, `BAR`, `COLD`.
 
 Middleware validation: `src/middlewares/validate.middleware.js`. File `validation.middleware.js` đã bị xóa (dead code).
 
@@ -195,9 +209,9 @@ Webhook:
 
 - Verify secure hash.
 - Dùng Redis lock để tránh xử lý trùng.
+- Doi chieu `vnp_Amount` voi `PAYMENTS.amount`.
 - Update `PAYMENTS`, `SESSIONS`, `TABLES`.
 
-Rủi ro còn lại: cần bổ sung check `vnp_Amount` khớp payment amount trước production.
 
 ## API Docs
 

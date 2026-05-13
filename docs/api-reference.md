@@ -230,15 +230,22 @@ Admin endpoints đã implement:
 | `GET` | `/admin/reports/export` | ADMIN | Export Excel |
 | `POST` | `/admin/menu/reset-quota` | ADMIN | Reset quota món |
 
-Chưa implement route thật dù có mô tả trong Swagger comments cũ:
+Admin CRUD endpoints:
 
-- `/admin/users`
-- `/admin/tables`
-- `/admin/menu/categories`
-- `/admin/menu/items`
-- `/admin/qr_codes`
-
-Các route này hiện trả `404` nếu gọi trực tiếp.
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| `GET/POST` | `/admin/users` | ADMIN | Danh sách / tạo nhân viên |
+| `PUT/DELETE` | `/admin/users/{id}` | ADMIN | Cập nhật / vô hiệu hóa nhân viên |
+| `GET/POST` | `/admin/tables` | ADMIN | Danh sách / tạo bàn |
+| `PUT/DELETE` | `/admin/tables/{id}` | ADMIN | Cập nhật / xóa bàn khả dụng |
+| `GET/POST` | `/admin/qr_codes` | ADMIN | Danh sách / tạo QR |
+| `PATCH/DELETE` | `/admin/qr_codes/{id}/toggle`, `/admin/qr_codes/{id}` | ADMIN | Bật/tắt / xóa QR |
+| `GET/POST` | `/admin/menu/categories` | ADMIN | Danh sách / tạo category |
+| `PUT/DELETE` | `/admin/menu/categories/{id}` | ADMIN | Cập nhật / vô hiệu hóa category |
+| `GET/POST` | `/admin/menu/items` | ADMIN | Danh sách / tạo món |
+| `PUT/DELETE` | `/admin/menu/items/{id}` | ADMIN | Cập nhật / vô hiệu hóa món |
+| `GET/POST` | `/admin/menu/items/{id}/options` | ADMIN | Danh sách / tạo option |
+| `PUT/DELETE` | `/admin/menu/options/{id}` | ADMIN | Cập nhật / vô hiệu hóa option |
 
 ## Webhooks
 
@@ -246,7 +253,7 @@ Các route này hiện trả `404` nếu gọi trực tiếp.
 |---|---|---|---|
 | `GET/POST` | `/webhooks/vnpay` | VNPay secure hash | Xử lý IPN VNPay |
 
-Lưu ý còn lại: webhook hiện verify checksum và idempotency bằng Redis lock, nhưng chưa đối chiếu `vnp_Amount` với `PAYMENTS.amount`. Nên bổ sung trước production.
+Luu y: webhook verify checksum, dung Redis lock de idempotency, va doi chieu `vnp_Amount` voi `PAYMENTS.amount` truoc khi dong session.
 
 ## Socket.IO
 

@@ -23,7 +23,7 @@ router.use(authenticateStaff(['KITCHEN']));
  *         required: true
  *         schema:
  *           type: string
- *           enum: [BAR, KITCHEN, GRILL, COLD]
+ *           enum: [GRILL, BAR, COLD]
  *     responses:
  *       200:
  *         description: Danh sách orders grouped theo order_id
@@ -36,7 +36,7 @@ router.use(authenticateStaff(['KITCHEN']));
  *                   items:
  *                     type: object
  *                     properties:
- *                       order_id:   { type: string, format: uuid }
+ *                       order_id:   { type: integer }
  *                       table_name: { type: string }
  *                       created_at: { type: string, format: date-time }
  *                       items:
@@ -44,7 +44,7 @@ router.use(authenticateStaff(['KITCHEN']));
  *                         items:
  *                           type: object
  *                           properties:
- *                             id:           { type: string, format: uuid }
+ *                             id:           { type: integer }
  *                             name:         { type: string }
  *                             quantity:     { type: integer }
  *                             note:         { type: string }
@@ -95,7 +95,7 @@ router.get('/orders', validate(getOrdersSchema), kdsController.getOrders);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     requestBody:
  *       content:
  *         application/json:
@@ -135,3 +135,4 @@ router.get('/orders', validate(getOrdersSchema), kdsController.getOrders);
 router.patch('/items/:id/status', validate(updateItemStatusSchema), kdsController.updateItemStatus);
 
 module.exports = router;
+

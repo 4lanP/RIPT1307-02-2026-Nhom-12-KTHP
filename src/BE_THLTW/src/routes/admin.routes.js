@@ -2,6 +2,24 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { validate } = require('../middlewares/validate.middleware');
+const {
+  idParamSchema,
+  createUserSchema,
+  updateUserSchema,
+  createTableSchema,
+  updateTableSchema,
+  listQrCodesSchema,
+  createQrCodeSchema,
+  createCategorySchema,
+  updateCategorySchema,
+  listItemsSchema,
+  createItemSchema,
+  updateItemSchema,
+  menuItemIdParamSchema,
+  createOptionSchema,
+  updateOptionSchema,
+} = require('../validators/admin.validator');
 
 router.use(authenticateStaff(['ADMIN']));
 
@@ -212,6 +230,35 @@ router.get('/reports/export', adminController.exportReport);
  */
 router.post('/menu/reset-quota', adminController.resetMenuQuota);
 
+router.get('/users', adminController.listUsers);
+router.post('/users', validate(createUserSchema), adminController.createUser);
+router.put('/users/:id', validate(updateUserSchema), adminController.updateUser);
+router.delete('/users/:id', validate(idParamSchema), adminController.deleteUser);
+
+router.get('/tables', adminController.listTables);
+router.post('/tables', validate(createTableSchema), adminController.createTable);
+router.put('/tables/:id', validate(updateTableSchema), adminController.updateTable);
+router.delete('/tables/:id', validate(idParamSchema), adminController.deleteTable);
+
+router.get('/qr_codes', validate(listQrCodesSchema), adminController.listQrCodes);
+router.post('/qr_codes', validate(createQrCodeSchema), adminController.createQrCode);
+router.patch('/qr_codes/:id/toggle', validate(idParamSchema), adminController.toggleQrCode);
+router.delete('/qr_codes/:id', validate(idParamSchema), adminController.deleteQrCode);
+
+router.get('/menu/categories', adminController.listCategories);
+router.post('/menu/categories', validate(createCategorySchema), adminController.createCategory);
+router.put('/menu/categories/:id', validate(updateCategorySchema), adminController.updateCategory);
+router.delete('/menu/categories/:id', validate(idParamSchema), adminController.deleteCategory);
+
+router.get('/menu/items', validate(listItemsSchema), adminController.listItems);
+router.post('/menu/items', validate(createItemSchema), adminController.createItem);
+router.put('/menu/items/:id', validate(updateItemSchema), adminController.updateItem);
+router.delete('/menu/items/:id', validate(idParamSchema), adminController.deleteItem);
+router.get('/menu/items/:id/options', validate(menuItemIdParamSchema), adminController.listOptions);
+router.post('/menu/items/:id/options', validate(createOptionSchema), adminController.createOption);
+router.put('/menu/options/:id', validate(updateOptionSchema), adminController.updateOption);
+router.delete('/menu/options/:id', validate(idParamSchema), adminController.deleteOption);
+
 // ==========================================
 // ADMIN CRUD ENDPOINTS (For Swagger Documentation)
 // ==========================================
@@ -238,7 +285,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *                   items:
  *                     type: object
  *                     properties:
- *                       id:        { type: string, format: uuid }
+ *                       id:        { type: integer }
  *                       email:     { type: string }
  *                       full_name: { type: string }
  *                       role:      { type: string, enum: [ADMIN, MANAGER, CASHIER, KITCHEN, WAITER] }
@@ -327,7 +374,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     requestBody:
  *       content:
  *         application/json:
@@ -370,7 +417,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Vô hiệu hoá thành công 
@@ -438,7 +485,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -458,7 +505,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -512,7 +559,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -534,7 +581,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -588,7 +635,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -608,7 +655,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -666,7 +713,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -686,7 +733,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -708,7 +755,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -728,7 +775,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -750,7 +797,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -770,7 +817,7 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Thành công
@@ -783,3 +830,4 @@ router.post('/menu/reset-quota', adminController.resetMenuQuota);
  */
 
 module.exports = router;
+

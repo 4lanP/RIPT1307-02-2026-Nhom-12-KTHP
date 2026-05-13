@@ -33,8 +33,16 @@ const createRequestSchema = z.object({
   }),
 });
 
+const getMenuSchema = z.object({
+  query: z.object({
+    category_id: positiveInt('Category ID is invalid').optional(),
+    station: z.enum(['GRILL', 'BAR', 'COLD']).optional(),
+  }),
+});
+
 module.exports = {
   scanSchema,
+  getMenuSchema,
   createOrderSchema,
   createRequestSchema,
 };

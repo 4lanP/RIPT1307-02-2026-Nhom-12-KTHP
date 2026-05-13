@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const staffController = require('../controllers/staff.controller');
 const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { validate } = require('../middlewares/validate.middleware');
+const { idParamSchema, checkoutCashSchema, cancelItemSchema } = require('../validators/staff.validator');
 
 router.use(authenticateStaff(['CASHIER', 'MANAGER', 'ADMIN']));
 
@@ -25,14 +27,13 @@ router.use(authenticateStaff(['CASHIER', 'MANAGER', 'ADMIN']));
  *                   items:
  *                     type: object
  *                     properties:
- *                       table_id:          { type: string, format: uuid }
+ *                       table_id:          { type: integer }
  *                       table_name:        { type: string, example: "Bàn 01" }
  *                       zone:              { type: string, example: "Tầng 1" }
  *                       capacity:          { type: integer }
- *                       status:            { type: string, enum: [AVAILABLE, OCCUPIED, RESERVED, CLEANING] }
+ *                       status:            { type: string, enum: [AVAILABLE, OCCUPIED] }
  *                       active_session_id:
- *                         type: string
- *                         format: uuid
+ *                         type: integer
  *                         nullable: true
  *                         description: "null nếu bàn đang AVAILABLE"
  *       401:
@@ -103,7 +104,7 @@ router.get('/tables', staffController.getTables);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/tables/:id/session', staffController.getTableSession);
+router.get('/tables/:id/session', validate(idParamSchema), staffController.getTableSession);
 
 /**
  * @swagger
@@ -153,7 +154,7 @@ router.get('/tables/:id/session', staffController.getTableSession);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/sessions/:id/checkout', staffController.checkoutCash);
+router.post('/sessions/:id/checkout', validate(checkoutCashSchema), staffController.checkoutCash);
 
 /**
  * @swagger
@@ -234,7 +235,7 @@ router.get('/requests', staffController.getRequests);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/requests/:id/resolve', staffController.resolveRequest);
+router.patch('/requests/:id/resolve', validate(idParamSchema), staffController.resolveRequest);
 
 /**
  * @swagger
@@ -284,7 +285,7 @@ router.patch('/requests/:id/resolve', staffController.resolveRequest);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/orders/items/:id/cancel', staffController.cancelItem);
+router.patch('/orders/items/:id/cancel', validate(cancelItemSchema), staffController.cancelItem);
 
 /**
  * @swagger
@@ -299,7 +300,7 @@ router.patch('/orders/items/:id/cancel', staffController.cancelItem);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema: { type: integer }
  *     responses:
  *       200: 
  *         description: Đóng session thành công
@@ -330,8 +331,10 @@ router.patch('/orders/items/:id/cancel', staffController.cancelItem);
  */
 router.post(
   '/sessions/:id/force-close',
+  validate(idParamSchema),
   authenticateStaff(['MANAGER', 'ADMIN']),
   staffController.forceCloseSession
 );
 
 module.exports = router;
+
