@@ -1,5 +1,5 @@
 const { init } = require('./io');
-const { verifyAccessToken } = require('../utils/jwt.util');
+const { verifyAccessToken, verifySessionToken } = require('../utils/jwt.util');
 const db = require('../config/db');
 const logger = require('../utils/logger');
 
@@ -11,9 +11,59 @@ module.exports = (server) => {
   customerIo.on('connection', (socket) => {
     logger.info('Customer connected', { socketId: socket.id });
 
-    socket.on('join_session', ({ session_id }) => {
-      socket.join(session_id);
-      logger.info('Socket joined session', { socketId: socket.id, sessionId: session_id });
+    socket.on('join_session', async (payload = {}, ack) => {
+      const { session_id, session_token } = payload;
+      const reply = (success, message) => {
+        const body = { success, message };
+        if (typeof ack === 'function') {
+          ack(body);
+        } else if (!success) {
+          socket.emit('join_session_error', body);
+        }
+      };
+
+      if (!session_id || !session_token) {
+        logger.warn('Customer join_session rejected: missing credentials', { socketId: socket.id });
+        reply(false, 'Invalid session credentials');
+        return;
+      }
+
+      const decoded = verifySessionToken(session_token);
+      if (!decoded || String(decoded.session_id) !== String(session_id)) {
+        logger.warn('Customer join_session rejected: invalid token', {
+          socketId: socket.id,
+          sessionId: session_id,
+        });
+        reply(false, 'Invalid session credentials');
+        return;
+      }
+
+      try {
+        const { rows } = await db.query(
+          "SELECT id FROM SESSIONS WHERE id = $1 AND status = 'ACTIVE'",
+          [session_id]
+        );
+
+        if (rows.length === 0) {
+          logger.warn('Customer join_session rejected: inactive session', {
+            socketId: socket.id,
+            sessionId: session_id,
+          });
+          reply(false, 'Session is not active');
+          return;
+        }
+
+        socket.join(String(session_id));
+        logger.info('Customer socket joined session', { socketId: socket.id, sessionId: session_id });
+        reply(true, 'Joined session');
+      } catch (error) {
+        logger.error('Customer join_session error', {
+          socketId: socket.id,
+          sessionId: session_id,
+          error: error.message,
+        });
+        reply(false, 'Unable to join session');
+      }
     });
 
     socket.on('disconnect', () => {

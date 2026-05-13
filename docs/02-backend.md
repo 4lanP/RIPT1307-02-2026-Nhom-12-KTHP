@@ -65,7 +65,7 @@ Request ID dùng `crypto.randomUUID()` để tránh lỗi `uuid@14` ESM-only tro
 | `/api/auth` | `routes/auth.routes.js` | Login, refresh, logout |
 | `/api/customer` | `routes/customer.routes.js` | Scan QR, menu, session, order, request, VNPay URL |
 | `/api/kds` | `routes/kds.routes.js` | Chỉ role `KITCHEN` cho HTTP endpoints |
-| `/api/staff` | `routes/staff.routes.js` | CASHIER/MANAGER/ADMIN |
+| `/api/staff` | `routes/staff.routes.js` | WAITER/CASHIER/MANAGER/ADMIN for table/session/request handling; CASHIER/MANAGER/ADMIN for checkout/cancel; MANAGER/ADMIN for force-close |
 | `/api/admin` | `routes/admin.routes.js` | Report, export, reset quota, CRUD users/tables/QR/menu |
 | `/api/webhooks` | `routes/webhook.routes.js` | VNPay IPN |
 
@@ -191,11 +191,9 @@ Middleware validation: `src/middlewares/validate.middleware.js`. File `validatio
 
 Namespaces:
 
-- `/customer`: hiện chưa auth khi connect, client gọi `join_session`.
+- `/customer`: client kết nối namespace rồi gọi `join_session` với `session_id` và `session_token`; backend chỉ join room khi token thuộc đúng session đang active.
 - `/kitchen`: auth access token, role `ADMIN` hoặc `KITCHEN`.
 - `/staff`: auth access token, role `ADMIN`, `CASHIER`, `MANAGER`, `WAITER`.
-
-Rủi ro còn lại: `/customer` nên xác thực session token trước khi cho join room session.
 
 ## VNPay
 

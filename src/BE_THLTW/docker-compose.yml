@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: restaurant_dbs
       POSTGRES_USER: ${DB_USER:-restaurant_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-strongpassword123}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in src/BE_THLTW/.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/config/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
@@ -42,7 +42,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:-strongpassword123}@postgres:5432/restaurant_dbs
+      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:?Set DB_PASSWORD in src/BE_THLTW/.env}@postgres:5432/restaurant_dbs
     restart: "no"
 
   # ---- Index Applier ----
@@ -54,7 +54,7 @@ services:
       seeder:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:-strongpassword123}@postgres:5432/restaurant_dbs
+      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:?Set DB_PASSWORD in src/BE_THLTW/.env}@postgres:5432/restaurant_dbs
     restart: "no"
 
   # ---- Backend Node.js ----
@@ -76,14 +76,14 @@ services:
     environment:
       NODE_ENV: development
       PORT: 5000
-      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:-strongpassword123}@postgres:5432/restaurant_dbs
+      DATABASE_URL: postgres://${DB_USER:-restaurant_user}:${DB_PASSWORD:?Set DB_PASSWORD in src/BE_THLTW/.env}@postgres:5432/restaurant_dbs
       REDIS_URL: redis://redis:6379
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_access_secret_change_me_32_chars_min}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in src/BE_THLTW/.env}
       JWT_ACCESS_EXPIRES_IN: 15m
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_change_me_32_chars_min}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in src/BE_THLTW/.env}
       JWT_REFRESH_EXPIRES_IN: 7d
-      VNPAY_TMNCODE: ${VNPAY_TMNCODE:-your_tmn_code}
-      VNPAY_HASHSECRET: ${VNPAY_HASHSECRET:-your_hash_secret}
+      VNPAY_TMNCODE: ${VNPAY_TMNCODE:?Set VNPAY_TMNCODE in src/BE_THLTW/.env}
+      VNPAY_HASHSECRET: ${VNPAY_HASHSECRET:?Set VNPAY_HASHSECRET in src/BE_THLTW/.env}
       VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:3000/payment-result}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}

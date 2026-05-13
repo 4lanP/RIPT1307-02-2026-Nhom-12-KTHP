@@ -19,6 +19,9 @@ const {
   menuItemIdParamSchema,
   createOptionSchema,
   updateOptionSchema,
+  emptySchema,
+  revenueReportSchema,
+  exportReportSchema,
 } = require('../validators/admin.validator');
 
 router.use(authenticateStaff(['ADMIN']));
@@ -72,7 +75,7 @@ router.use(authenticateStaff(['ADMIN']));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/reports/revenue', adminController.getRevenue);
+router.get('/reports/revenue', validate(revenueReportSchema), adminController.getRevenue);
 
 /**
  * @swagger
@@ -111,7 +114,7 @@ router.get('/reports/revenue', adminController.getRevenue);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/reports/menu', adminController.getMenuReport);
+router.get('/reports/menu', validate(emptySchema), adminController.getMenuReport);
 
 /**
  * @swagger
@@ -150,7 +153,7 @@ router.get('/reports/menu', adminController.getMenuReport);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/reports/kds', adminController.getKdsReport);
+router.get('/reports/kds', validate(emptySchema), adminController.getKdsReport);
 
 /**
  * @swagger
@@ -189,7 +192,7 @@ router.get('/reports/kds', adminController.getKdsReport);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/reports/export', adminController.exportReport);
+router.get('/reports/export', validate(exportReportSchema), adminController.exportReport);
 
 /**
  * @swagger
@@ -228,14 +231,14 @@ router.get('/reports/export', adminController.exportReport);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/menu/reset-quota', adminController.resetMenuQuota);
+router.post('/menu/reset-quota', validate(emptySchema), adminController.resetMenuQuota);
 
-router.get('/users', adminController.listUsers);
+router.get('/users', validate(emptySchema), adminController.listUsers);
 router.post('/users', validate(createUserSchema), adminController.createUser);
 router.put('/users/:id', validate(updateUserSchema), adminController.updateUser);
 router.delete('/users/:id', validate(idParamSchema), adminController.deleteUser);
 
-router.get('/tables', adminController.listTables);
+router.get('/tables', validate(emptySchema), adminController.listTables);
 router.post('/tables', validate(createTableSchema), adminController.createTable);
 router.put('/tables/:id', validate(updateTableSchema), adminController.updateTable);
 router.delete('/tables/:id', validate(idParamSchema), adminController.deleteTable);
@@ -245,7 +248,7 @@ router.post('/qr_codes', validate(createQrCodeSchema), adminController.createQrC
 router.patch('/qr_codes/:id/toggle', validate(idParamSchema), adminController.toggleQrCode);
 router.delete('/qr_codes/:id', validate(idParamSchema), adminController.deleteQrCode);
 
-router.get('/menu/categories', adminController.listCategories);
+router.get('/menu/categories', validate(emptySchema), adminController.listCategories);
 router.post('/menu/categories', validate(createCategorySchema), adminController.createCategory);
 router.put('/menu/categories/:id', validate(updateCategorySchema), adminController.updateCategory);
 router.delete('/menu/categories/:id', validate(idParamSchema), adminController.deleteCategory);

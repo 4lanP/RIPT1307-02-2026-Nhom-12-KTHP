@@ -36,21 +36,21 @@ Swagger: http://localhost:5000/api/docs
 DB:      localhost:5433
 ```
 
-### Không có `.env` vẫn chạy được
+### Tạo `.env` local trước khi chạy
 
-`docker-compose.yml` đã có default local cho:
-
-- `DB_USER=restaurant_user`
-- `DB_PASSWORD=strongpassword123`
-- JWT dev secrets
-- VNPay placeholder
-- `FRONTEND_URL=http://localhost:3000`
-
-Nếu muốn override, copy `.env.example` thành `.env` và chỉnh lại:
+`docker-compose.yml` không chứa secret mặc định. Copy file ví dụ và thay placeholder bằng giá trị local riêng:
 
 ```powershell
 Copy-Item .env.example .env
 ```
+
+Các biến local tối thiểu:
+
+- `DB_USER=restaurant_user`
+- `DB_PASSWORD=<local-db-password>`
+- JWT dev secrets
+- VNPay placeholder
+- `FRONTEND_URL=http://localhost:3000`
 
 ### Reset DB Docker
 
@@ -81,7 +81,7 @@ Copy-Item .env.example .env
 Chỉnh `.env` để dùng PostgreSQL local, thường là:
 
 ```env
-DATABASE_URL=postgres://restaurant_user:strongpassword123@localhost:5432/restaurant_dbs
+DATABASE_URL=postgres://restaurant_user:<local-db-password>@localhost:5432/restaurant_dbs
 REDIS_URL=redis://localhost:6379
 ```
 

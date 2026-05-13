@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON REFRESH_TOKENS(expir
 
 -- Index for PAYMENTS table
 CREATE INDEX IF NOT EXISTS idx_payments_session_id ON PAYMENTS(session_id);
-CREATE INDEX IF NOT EXISTS idx_payments_transaction_id ON PAYMENTS(transaction_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_transaction_id ON PAYMENTS(transaction_id) WHERE transaction_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_payments_status ON PAYMENTS(status);
 
 -- Index for CUSTOMER_REQUESTS table

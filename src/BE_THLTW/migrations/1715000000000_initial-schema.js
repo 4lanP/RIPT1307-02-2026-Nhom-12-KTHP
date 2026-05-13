@@ -141,7 +141,7 @@ exports.up = (pgm) => {
     method: { type: 'payment_method', notNull: true },
     amount: { type: 'decimal(10,2)', notNull: true },
     status: { type: 'payment_status', default: 'PENDING' },
-    transaction_id: { type: 'varchar(100)' },
+    transaction_id: { type: 'varchar(100)', unique: true },
     webhook_data: { type: 'jsonb' },
     paid_at: { type: 'timestamp' }
   });

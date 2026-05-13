@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { errorResponse } = require('../utils/response.util');
+const { ValidationError } = require('../utils/errors');
 
 const validate = (schema) => {
   return (req, res, next) => {
@@ -18,16 +18,16 @@ const validate = (schema) => {
       if (Object.prototype.hasOwnProperty.call(parsed, 'params')) {
         req.params = parsed.params;
       }
-      next();
+      return next();
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errors = error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         }));
-        return errorResponse(res, 400, 'Dữ liệu không hợp lệ', errors);
+        return next(new ValidationError('Du lieu khong hop le', errors));
       }
-      next(error);
+      return next(error);
     }
   };
 };

@@ -6,6 +6,12 @@ const idParamSchema = z.object({
   params: z.object({ id }),
 });
 
+const emptySchema = z.object({
+  body: z.object({}).strict().optional(),
+  query: z.object({}).strict().optional(),
+  params: z.object({}).strict().optional(),
+});
+
 const checkoutCashSchema = z.object({
   params: z.object({ id }),
   body: z.object({
@@ -22,6 +28,7 @@ const cancelItemSchema = z.object({
 
 module.exports = {
   idParamSchema,
+  emptySchema,
   checkoutCashSchema,
   cancelItemSchema,
 };

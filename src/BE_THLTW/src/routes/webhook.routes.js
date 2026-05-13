@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const webhookController = require('../controllers/webhook.controller');
+const { validate } = require('../middlewares/validate.middleware');
+const { webhookPayloadSchema } = require('../validators/payment.validator');
 
 // VNPay gọi qua IPN Webhook (cả GET và POST tùy thiết lập VNPay)
 /**
@@ -19,7 +21,7 @@ const webhookController = require('../controllers/webhook.controller');
  *       200:
  *         description: Trả về trạng thái xử lý cho VNPay
  */
-router.get('/vnpay', webhookController.vnpayWebhook);
-router.post('/vnpay', webhookController.vnpayWebhook);
+router.get('/vnpay', validate(webhookPayloadSchema), webhookController.vnpayWebhook);
+router.post('/vnpay', validate(webhookPayloadSchema), webhookController.vnpayWebhook);
 
 module.exports = router;

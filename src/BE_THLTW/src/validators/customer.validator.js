@@ -40,9 +40,22 @@ const getMenuSchema = z.object({
   }),
 });
 
+const createPaymentSchema = z.object({
+  body: z.object({}).strict().optional(),
+  query: z.object({}).strict().optional(),
+});
+
+const emptySchema = z.object({
+  body: z.object({}).strict().optional(),
+  query: z.object({}).strict().optional(),
+  params: z.object({}).strict().optional(),
+});
+
 module.exports = {
   scanSchema,
   getMenuSchema,
   createOrderSchema,
   createRequestSchema,
+  createPaymentSchema,
+  emptySchema,
 };
