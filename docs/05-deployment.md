@@ -125,7 +125,7 @@ curl https://your-api-domain/api/health
 ## Rủi ro còn lại trước production
 
 - VNPay webhook da check amount; truoc production can test voi sandbox merchant config that.
-- `/customer` Socket.IO nên xác thực bằng session token trước khi `join_session`.
+- `/customer` Socket.IO đã xác thực `session_id` + `session_token` trong `join_session`; trước production vẫn nên test end-to-end với frontend thật.
 - Admin CRUD đã có route thật; trước production nên bổ sung integration test và phân quyền chi tiết theo từng thao tác.
 - Nên thêm CI để chạy test tự động.
 
@@ -139,3 +139,18 @@ curl https://your-api-domain/api/health
 | Seeder/indexer fail | `docker compose logs seeder` hoặc `docker compose logs indexer` |
 | Port conflict | Đổi port host trong `docker-compose.yml` |
 | Dữ liệu cũ không đổi sau seed | Chạy `docker compose down -v` |
+
+## Backend Security Checklist
+
+- Keep `src/BE_THLTW/.env` and `src/BE_THLTW/.env.local` local only. They must not be tracked by Git.
+- Provision production values from the deployment secret store or runtime environment. Do not copy values from local workstations.
+- Use `src/BE_THLTW/.env.example` only as a shape reference. Values wrapped in `<...>` are placeholders.
+
+## Credential Rotation
+
+Rotate credentials immediately after removing tracked env files from Git history or after any suspected exposure.
+
+- JWT: replace `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`, then force staff login again and allow customer session tokens to expire.
+- Database: rotate `DB_PASSWORD` or `DATABASE_URL`, update the deployment secret store, then restart the backend.
+- VNPay: rotate `VNPAY_HASHSECRET` and merchant credentials in coordination with the payment provider.
+- Redis: rotate `REDIS_URL` credentials when Redis auth is enabled, then restart workers/backends that use webhook locks.

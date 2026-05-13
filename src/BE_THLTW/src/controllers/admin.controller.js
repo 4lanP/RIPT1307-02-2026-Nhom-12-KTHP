@@ -7,9 +7,6 @@ const send = (res, status, message, data) => successResponse(res, status, messag
 async function getRevenue(req, res, next) {
   try {
     const { from, to, group_by } = req.query;
-    if (!from || !to) {
-      return res.status(400).json({ success: false, message: 'from and to are required (YYYY-MM-DD)' });
-    }
     const result = await reportService.getRevenueReport(from, to, group_by || 'day');
     return send(res, 200, 'Revenue report loaded', result);
   } catch (err) {

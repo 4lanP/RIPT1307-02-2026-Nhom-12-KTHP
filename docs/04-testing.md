@@ -68,3 +68,10 @@ npm test -- --detectOpenHandles
 - API tests cho route thật bằng `supertest`.
 - Bo sung unit/integration test rieng cho VNPay webhook amount mismatch va Redis fallback.
 - Socket.IO auth tests cho `/customer`, `/kitchen`, `/staff`.
+
+## Backend Hardening Test Scope
+
+- Secret hygiene tests verify tracked files do not include local `.env` files and that `.env.example` contains placeholders only.
+- Socket.IO tests verify `/customer` only joins a session room when `session_id` and a matching `session_token` are supplied and the session is active.
+- Migration tests verify split historical migrations are no-ops and that payment transaction IDs are protected by a unique constraint.
+- Validation/error tests verify invalid API input reaches the shared validation middleware and returns the standard error response shape.

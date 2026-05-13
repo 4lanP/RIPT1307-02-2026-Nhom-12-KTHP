@@ -3,6 +3,11 @@ const { createPaymentUrl, verifyIPN } = require('../utils/vnpay.util');
 const { acquireLock, releaseLock } = require('../config/redis');
 const logger = require('../utils/logger');
 const { NotFoundError } = require('../utils/errors');
+const crypto = require('crypto');
+
+function generateTransactionRef() {
+  return `RES-${crypto.randomUUID()}`;
+}
 
 async function createVNPayPayment(session_id, ipAddr) {
   const client = await pool.connect();
@@ -18,7 +23,7 @@ async function createVNPayPayment(session_id, ipAddr) {
     }
 
     const final_amount = sessionRes.rows[0].final_amount;
-    const txnRef = `RES-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const txnRef = generateTransactionRef();
 
     // Tạo record PAYMENT
     await client.query(
@@ -151,4 +156,5 @@ async function processVNPayWebhook(queryData) {
 module.exports = {
   createVNPayPayment,
   processVNPayWebhook,
+  generateTransactionRef,
 };

@@ -5,6 +5,12 @@ const role = z.enum(['ADMIN', 'MANAGER', 'CASHIER', 'KITCHEN', 'WAITER']);
 const tableStatus = z.enum(['AVAILABLE', 'OCCUPIED']);
 const station = z.enum(['GRILL', 'BAR', 'COLD']);
 const optionalUrl = z.string().url().max(500).optional().nullable();
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD');
+const emptySchema = z.object({
+  body: z.object({}).strict().optional(),
+  query: z.object({}).strict().optional(),
+  params: z.object({}).strict().optional(),
+});
 
 const idParamSchema = z.object({
   params: z.object({ id }),
@@ -87,6 +93,21 @@ const listItemsSchema = z.object({
   }),
 });
 
+const revenueReportSchema = z.object({
+  query: z.object({
+    from: dateOnly,
+    to: dateOnly,
+    group_by: z.enum(['day', 'week', 'month']).optional(),
+  }),
+});
+
+const exportReportSchema = z.object({
+  query: z.object({
+    from: dateOnly.optional(),
+    to: dateOnly.optional(),
+  }),
+});
+
 const createItemSchema = z.object({
   body: z.object({
     category_id: id,
@@ -154,4 +175,7 @@ module.exports = {
   menuItemIdParamSchema,
   createOptionSchema,
   updateOptionSchema,
+  emptySchema,
+  revenueReportSchema,
+  exportReportSchema,
 };

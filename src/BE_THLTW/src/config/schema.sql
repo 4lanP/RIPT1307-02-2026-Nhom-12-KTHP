@@ -125,7 +125,7 @@ CREATE TABLE PAYMENTS (
     method payment_method NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     status payment_status DEFAULT 'PENDING',
-    transaction_id VARCHAR(100),
+    transaction_id VARCHAR(100) UNIQUE,
     webhook_data JSONB,
     paid_at TIMESTAMP
 );

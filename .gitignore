@@ -1,2 +1,12 @@
-agent-skills/
-
+.agents
+.github
+.specify
+.vscode
+AGENTS.md
+specs
+.env
+.env.*
+!.env.example
+*.log
+node_modules/
+coverage/

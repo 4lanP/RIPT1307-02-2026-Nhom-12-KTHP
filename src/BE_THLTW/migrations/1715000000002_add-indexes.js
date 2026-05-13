@@ -26,7 +26,11 @@ exports.up = (pgm) => {
 
   // PAYMENTS indexes
   pgm.createIndex('PAYMENTS', 'session_id', { name: 'idx_payments_session_id' });
-  pgm.createIndex('PAYMENTS', 'transaction_id', { name: 'idx_payments_transaction_id' });
+  pgm.createIndex('PAYMENTS', 'transaction_id', {
+    name: 'idx_payments_transaction_id',
+    unique: true,
+    where: 'transaction_id IS NOT NULL',
+  });
   pgm.createIndex('PAYMENTS', 'status', { name: 'idx_payments_status' });
 
   // CUSTOMER_REQUESTS indexes

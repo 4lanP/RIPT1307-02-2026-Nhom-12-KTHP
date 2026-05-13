@@ -371,7 +371,9 @@ npm run docker:reset     # Reset DB và rebuild
 
 ## 🤝 Contributing
 
-Dự án này là đồ án môn học. Mọi đóng góp và góp ý xin gửi qua Issues hoặc Pull Requests.
+- Đoàn Vũ Phúc 
+- Lê Minh Đạo
+- Trần Minh Trí
 
 ## 📝 License
 

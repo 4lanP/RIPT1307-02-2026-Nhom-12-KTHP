@@ -52,12 +52,13 @@ Password123!
 | Auth login/refresh | không | tất cả tài khoản nhân viên |
 | API khách hàng | session token | session khách hàng từ quét QR |
 | KDS HTTP | staff access token | chỉ `KITCHEN` |
-| Staff HTTP | staff access token | `CASHIER`, `MANAGER`, `ADMIN` |
+| Staff HTTP: tables/sessions/requests | staff access token | `WAITER`, `CASHIER`, `MANAGER`, `ADMIN` |
+| Staff HTTP: checkout/cancel item | staff access token | `CASHIER`, `MANAGER`, `ADMIN` |
 | Staff force close | staff access token | `MANAGER`, `ADMIN` |
 | Admin HTTP | staff access token | `ADMIN` |
 | Kitchen socket | staff access token | `ADMIN`, `KITCHEN` |
 | Staff socket | staff access token | `ADMIN`, `CASHIER`, `MANAGER`, `WAITER` |
-| Customer socket | hiện tại không có socket auth | chỉ join session hiện tại từ FE |
+| Customer socket | session token trong `join_session` | chỉ session đang active của khách |
 
 ## Luồng Chính FE
 
@@ -68,7 +69,7 @@ Khách hàng:
 3. `GET /customer/session` để đọc `id`, `version`, tổng tiền.
 4. `GET /customer/menu?station=GRILL|BAR|COLD` hoặc `?category_id=1`.
 5. `POST /customer/orders` với `session_version` mới nhất.
-6. Lắng nghe trên `/customer`, emit `join_session` với `session_id` hiện tại.
+6. Lắng nghe trên `/customer`, emit `join_session` với cả `session_id` hiện tại và `session_token`.
 7. Với VNPay, gọi `POST /customer/payment/vnpay`, chuyển hướng đến `payment_url` trả về, sau đó hiển thị trang kết quả trên URL return của frontend.
 
 KDS:
@@ -81,12 +82,12 @@ KDS:
 
 Nhân viên/Thu ngân:
 
-1. Đăng nhập với cashier/manager/admin.
+1. Đăng nhập với waiter/cashier/manager/admin.
 2. `GET /staff/tables`.
 3. `GET /staff/tables/{id}/session` cho các bàn đang có khách.
-4. `POST /staff/sessions/{id}/checkout` với `{ "amount": final_amount }`.
+4. `POST /staff/sessions/{id}/checkout` với `{ "amount": final_amount }` cho cashier/manager/admin.
 5. `GET /staff/requests`, `PATCH /staff/requests/{id}/resolve`.
-6. Tùy chọn: `PATCH /staff/orders/items/{id}/cancel`.
+6. Tùy chọn: `PATCH /staff/orders/items/{id}/cancel` cho cashier/manager/admin.
 
 Admin:
 
@@ -118,7 +119,6 @@ Admin:
 
 Đây không phải là blocker cho phát triển FE, nhưng nên được theo dõi trước khi production:
 
-- Namespace Socket.IO `/customer` không xác thực session token trước `join_session`.
 - Hủy item của nhân viên hiện cho phép hủy rộng rãi; FE nên tránh hiển thị nút hủy cho các item đã served/cancelled cho đến khi backend thực thi chuyển đổi trạng thái.
 - Xóa table/QR của admin có thể gặp ràng buộc FK nếu các bản ghi có session lịch sử. Ưu tiên UX toggle/deactivate nếu có thể.
 - Các endpoint list của admin chưa hỗ trợ phân trang/tìm kiếm/sắp xếp; FE có thể bắt đầu với client-side cho quy mô seed/demo.
@@ -140,3 +140,10 @@ Tests:       27 passed, 27 total
 docker compose ps
 backend/postgres/redis healthy
 ```
+
+## Backend Hardening Notes
+
+- Do not send local env values to the frontend. Frontend config should use public frontend variables only.
+- When opening a customer socket, pass both `session_id` and `session_token` in `join_session`; do not join arbitrary rooms by ID.
+- Treat validation errors as the standard `{ success, message, errors }` response. VNPay webhook responses are the exception because they are provider-facing.
+- Payment redirects use a unique backend-generated transaction reference. The frontend should treat it as opaque.

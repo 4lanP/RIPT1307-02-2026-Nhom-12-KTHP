@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const staffController = require('../controllers/staff.controller');
-const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { authenticateStaff, authorizeStaffRoles } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validate.middleware');
-const { idParamSchema, checkoutCashSchema, cancelItemSchema } = require('../validators/staff.validator');
+const { idParamSchema, checkoutCashSchema, cancelItemSchema, emptySchema } = require('../validators/staff.validator');
 
-router.use(authenticateStaff(['CASHIER', 'MANAGER', 'ADMIN']));
+const STAFF_ACCESS_ROLES = ['CASHIER', 'MANAGER', 'ADMIN', 'WAITER'];
+const CASHIER_ACCESS_ROLES = ['CASHIER', 'MANAGER', 'ADMIN'];
+const MANAGER_ACCESS_ROLES = ['MANAGER', 'ADMIN'];
+
+router.use(authenticateStaff(STAFF_ACCESS_ROLES));
 
 /**
  * @swagger
@@ -61,7 +65,7 @@ router.use(authenticateStaff(['CASHIER', 'MANAGER', 'ADMIN']));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/tables', staffController.getTables);
+router.get('/tables', validate(emptySchema), staffController.getTables);
 
 /**
  * @swagger
@@ -154,7 +158,12 @@ router.get('/tables/:id/session', validate(idParamSchema), staffController.getTa
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/sessions/:id/checkout', validate(checkoutCashSchema), staffController.checkoutCash);
+router.post(
+  '/sessions/:id/checkout',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(checkoutCashSchema),
+  staffController.checkoutCash
+);
 
 /**
  * @swagger
@@ -192,7 +201,7 @@ router.post('/sessions/:id/checkout', validate(checkoutCashSchema), staffControl
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/requests', staffController.getRequests);
+router.get('/requests', validate(emptySchema), staffController.getRequests);
 
 /**
  * @swagger
@@ -285,7 +294,12 @@ router.patch('/requests/:id/resolve', validate(idParamSchema), staffController.r
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/orders/items/:id/cancel', validate(cancelItemSchema), staffController.cancelItem);
+router.patch(
+  '/orders/items/:id/cancel',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(cancelItemSchema),
+  staffController.cancelItem
+);
 
 /**
  * @swagger
@@ -331,8 +345,8 @@ router.patch('/orders/items/:id/cancel', validate(cancelItemSchema), staffContro
  */
 router.post(
   '/sessions/:id/force-close',
+  authorizeStaffRoles(MANAGER_ACCESS_ROLES),
   validate(idParamSchema),
-  authenticateStaff(['MANAGER', 'ADMIN']),
   staffController.forceCloseSession
 );
 

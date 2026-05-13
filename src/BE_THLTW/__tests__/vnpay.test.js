@@ -1,6 +1,7 @@
 const { createPaymentUrl, verifyIPN } = require('../src/utils/vnpay.util');
 const querystring = require('qs');
 const crypto = require('crypto');
+const { mockClient } = require('./helpers/mockDb');
 
 jest.mock('../src/config/vnpay', () => ({
   vnp_TmnCode: 'TESTCODE',
@@ -8,6 +9,13 @@ jest.mock('../src/config/vnpay', () => ({
   vnp_Url: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
   vnp_ReturnUrl: 'http://localhost/return',
 }));
+
+jest.mock('../src/config/redis', () => ({
+  acquireLock: jest.fn(),
+  releaseLock: jest.fn(),
+}));
+
+const { acquireLock, releaseLock } = require('../src/config/redis');
 
 describe('VNPay Utils', () => {
   it('createPaymentUrl() trả về URL hợp lệ chứa đúng param', () => {
@@ -48,5 +56,58 @@ describe('VNPay Utils', () => {
       vnp_SecureHash: 'wronghash123',
     };
     expect(verifyIPN(params)).toBe(false);
+  });
+});
+
+describe('VNPay payment service hardening', () => {
+  beforeEach(() => {
+    acquireLock.mockReset();
+    releaseLock.mockReset();
+    acquireLock.mockResolvedValue(true);
+    releaseLock.mockResolvedValue(true);
+  });
+
+  function signPayload(payload) {
+    const sortedParams = {};
+    Object.keys(payload).sort().forEach((key) => {
+      sortedParams[key] = payload[key];
+    });
+    const signData = querystring.stringify(sortedParams, { encode: false });
+    return crypto.createHmac('sha512', 'SECRETKEY123').update(Buffer.from(signData, 'utf-8')).digest('hex');
+  }
+
+  it('generates opaque unique transaction references', () => {
+    const { generateTransactionRef } = require('../src/services/payment.service');
+    const refs = new Set(Array.from({ length: 20 }, () => generateTransactionRef()));
+
+    expect(refs.size).toBe(20);
+    refs.forEach((ref) => {
+      expect(ref).toMatch(/^RES-[0-9a-f-]{36}$/);
+    });
+  });
+
+  it('returns idempotent duplicate status without mutating completed payments again', async () => {
+    const { processVNPayWebhook } = require('../src/services/payment.service');
+    const payload = {
+      vnp_Amount: '10000000',
+      vnp_TxnRef: 'RES-existing',
+      vnp_ResponseCode: '00',
+    };
+    payload.vnp_SecureHash = signPayload(payload);
+    mockClient.query
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({
+        rows: [{ session_id: 10, amount: '100000', status: 'COMPLETED' }],
+      })
+      .mockResolvedValueOnce({});
+
+    const result = await processVNPayWebhook(payload);
+
+    expect(result).toEqual({ RspCode: '02', Message: 'Order already confirmed' });
+    expect(mockClient.query).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE SESSIONS'),
+      expect.any(Array)
+    );
+    expect(releaseLock).toHaveBeenCalledWith('webhook:vnpay:RES-existing');
   });
 });
