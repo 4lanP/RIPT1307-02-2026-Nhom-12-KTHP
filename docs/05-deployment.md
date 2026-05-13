@@ -124,9 +124,9 @@ curl https://your-api-domain/api/health
 
 ## Rủi ro còn lại trước production
 
-- VNPay webhook cần đối chiếu amount từ VNPay với `PAYMENTS.amount`.
+- VNPay webhook da check amount; truoc production can test voi sandbox merchant config that.
 - `/customer` Socket.IO nên xác thực bằng session token trước khi `join_session`.
-- Admin CRUD trong Swagger comments cũ chưa có implementation thật.
+- Admin CRUD đã có route thật; trước production nên bổ sung integration test và phân quyền chi tiết theo từng thao tác.
 - Nên thêm CI để chạy test tự động.
 
 ## Troubleshooting

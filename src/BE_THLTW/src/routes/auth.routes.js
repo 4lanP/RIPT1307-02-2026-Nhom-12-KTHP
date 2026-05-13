@@ -41,7 +41,7 @@ const { loginSchema, refreshSchema } = require('../validators/auth.validator');
  *                     user:
  *                       type: object
  *                       properties:
- *                         id:        { type: string, format: uuid }
+ *                         id:        { type: integer }
  *                         full_name: { type: string }
  *                         role:      { type: string, enum: [ADMIN, MANAGER, CASHIER, KITCHEN, WAITER] }
  *       401:
@@ -112,3 +112,4 @@ router.post('/refresh', validate(refreshSchema), authController.refresh);
 router.post('/logout', authenticateStaff(), authController.logout);
 
 module.exports = router;
+

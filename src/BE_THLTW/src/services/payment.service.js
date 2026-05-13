@@ -52,9 +52,13 @@ async function processVNPayWebhook(queryData) {
 
   const lockAcquired = await acquireLock(lockKey, 60);
 
-  if (lockAcquired === false || lockAcquired === null) {
+  if (lockAcquired === false) {
     logger.warn('VNPay webhook: Already processing', { txnRef: vnp_TxnRef });
     return { RspCode: '02', Message: 'Webhook already processing' };
+  }
+
+  if (lockAcquired === null) {
+    logger.warn('VNPay webhook: Redis lock unavailable, continuing with DB idempotency', { txnRef: vnp_TxnRef });
   }
 
   const client = await pool.connect();
@@ -73,6 +77,18 @@ async function processVNPayWebhook(queryData) {
     }
 
     const payment = paymentRes.rows[0];
+    const paidAmount = Number(queryData['vnp_Amount']) / 100;
+    const expectedAmount = Number(payment.amount);
+
+    if (!Number.isFinite(paidAmount) || paidAmount !== expectedAmount) {
+      await client.query('ROLLBACK');
+      logger.warn('VNPay webhook: Amount mismatch', {
+        txnRef: vnp_TxnRef,
+        paidAmount,
+        expectedAmount,
+      });
+      return { RspCode: '04', Message: 'Invalid amount' };
+    }
 
     if (payment.status === 'COMPLETED' || payment.status === 'FAILED') {
       await client.query('ROLLBACK');

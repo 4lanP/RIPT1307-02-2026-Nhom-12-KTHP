@@ -4,7 +4,7 @@ const customerController = require('../controllers/customer.controller');
 const { authenticateSession } = require('../middlewares/auth.middleware');
 const { scanRateLimiter } = require('../middlewares/rateLimit.middleware');
 const { validate } = require('../middlewares/validate.middleware');
-const { scanSchema, createOrderSchema, createRequestSchema } = require('../validators/customer.validator');
+const { scanSchema, getMenuSchema, createOrderSchema, createRequestSchema } = require('../validators/customer.validator');
 
 /**
  * @swagger
@@ -31,7 +31,7 @@ const { scanSchema, createOrderSchema, createRequestSchema } = require('../valid
  *               properties:
  *                 data:
  *                   properties:
- *                     session_token: { type: string, format: uuid }
+ *                     session_token: { type: string }
  *                     table_name:    { type: string, example: "Bàn 01" }
  *       404:
  *         description: Mã QR không hợp lệ
@@ -59,7 +59,7 @@ router.post('/scan', scanRateLimiter, validate(scanSchema), customerController.s
  *                 data:
  *                   type: object
  *                   properties:
- *                     id:              { type: string, format: uuid }
+ *                     id:              { type: integer }
  *                     table_name:      { type: string, example: "Bàn 01" }
  *                     status:          { type: string, enum: [ACTIVE, CLOSED, CANCELLED] }
  *                     subtotal:        { type: number, example: 240000 }
@@ -111,7 +111,7 @@ router.get('/session', authenticateSession, customerController.getSession);
  *         name: station
  *         schema:
  *           type: string
- *           enum: [BAR, KITCHEN, GRILL, COLD]
+ *           enum: [GRILL, BAR, COLD]
  *     responses:
  *       200:
  *         description: Danh sách menu nested
@@ -140,7 +140,7 @@ router.get('/session', authenticateSession, customerController.getSession);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/menu', authenticateSession, customerController.getMenu);
+router.get('/menu', authenticateSession, validate(getMenuSchema), customerController.getMenu);
 
 /**
  * @swagger
@@ -213,14 +213,14 @@ router.post('/requests', authenticateSession, validate(createRequestSchema), cus
  *                 items:
  *                   type: object
  *                   properties:
- *                     menu_item_id: { type: string, format: uuid }
+ *                     menu_item_id: { type: integer }
  *                     quantity:     { type: integer, minimum: 1 }
  *                     note:         { type: string }
  *                     options:
  *                       type: array
  *                       items:
  *                         properties:
- *                           option_id: { type: string, format: uuid }
+ *                           option_id: { type: integer }
  *                           quantity:  { type: integer }
  *     responses:
  *       201:
@@ -270,7 +270,7 @@ router.post('/requests', authenticateSession, validate(createRequestSchema), cus
  *                   items:
  *                     type: object
  *                     properties:
- *                       id:         { type: string, format: uuid }
+ *                       id:         { type: integer }
  *                       status:     { type: string, enum: [PENDING, CONFIRMED, PREPARING, READY, SERVED, CANCELLED] }
  *                       note:       { type: string }
  *                       created_at: { type: string, format: date-time }
@@ -355,3 +355,4 @@ router.get('/orders', authenticateSession, customerController.getOrders);
 router.post('/payment/vnpay', authenticateSession, customerController.createPayment);
 
 module.exports = router;
+

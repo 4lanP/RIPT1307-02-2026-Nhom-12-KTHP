@@ -13,7 +13,7 @@ Kết quả hiện tại sau các sửa backend:
 
 ```text
 Test Suites: 6 passed, 6 total
-Tests:       26 passed, 26 total
+Tests:       27 passed, 27 total
 ```
 
 Không còn test `.skip`.
@@ -27,7 +27,7 @@ Không còn test `.skip`.
 | `__tests__/session.test.js` | Scan lock bàn, checkout tiền mặt, session đã đóng |
 | `__tests__/kds.test.js` | Cập nhật status item và order status |
 | `__tests__/vnpay.test.js` | Tạo URL VNPay và verify IPN signature |
-| `__tests__/validation.test.js` | Zod v4 validation, integer ID validators |
+| `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, parsed data write-back to `req` |
 
 ## Test Helpers
 
@@ -66,5 +66,5 @@ npm test -- --detectOpenHandles
 
 - Integration tests chạy với PostgreSQL test container riêng.
 - API tests cho route thật bằng `supertest`.
-- VNPay webhook nên có test đối chiếu `vnp_Amount` với `PAYMENTS.amount` sau khi logic đó được bổ sung.
+- Bo sung unit/integration test rieng cho VNPay webhook amount mismatch va Redis fallback.
 - Socket.IO auth tests cho `/customer`, `/kitchen`, `/staff`.

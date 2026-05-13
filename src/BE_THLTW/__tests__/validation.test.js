@@ -89,4 +89,19 @@ describe('Validation middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
+
+  it('writes parsed Zod data back to the request', () => {
+    const req = {
+      body: { new_status: 'READY' },
+      query: {},
+      params: { id: '1' },
+    };
+    const res = createResponse();
+    const next = jest.fn();
+
+    validate(updateItemStatusSchema)(req, res, next);
+
+    expect(req.params.id).toBe(1);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
 });

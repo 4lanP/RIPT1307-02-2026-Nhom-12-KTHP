@@ -34,6 +34,8 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 
 ## Admin
 
+- [x] CRUD users, tables, QR codes
+- [x] CRUD menu categories, items, options
 - [x] Xem báo cáo doanh thu (theo ngày / tuần / tháng)
 - [x] Export báo cáo ra file Excel (exceljs)
 - [x] Quản lý người dùng

@@ -65,7 +65,8 @@ src/
 │   ├── order.service.js     # Đặt món, quota check, optimistic locking
 │   ├── kds.service.js       # Queue bếp, xác nhận món
 │   ├── payment.service.js   # VNPay URL, webhook idempotency
-│   └── report.service.js    # Thống kê, export Excel
+│   ├── report.service.js    # Thống kê, export Excel
+│   └── admin.service.js     # Admin CRUD users/tables/QR/menu
 │
 ├── middlewares/
 │   ├── auth.middleware.js         # JWT verify, session token verify
@@ -77,7 +78,8 @@ src/
 ├── validators/          # Zod schemas
 │   ├── auth.validator.js
 │   ├── customer.validator.js
-│   └── kds.validator.js
+│   ├── kds.validator.js
+│   └── admin.validator.js
 │
 ├── routes/
 │   ├── index.js         # Master router
@@ -131,13 +133,15 @@ Schema đầy đủ: [src/BE_THLTW/src/config/schema.sql](../src/BE_THLTW/src/co
 |---|---|
 | `users` | Tài khoản nhân viên, role, trạng thái |
 | `refresh_tokens` | Refresh token (SHA256 hash), expires_at, revoked_at |
-| `tables` | Bàn nhà hàng, trạng thái (AVAILABLE/OCCUPIED/CLEANING) |
+| `tables` | Bàn nhà hàng, trạng thái (AVAILABLE/OCCUPIED) |
 | `menu_items` | Món ăn, giá, danh mục, daily_quota, is_available |
 | `sessions` | Phiên khách tại bàn, subtotal, version (optimistic lock) |
 | `orders` | Đơn hàng trong session, status |
 | `order_items` | Chi tiết món, status (PENDING/PREPARING/READY/SERVED/CANCELLED) |
 | `payments` | Giao dịch thanh toán, transaction_id, status |
 | `customer_requests` | Yêu cầu gọi nhân viên / xin thanh toán |
+
+Lưu ý schema hiện tại dùng PostgreSQL `SERIAL`, nên API IDs là integer. `tables.status` chỉ có `AVAILABLE` và `OCCUPIED`; không có `CLEANING`/`RESERVED`.
 
 ### Indexes (30+)
 

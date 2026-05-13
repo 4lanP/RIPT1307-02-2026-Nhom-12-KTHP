@@ -231,7 +231,7 @@ Log format:
 
 ```
 Test Suites: 6 passed, 6 total
-Tests:       26 passed, 26 total
+Tests:       27 passed, 27 total
 ```
 
 ---

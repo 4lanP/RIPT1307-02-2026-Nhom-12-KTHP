@@ -125,8 +125,8 @@ async function seed() {
       for (let i = 0; i < itemsToInsert.length; i++) {
         const item = itemsToInsert[i];
         const itemRes = await client.query(
-          `INSERT INTO MENU_ITEMS (category_id, name, price, daily_quota, sort_order, is_available) 
-           VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+          `INSERT INTO MENU_ITEMS (category_id, name, price, daily_quota, daily_quota_default, sort_order, is_available) 
+           VALUES ($1, $2, $3, $4, $4, $5, true) RETURNING id`,
           [catId, item.name, item.price, item.daily_quota, i + 1]
         );
         const itemId = itemRes.rows[0].id;
