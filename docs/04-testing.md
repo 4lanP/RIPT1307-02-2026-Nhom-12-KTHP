@@ -22,12 +22,12 @@ Không còn test `.skip`.
 
 | File | Phạm vi |
 |---|---|
-| `__tests__/auth.test.js` | Login, refresh token, lỗi auth |
-| `__tests__/order.test.js` | Tạo order, quota, item unavailable, option không hợp lệ, rollback, bill |
-| `__tests__/session.test.js` | Scan lock bàn, checkout tiền mặt, session đã đóng |
-| `__tests__/kds.test.js` | Cập nhật status item và order status |
-| `__tests__/vnpay.test.js` | Tạo URL VNPay và verify IPN signature |
-| `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, parsed data write-back to `req` |
+| `__tests__/auth.test.js` | Login, refresh token rotation, logout, lỗi auth |
+| `__tests__/order.test.js` | Tạo order, quota check, item unavailable, option validation, transaction rollback, bill calculation |
+| `__tests__/session.test.js` | QR scan (customer), table lock, checkout tiền mặt (staff), force close session |
+| `__tests__/kds.test.js` | Cập nhật item status, order status transitions |
+| `__tests__/vnpay.test.js` | Tạo payment URL, verify webhook signature, idempotency |
+| `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, enum validation, parsed data write-back to `req` |
 
 ## Test Helpers
 
