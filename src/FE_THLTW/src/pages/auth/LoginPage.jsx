@@ -5,11 +5,11 @@ import { UtensilsCrossed, Eye, EyeOff, LogIn, ChefHat } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const DEMO_ACCOUNTS = [
-  { email: 'admin@restaurant.com', role: 'ADMIN', color: 'from-purple-500 to-purple-700' },
-  { email: 'manager@restaurant.com', role: 'MANAGER', color: 'from-blue-500 to-blue-700' },
-  { email: 'cashier@restaurant.com', role: 'CASHIER', color: 'from-emerald-500 to-emerald-700' },
-  { email: 'kitchen@restaurant.com', role: 'KITCHEN', color: 'from-red-500 to-red-700' },
-  { email: 'waiter@restaurant.com', role: 'WAITER', color: 'from-orange-500 to-orange-700' },
+  { email: 'admin@restaurant.com', role: 'ADMIN', color: 'from-emerald-600 to-emerald-700' },
+  { email: 'manager@restaurant.com', role: 'MANAGER', color: 'from-blue-600 to-blue-700' },
+  { email: 'cashier@restaurant.com', role: 'CASHIER', color: 'from-teal-600 to-teal-700' },
+  { email: 'kitchen@restaurant.com', role: 'KITCHEN', color: 'from-orange-500 to-orange-600' },
+  { email: 'waiter@restaurant.com', role: 'WAITER', color: 'from-amber-500 to-amber-600' },
 ]
 
 const LoginPage = () => {
@@ -40,44 +40,43 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 via-transparent to-purple-900/20" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-100/50 via-transparent to-transparent" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-3xl" />
 
-      <div className="relative w-full max-w-md animate-fade-in">
+      <div className="relative w-full max-w-md animate-fade-in z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl shadow-2xl shadow-orange-500/30 mb-4">
-            <UtensilsCrossed className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-50 rounded-[24px] shadow-sm border border-emerald-100 mb-5">
+            <UtensilsCrossed className="w-10 h-10 text-emerald-600" strokeWidth={2.5} />
           </div>
-          <h1 className="text-3xl font-bold text-white">Nhà Hàng KTHP</h1>
-          <p className="text-gray-400 mt-2 text-sm">Hệ thống quản lý nhà hàng</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">3POS</h1>
+          <p className="text-emerald-600 font-medium mt-2 text-sm">Restaurant Management System</p>
         </div>
 
         {/* Login card */}
-        <div className="glass-card p-8">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <LogIn className="w-5 h-5 text-orange-400" />
-            Đăng nhập
+        <div className="bg-white/80 backdrop-blur-xl border border-gray-100 p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            Đăng nhập hệ thống
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="email@restaurant.com"
                 required
-                className="input-field"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[16px] px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200"
                 id="login-email"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Mật khẩu</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
               <div className="relative">
                 <input
                   type={showPwd ? 'text' : 'password'}
@@ -85,13 +84,13 @@ const LoginPage = () => {
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   placeholder="••••••••"
                   required
-                  className="input-field pr-12"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-[16px] px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200 pr-12"
                   id="login-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd(!showPwd)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -100,48 +99,48 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3.5 rounded-[16px] transition-all duration-200 hover:shadow-lg hover:shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
               id="login-submit"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-5 h-5" />
               )}
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {loading ? 'Đang xác thực...' : 'Đăng nhập'}
             </button>
           </form>
         </div>
 
         {/* Quick login */}
-        <div className="mt-6">
-          <p className="text-center text-gray-500 text-xs mb-3">Tài khoản demo (click để điền)</p>
+        <div className="mt-8">
+          <p className="text-center text-gray-500 text-xs font-medium mb-3 uppercase tracking-wider">Tài khoản demo</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {DEMO_ACCOUNTS.map(({ email, role, color }) => (
               <button
                 key={email}
                 onClick={() => quickLogin(email)}
                 className={`
-                  px-3 py-2 rounded-xl text-xs font-medium text-white
-                  bg-gradient-to-r ${color} opacity-70 hover:opacity-100
-                  transition-all duration-200 hover:shadow-lg
+                  px-3 py-2.5 rounded-[12px] text-xs font-semibold text-white shadow-sm
+                  bg-gradient-to-r ${color} hover:opacity-90 active:scale-[0.98]
+                  transition-all duration-200
                 `}
               >
                 {role}
               </button>
             ))}
           </div>
-          <p className="text-center text-gray-600 text-xs mt-3">Mật khẩu chung: Password123!</p>
+          <p className="text-center text-gray-400 text-xs mt-4">Mật khẩu: Password123!</p>
         </div>
 
         {/* Customer link */}
-        <div className="mt-4 text-center">
+        <div className="mt-8 text-center">
           <a
             href="/scan"
-            className="text-orange-400 hover:text-orange-300 text-sm flex items-center justify-center gap-1 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-[14px] text-sm font-medium hover:bg-gray-50 hover:text-emerald-600 transition-all duration-200 shadow-sm"
           >
             <ChefHat className="w-4 h-4" />
-            Đặt món khách hàng (QR)
+            Trải nghiệm đặt món (Khách hàng)
           </a>
         </div>
       </div>

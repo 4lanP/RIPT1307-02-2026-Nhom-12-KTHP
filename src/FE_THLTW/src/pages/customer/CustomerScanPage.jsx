@@ -17,17 +17,15 @@ const CustomerScanPage = () => {
       const res = await customerApi.scan(qrCode.trim())
       const sessionToken = res.data.session_token
       sessionStorage.setItem('session_token', sessionToken)
-      toast.success('Quét QR thành công! Đang tải menu...')
+      toast.success('Chào mừng bạn đến với 3POS!')
       navigate('/menu')
     } catch (err) {
-      const msg = err?.message || 'Mã QR không hợp lệ hoặc bàn đang có khách'
-      toast.error(msg)
+      toast.error(err?.message || 'Mã QR không hợp lệ hoặc bàn đang có khách')
     } finally {
       setLoading(false)
     }
   }
 
-  // Demo QR codes
   const demoQRs = [
     'QR-Bàn-01-ABC123',
     'QR-Bàn-02-DEF456',
@@ -35,91 +33,109 @@ const CustomerScanPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-orange-900/20 via-transparent to-gray-950" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Premium Background */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[#F9FBF9] -z-10" />
+      <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] bg-emerald-50 rounded-full blur-[120px] opacity-60" />
+      <div className="absolute -bottom-[10%] -left-[10%] w-[50%] h-[50%] bg-mint-50 rounded-full blur-[100px] opacity-40" />
 
-      <div className="relative w-full max-w-sm animate-fade-in">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-700 rounded-3xl shadow-2xl shadow-orange-500/40 mb-6">
-            <UtensilsCrossed className="w-12 h-12 text-white" />
+      <div className="relative w-full max-w-sm animate-fade-in text-center">
+        {/* Branding */}
+        <div className="mb-10">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-[32px] shadow-[0_20px_50px_rgba(16,185,129,0.12)] border border-emerald-50 mb-6 group transition-transform hover:scale-105 duration-500">
+            <UtensilsCrossed className="w-10 h-10 text-emerald-500" strokeWidth={2.5} />
           </div>
-          <h1 className="text-4xl font-black text-white mb-2">Nhà Hàng KTHP</h1>
-          <p className="text-gray-400">Đặt món nhanh — Tiện lợi — Hiện đại</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-3">3POS</h1>
+          <p className="text-gray-500 font-medium px-4">Trải nghiệm ẩm thực cao cấp tại bàn của bạn</p>
         </div>
 
-        {/* Scan card */}
-        <div className="glass-card p-8">
-          {/* QR scan animation */}
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="w-32 h-32 border-4 border-orange-500/30 rounded-2xl flex items-center justify-center">
-                <QrCode className="w-16 h-16 text-orange-400" />
+        {/* Scan UI */}
+        <div className="bg-white/80 backdrop-blur-2xl border border-gray-100 p-8 rounded-[40px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)]">
+          <div className="flex justify-center mb-8">
+            <div className="relative group cursor-pointer">
+              <div className="w-40 h-40 border-2 border-emerald-100 rounded-[32px] flex items-center justify-center bg-emerald-50/30 overflow-hidden">
+                <QrCode className="w-20 h-20 text-emerald-500 opacity-80 group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent" />
               </div>
-              <div className="absolute inset-0 border-4 border-orange-500 rounded-2xl animate-ping opacity-20" />
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-orange-500 rounded-tl-xl" />
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-orange-500 rounded-tr-xl" />
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-orange-500 rounded-bl-xl" />
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-orange-500 rounded-br-xl" />
+              
+              {/* Animated Scan Line */}
+              <div className="absolute top-4 left-4 right-4 h-[2px] bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-[scan_2s_ease-in-out_infinite] z-10" />
+              
+              {/* Corner Accents */}
+              <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-2xl" />
+              <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-2xl" />
+              <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-2xl" />
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-2xl" />
             </div>
           </div>
 
-          <h2 className="text-center text-white font-bold text-lg mb-2">Nhập mã QR</h2>
-          <p className="text-center text-gray-400 text-sm mb-6">
-            Quét mã QR tại bàn hoặc nhập thủ công
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Quét để đặt món</h2>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+            Quét mã QR dán tại bàn để xem thực đơn và gọi món ngay lập tức.
           </p>
 
           <form onSubmit={handleScan} className="space-y-4">
-            <input
-              type="text"
-              value={qrCode}
-              onChange={e => setQrCode(e.target.value)}
-              placeholder="VD: QR-Bàn-01-ABC123"
-              className="input-field text-center text-lg tracking-wider"
-              id="qr-input"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={qrCode}
+                onChange={e => setQrCode(e.target.value)}
+                placeholder="Nhập mã bàn..."
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-center text-lg font-bold tracking-[0.2em] text-gray-800 placeholder:text-gray-300 placeholder:font-medium placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
+                id="qr-input"
+              />
+            </div>
+            
             <button
               type="submit"
               disabled={loading || !qrCode.trim()}
-              className="btn-primary w-full flex items-center justify-center gap-2 text-base py-4"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-100 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl shadow-[0_12px_24px_-8px_rgba(16,185,129,0.4)] transition-all hover:-translate-y-1 active:scale-[0.98] flex items-center justify-center gap-3 group"
               id="qr-submit"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <Scan className="w-5 h-5" />
+                <>
+                  <Scan className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                  <span className="text-lg">Tiếp tục</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
-              {loading ? 'Đang xử lý...' : 'Vào xem menu'}
-              {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
         </div>
 
-        {/* Demo QR codes */}
-        <div className="mt-6">
-          <p className="text-center text-gray-500 text-xs mb-3">Mã QR demo</p>
-          <div className="space-y-2">
+        {/* Demo Section */}
+        <div className="mt-10">
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Trải nghiệm thử</p>
+          <div className="flex flex-wrap justify-center gap-2">
             {demoQRs.map(qr => (
               <button
                 key={qr}
                 onClick={() => setQrCode(qr)}
-                className="w-full glass-card p-3 text-gray-400 hover:text-orange-400 hover:border-orange-500/30 transition-all text-sm font-mono text-center"
+                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-xs font-bold text-gray-500 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50/50 transition-all shadow-sm"
               >
-                {qr}
+                {qr.split('-')[1]}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Staff link */}
-        <div className="mt-6 text-center">
-          <a href="/login" className="text-gray-500 hover:text-gray-400 text-xs transition-colors">
-            Đăng nhập nhân viên →
+        {/* Footer */}
+        <div className="mt-12 opacity-40">
+          <a href="/login" className="text-gray-900 font-bold text-xs tracking-widest uppercase hover:opacity-100 transition-opacity">
+            Nhân viên đăng nhập
           </a>
         </div>
       </div>
+      
+      <style>{`
+        @keyframes scan {
+          0%, 100% { top: 16px; opacity: 0; }
+          10%, 90% { opacity: 1; }
+          50% { top: calc(100% - 18px); }
+        }
+      `}</style>
     </div>
   )
 }

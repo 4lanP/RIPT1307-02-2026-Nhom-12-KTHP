@@ -65,7 +65,7 @@ const AppRoutes = () => {
         <Route path="tables/:id" element={<StaffTableDetailPage />} />
         <Route path="requests" element={<StaffRequestsPage />} />
         <Route path="admin/dashboard" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminDashboardPage />
           </ProtectedRoute>
         } />
@@ -85,7 +85,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } />
         <Route path="admin/reports" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminReportsPage />
           </ProtectedRoute>
         } />
@@ -104,8 +104,8 @@ const AppRoutes = () => {
 
 const getDefaultRoute = (role) => {
   if (role === 'KITCHEN') return '/kds'
-  if (role === 'ADMIN' || role === 'MANAGER') return '/admin/dashboard'
-  return '/tables'
+  if (role === 'ADMIN') return '/admin/dashboard'
+  return '/tables' // MANAGER, CASHIER, WAITER
 }
 
 const App = () => (

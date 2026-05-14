@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
-import { UtensilsCrossed, Plus, Edit2, Trash2, X, Check, RefreshCw, Flame, Wine, Salad, ChevronDown, ChevronUp } from 'lucide-react'
+import { UtensilsCrossed, Plus, Edit2, Trash2, X, Check, RefreshCw, Flame, Wine, Salad, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const STATIONS = ['GRILL', 'BAR', 'COLD']
 const STATION_ICONS = { GRILL: Flame, BAR: Wine, COLD: Salad }
-const STATION_LABELS = { GRILL: 'Nướng', BAR: 'Bar', COLD: 'Lạnh' }
+const STATION_LABELS = { GRILL: 'Bếp Nướng', BAR: 'Pha Chế', COLD: 'Bếp Salad' }
+const STATION_COLORS = { 
+  GRILL: 'bg-orange-50 text-orange-600 border-orange-100', 
+  BAR: 'bg-blue-50 text-blue-600 border-blue-100', 
+  COLD: 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+}
 
 const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '' }
 
@@ -14,13 +19,13 @@ const AdminMenuPage = () => {
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('items')
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [form, setForm] = useState(defaultItem)
   const [saving, setSaving] = useState(false)
   const [stationFilter, setStationFilter] = useState('')
   const [resetting, setResetting] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => { loadAll() }, [])
 
@@ -32,7 +37,7 @@ const AdminMenuPage = () => {
       ])
       setCategories(catRes.data || [])
       setItems(itemRes.data || [])
-    } catch { toast.error('Không tải được menu') }
+    } catch { toast.error('Lỗi tải dữ liệu') }
     finally { setLoading(false) }
   }
 
@@ -67,135 +72,171 @@ const AdminMenuPage = () => {
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
-        toast.success('Đã cập nhật món')
+        toast.success('Đã cập nhật thực đơn')
       } else {
         await adminApi.createMenuItem(data)
-        toast.success('Đã thêm món')
+        toast.success('Đã thêm món mới')
       }
       setModalOpen(false)
       loadAll()
-    } catch (err) { toast.error(err?.message || 'Lỗi') }
+    } catch (err) { toast.error('Lỗi lưu dữ liệu') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Xóa món này?')) return
+    if (!confirm('Xác nhận xóa món này?')) return
     try {
       await adminApi.deleteMenuItem(id)
       setItems(prev => prev.filter(i => i.id !== id))
-      toast.success('Đã xóa món')
-    } catch { toast.error('Không thể xóa') }
+      toast.success('Đã xóa')
+    } catch { toast.error('Lỗi xóa') }
   }
 
   const handleResetQuota = async () => {
     setResetting(true)
     try {
       await adminApi.resetQuota()
-      toast.success('Đã reset quota!')
+      toast.success('Đã làm mới số lượng trong ngày')
       loadAll()
-    } catch { toast.error('Không reset được') }
+    } catch { toast.error('Lỗi reset') }
     finally { setResetting(false) }
   }
 
-  const filteredItems = stationFilter ? items.filter(i => i.station === stationFilter) : items
+  const filteredItems = items.filter(i => {
+    const matchStation = !stationFilter || i.station === stationFilter
+    const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase())
+    return matchStation && matchSearch
+  })
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="section-title mb-0 flex items-center gap-2">
-          <UtensilsCrossed className="w-6 h-6 text-orange-400" />
-          Quản lý Menu
-        </h1>
-        <div className="flex gap-2">
-          <button onClick={handleResetQuota} disabled={resetting} className="btn-secondary flex items-center gap-2 text-sm px-4 py-2">
+    <div className="space-y-8 animate-fade-in pb-20">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Quản Lý Thực Đơn</h1>
+          <p className="text-gray-400 font-medium mt-1 text-base">Tổng số {items.length} món ăn đang kinh doanh tại 3POS.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleResetQuota} 
+            disabled={resetting} 
+            className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-emerald-600 hover:border-emerald-100 hover:bg-emerald-50 transition-all shadow-sm"
+          >
             <RefreshCw className={`w-4 h-4 ${resetting ? 'animate-spin' : ''}`} />
-            Reset quota
+            Reset Quota
           </button>
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Thêm món
+          <button 
+            onClick={openCreate} 
+            className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+          >
+            <Plus className="w-4 h-4" strokeWidth={3} />
+            Thêm món mới
           </button>
         </div>
       </div>
 
-      {/* Station filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <button
-          onClick={() => setStationFilter('')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${!stationFilter ? 'bg-orange-500 text-white' : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'}`}
-        >
-          Tất cả ({items.length})
-        </button>
-        {STATIONS.map(s => {
-          const Icon = STATION_ICONS[s]
-          const count = items.filter(i => i.station === s).length
-          return (
-            <button
-              key={s}
-              onClick={() => setStationFilter(s)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${stationFilter === s ? 'bg-orange-500 text-white' : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'}`}
-            >
-              <Icon className="w-4 h-4" />
-              {STATION_LABELS[s]} ({count})
-            </button>
-          )
-        })}
+      {/* Filters & Search */}
+      <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+           <input 
+             type="text" 
+             value={search}
+             onChange={e => setSearch(e.target.value)}
+             placeholder="Tìm kiếm món ăn..." 
+             className="w-full bg-[#F9FBF9] border-none rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
+           />
+        </div>
+        
+        <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+          <button
+            onClick={() => setStationFilter('')}
+            className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+              ${!stationFilter ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+          >
+            Tất cả
+          </button>
+          {STATIONS.map(s => {
+            const Icon = STATION_ICONS[s]
+            return (
+              <button
+                key={s}
+                onClick={() => setStationFilter(s)}
+                className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                  ${stationFilter === s ? `${STATION_COLORS[s]} border shadow-sm` : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+              >
+                <Icon className="w-4 h-4" />
+                {STATION_LABELS[s]}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Items table */}
-      <div className="glass-card overflow-hidden">
-        {loading ? (
-          <div className="p-8 flex justify-center">
-            <div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
-          </div>
-        ) : (
-          <table className="data-table">
+      {/* Menu Table */}
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr>
-                <th className="px-6 py-4">Món ăn</th>
-                <th className="px-6 py-4">Trạm</th>
-                <th className="px-6 py-4">Giá</th>
-                <th className="px-6 py-4">Quota</th>
-                <th className="px-6 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Hành động</th>
+              <tr className="border-b border-gray-50">
+                <th className="pl-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Món ăn</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Phân loại</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Giá bán</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Quota</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</th>
+                <th className="pr-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody>
-              {filteredItems.map(item => {
+            <tbody className="divide-y divide-gray-50">
+              {loading ? (
+                 <tr><td colSpan="6" className="py-20 text-center"><div className="w-10 h-10 border-4 border-emerald-50 border-t-emerald-500 rounded-full animate-spin mx-auto" /></td></tr>
+              ) : filteredItems.length === 0 ? (
+                 <tr><td colSpan="6" className="py-20 text-center text-gray-400 font-bold">Không tìm thấy món ăn nào</td></tr>
+              ) : filteredItems.map(item => {
                 const StationIcon = STATION_ICONS[item.station] || UtensilsCrossed
+                const colorClass = STATION_COLORS[item.station] || 'bg-gray-50 text-gray-500'
                 return (
-                  <tr key={item.id} className="group">
-                    <td className="px-6">
-                      <div>
-                        <p className="text-white font-medium">{item.name}</p>
-                        {item.description && <p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{item.description}</p>}
+                  <tr key={item.id} className="group hover:bg-[#F9FBF9] transition-colors">
+                    <td className="pl-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
+                          <UtensilsCrossed className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-gray-900 font-black text-base leading-tight">{item.name}</p>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{item.id}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6">
-                      <span className="flex items-center gap-1.5 text-gray-300 text-sm">
-                        <StationIcon className="w-4 h-4 text-orange-400" />
+                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${colorClass} text-[10px] font-black uppercase tracking-widest shadow-sm`}>
+                        <StationIcon className="w-3 h-3" />
                         {STATION_LABELS[item.station]}
-                      </span>
+                      </div>
                     </td>
                     <td className="px-6">
-                      <span className="text-orange-400 font-semibold">{formatCurrency(item.price)}</span>
+                      <span className="text-gray-900 font-black text-base">{formatCurrency(item.price)}</span>
+                    </td>
+                    <td className="px-6 text-center">
+                       <div className="flex flex-col items-center">
+                          <span className="text-gray-900 font-black text-sm">{item.daily_quota ?? '∞'}</span>
+                          <div className="w-12 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                             <div className="h-full bg-emerald-500" style={{ width: item.daily_quota_default ? `${(item.daily_quota / item.daily_quota_default) * 100}%` : '100%' }} />
+                          </div>
+                          <span className="text-[8px] font-black text-gray-400 uppercase mt-1">/ {item.daily_quota_default ?? '∞'}</span>
+                       </div>
                     </td>
                     <td className="px-6">
-                      <span className="text-gray-300 text-sm">
-                        {item.daily_quota ?? '∞'}/{item.daily_quota_default ?? '∞'}
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                        {item.is_available ? 'Sẵn sàng' : 'Tạm hết'}
                       </span>
                     </td>
-                    <td className="px-6">
-                      <span className={`badge ${item.is_available ? 'badge-ready' : 'badge-cancelled'}`}>
-                        {item.is_available ? 'Khả dụng' : 'Không KD'}
-                      </span>
-                    </td>
-                    <td className="px-6 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400">
+                    <td className="pr-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={() => openEdit(item)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 hover:border-emerald-100 transition-all shadow-sm">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400">
+                        <button onClick={() => handleDelete(item.id)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -205,64 +246,79 @@ const AdminMenuPage = () => {
               })}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
 
-      {/* Modal */}
+      {/* Modern Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setModalOpen(false)} />
-          <div className="relative glass-card p-6 w-full max-w-lg animate-slide-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-white font-bold text-lg">{editItem ? 'Sửa món' : 'Thêm món mới'}</h3>
-              <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-white">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
+          <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-2xl animate-[bounce-in_0.4s_ease-out] overflow-hidden">
+            <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
+               <div>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editItem ? 'Chỉnh Sửa Món Ăn' : 'Thêm Món Mới'}</h3>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Thông tin chi tiết thực đơn</p>
+               </div>
+               <button onClick={() => setModalOpen(false)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
+                  <X className="w-5 h-5" strokeWidth={3} />
+               </button>
+            </div>
+            
+            <div className="p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Tên món ăn</label>
+                    <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="Ví dụ: Bít tết bò Mỹ" />
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Giá bán (VND)</label>
+                    <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="150000" />
+                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Mô tả chi tiết</label>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all h-24 resize-none" placeholder="Nguyên liệu, cách chế biến..." />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Khu vực trạm bếp</label>
+                    <select value={form.station} onChange={e => setForm(f => ({ ...f, station: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
+                       {STATIONS.map(s => <option key={s} value={s}>{STATION_LABELS[s]}</option>)}
+                    </select>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Danh mục món</label>
+                    <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
+                       <option value="">Không có danh mục</option>
+                       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8 p-6 bg-[#F9FBF9] rounded-[32px] border border-gray-50">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-1">Quota hôm nay</label>
+                    <input type="number" value={form.daily_quota} onChange={e => setForm(f => ({ ...f, daily_quota: e.target.value }))} className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="50" />
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-1">Mặc định/Ngày</label>
+                    <input type="number" value={form.daily_quota_default} onChange={e => setForm(f => ({ ...f, daily_quota_default: e.target.value }))} className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="50" />
+                 </div>
+              </div>
+            </div>
+
+            <div className="px-10 py-8 bg-gray-50 flex gap-4">
+              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+                Hủy bỏ
               </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Tên món *</label>
-                <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="input-field" placeholder="Bít tết bò Mỹ" />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Mô tả</label>
-                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input-field h-20 resize-none" placeholder="Mô tả ngắn..." />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Giá (VND) *</label>
-                  <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className="input-field" placeholder="150000" step="1000" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Trạm bếp *</label>
-                  <select value={form.station} onChange={e => setForm(f => ({ ...f, station: e.target.value }))} className="input-field">
-                    {STATIONS.map(s => <option key={s} value={s}>{STATION_LABELS[s]}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Danh mục</label>
-                <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="input-field">
-                  <option value="">— Không có —</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Quota hôm nay</label>
-                  <input type="number" value={form.daily_quota} onChange={e => setForm(f => ({ ...f, daily_quota: e.target.value }))} className="input-field" placeholder="50" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Quota mặc định/ngày</label>
-                  <input type="number" value={form.daily_quota_default} onChange={e => setForm(f => ({ ...f, daily_quota_default: e.target.value }))} className="input-field" placeholder="50" />
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Hủy</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-4 h-4" />}
-                {editItem ? 'Cập nhật' : 'Tạo mới'}
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editItem ? 'Cập Nhật Món Ăn' : 'Thêm Vào Menu'}
               </button>
             </div>
           </div>
