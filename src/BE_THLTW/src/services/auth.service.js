@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const { generateTokens } = require('../utils/jwt.util');
+const { generateTokens, verifyRefreshToken } = require('../utils/jwt.util');
 const { AuthenticationError, AuthorizationError } = require('../utils/errors');
 
 async function login({ email, password }) {
@@ -58,6 +58,11 @@ async function login({ email, password }) {
 }
 
 async function refresh({ refreshToken }) {
+  const decodedRefresh = verifyRefreshToken(refreshToken);
+  if (!decodedRefresh || !decodedRefresh.id) {
+    throw new AuthenticationError('Refresh token khong hop le hoac da het han');
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -70,10 +75,13 @@ async function refresh({ refreshToken }) {
     );
 
     if (rows.length === 0) {
-      throw new AuthenticationError('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new AuthenticationError('Refresh token khong hop le hoac da het han');
     }
 
     const { user_id, id: tokenId } = rows[0];
+    if (String(decodedRefresh.id) !== String(user_id)) {
+      throw new AuthenticationError('Refresh token khong hop le hoac da het han');
+    }
 
     const userRows = await client.query('SELECT * FROM USERS WHERE id = $1 AND is_active = true', [user_id]);
     if (userRows.rows.length === 0) {

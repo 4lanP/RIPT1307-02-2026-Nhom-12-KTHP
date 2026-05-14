@@ -17,6 +17,7 @@
     "migrate:create": "node-pg-migrate create"
   },
   "jest": {
+    "testRunner": "./jest-runner.cjs",
     "testEnvironment": "node",
     "testMatch": [
       "**/__tests__/**/*.test.js"
@@ -46,7 +47,7 @@
   },
   "devDependencies": {
     "eslint": "^10.3.0",
-    "jest": "^30.4.0",
+    "jest": "^29.7.0",
     "node-pg-migrate": "^8.0.4",
     "nodemon": "^3.1.14"
   }

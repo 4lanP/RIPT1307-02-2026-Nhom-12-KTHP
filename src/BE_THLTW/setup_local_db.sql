@@ -9,7 +9,7 @@ CREATE DATABASE restaurant_dbs;
 \c restaurant_dbs
 
 -- 3. Tạo user (optional, có thể dùng postgres user)
--- CREATE USER restaurant_user WITH PASSWORD 'strongpassword123';
+-- CREATE USER restaurant_user WITH PASSWORD '<local-db-password>';
 -- GRANT ALL PRIVILEGES ON DATABASE restaurant_dbs TO restaurant_user;
 
 -- 4. Import schema

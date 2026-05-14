@@ -4,7 +4,14 @@ const customerController = require('../controllers/customer.controller');
 const { authenticateSession } = require('../middlewares/auth.middleware');
 const { scanRateLimiter } = require('../middlewares/rateLimit.middleware');
 const { validate } = require('../middlewares/validate.middleware');
-const { scanSchema, getMenuSchema, createOrderSchema, createRequestSchema } = require('../validators/customer.validator');
+const {
+  scanSchema,
+  getMenuSchema,
+  createOrderSchema,
+  createRequestSchema,
+  createPaymentSchema,
+  emptySchema,
+} = require('../validators/customer.validator');
 
 /**
  * @swagger
@@ -96,7 +103,7 @@ router.post('/scan', scanRateLimiter, validate(scanSchema), customerController.s
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/session', authenticateSession, customerController.getSession);
+router.get('/session', authenticateSession, validate(emptySchema), customerController.getSession);
 
 /**
  * @swagger
@@ -304,7 +311,7 @@ router.post('/requests', authenticateSession, validate(createRequestSchema), cus
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/orders', authenticateSession, validate(createOrderSchema), customerController.createOrder);
-router.get('/orders', authenticateSession, customerController.getOrders);
+router.get('/orders', authenticateSession, validate(emptySchema), customerController.getOrders);
 
 /**
  * @swagger
@@ -352,7 +359,7 @@ router.get('/orders', authenticateSession, customerController.getOrders);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/payment/vnpay', authenticateSession, customerController.createPayment);
+router.post('/payment/vnpay', authenticateSession, validate(createPaymentSchema), customerController.createPayment);
 
 module.exports = router;
 

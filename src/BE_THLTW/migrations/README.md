@@ -19,9 +19,10 @@ npm run migrate:create my-migration-name
 
 Migrations are executed in order based on their timestamp prefix:
 
-1. `1715000000000_initial-schema-part1.js` - Creates enums and base tables (USERS, TABLES, SESSIONS, MENU)
-2. `1715000000001_initial-schema-part2.js` - Creates order and payment tables
-3. `1715000000002_add-indexes.js` - Adds performance indexes
+1. `1715000000000_initial-schema.js` - Canonical initial schema for enums, core tables, orders, sessions, and payments
+2. `1715000000000_initial-schema-part1.js` - Historical split migration kept as a no-op for stable migration history
+3. `1715000000001_initial-schema-part2.js` - Historical split migration kept as a no-op for stable migration history
+4. `1715000000002_add-indexes.js` - Adds performance indexes and unique payment transaction reference protection
 
 ## Creating New Migrations
 
