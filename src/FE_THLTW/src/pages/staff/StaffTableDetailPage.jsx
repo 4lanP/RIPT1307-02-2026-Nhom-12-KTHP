@@ -123,35 +123,35 @@ const StaffTableDetailPage = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Table Stats Header */}
           <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-full -mr-16 -mt-16 blur-2xl" />
-             <div className="relative flex items-center justify-between mb-8">
-               <div className="flex items-center gap-5">
-                 <div className="w-16 h-16 bg-emerald-500 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                   <Table2 className="w-8 h-8" />
-                 </div>
-                 <div>
-                   <h1 className="text-3xl font-black text-gray-900 tracking-tight">{session.table_name || `Bàn ${id}`}</h1>
-                   <div className="flex items-center gap-2 mt-1">
-                      <Clock className="w-3 h-3 text-gray-400" />
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bắt đầu: {formatDateShort(session.started_at)}</span>
-                   </div>
-                 </div>
-               </div>
-               <div className="text-right">
-                 <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100">Đang hoạt động</span>
-               </div>
-             </div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-full -mr-16 -mt-16 blur-2xl" />
+            <div className="relative flex items-center justify-between mb-8">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 bg-emerald-500 text-white rounded-[24px] flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Table2 className="w-8 h-8" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-black text-gray-900 tracking-tight">{session.table_name || `Bàn ${id}`}</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Clock className="w-3 h-3 text-gray-400" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bắt đầu: {formatDateShort(session.started_at)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100">Đang hoạt động</span>
+              </div>
+            </div>
 
-             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-[#F9FBF9] p-6 rounded-[28px] border border-gray-100">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tạm tính</p>
-                  <p className="text-2xl font-black text-gray-900">{formatCurrency(session.subtotal || 0)}</p>
-               </div>
-               <div className="bg-emerald-600 p-6 rounded-[28px] shadow-lg shadow-emerald-600/20">
-                  <p className="text-[10px] font-black text-emerald-50/70 uppercase tracking-widest mb-1">Cần thanh toán</p>
-                  <p className="text-2xl font-black text-white">{formatCurrency(finalAmount)}</p>
-               </div>
-             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#F9FBF9] p-6 rounded-[28px] border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tạm tính</p>
+                <p className="text-2xl font-black text-gray-900">{formatCurrency(session.subtotal || 0)}</p>
+              </div>
+              <div className="bg-emerald-600 p-6 rounded-[28px] shadow-lg shadow-emerald-600/20">
+                <p className="text-[10px] font-black text-emerald-50/70 uppercase tracking-widest mb-1">Cần thanh toán</p>
+                <p className="text-2xl font-black text-white">{formatCurrency(finalAmount)}</p>
+              </div>
+            </div>
           </div>
 
           {/* Orders Table */}
@@ -160,10 +160,10 @@ const StaffTableDetailPage = () => {
               <UtensilsCrossed className="w-6 h-6 text-emerald-500" />
               Chi tiết gọi món
             </h2>
-            
+
             {allItems.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-[32px] border border-dashed border-gray-200">
-                 <p className="text-gray-400 font-bold">Chưa có món nào được đặt</p>
+                <p className="text-gray-400 font-bold">Chưa có món nào được đặt</p>
               </div>
             ) : (
               <div className="overflow-hidden">
@@ -260,8 +260,8 @@ const StaffTableDetailPage = () => {
 
               {amount && parseInt(amount) > finalAmount && (
                 <div className="flex items-center justify-between px-2 pt-4 border-t border-gray-50">
-                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiền thối lại</span>
-                   <span className="text-xl font-black text-emerald-600">{formatCurrency(change)}</span>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiền thối lại</span>
+                  <span className="text-xl font-black text-emerald-600">{formatCurrency(change)}</span>
                 </div>
               )}
 
@@ -284,7 +284,7 @@ const StaffTableDetailPage = () => {
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setCheckoutOpen(false)} />
           <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
             <div className="w-20 h-20 bg-emerald-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100 text-emerald-500">
-               <CreditCard className="w-10 h-10" />
+              <CreditCard className="w-10 h-10" />
             </div>
             <h3 className="text-2xl font-black text-center text-gray-900 mb-8 tracking-tight">Xác nhận thanh toán</h3>
             <div className="bg-[#F9FBF9] rounded-[32px] p-6 space-y-4 mb-10 border border-gray-50">
