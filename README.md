@@ -11,12 +11,13 @@
 
 Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 
-- **🔐 Xác thực & Phân quyền**: JWT-based authentication với 4 roles (Customer, Staff, KDS, Admin)
+- **🔐 Xác thực & Phân quyền**: JWT-based authentication với 6 roles (CUSTOMER, WAITER, CASHIER, KITCHEN, MANAGER, ADMIN)
 - **📱 Đặt món QR**: Khách quét mã QR tại bàn để xem menu và đặt món
-- **👨‍🍳 Kitchen Display System**: Màn hình bếp hiển thị queue món cần chế biến
+- **👨‍🍳 Kitchen Display System**: Màn hình bếp hiển thị queue món theo station (GRILL/BAR/COLD)
 - **💳 Thanh toán VNPay**: Tích hợp cổng thanh toán VNPay với webhook idempotency
-- **📊 Báo cáo & Thống kê**: Dashboard admin với export Excel
+- **📊 Báo cáo & Thống kê**: Dashboard admin/manager với export Excel
 - **⚡ Real-time Updates**: Socket.IO cho cập nhật trạng thái đơn hàng, bàn, và món ăn
+- **🎨 Frontend**: React + Vite với Tailwind CSS
 
 ## 🏗️ Kiến trúc
 
@@ -53,6 +54,7 @@ Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 | Layer | Công nghệ |
 | ----- | --------- |
 | **Backend** | Node.js 20 + Express 5 |
+| **Frontend** | React 18 + Vite 5 + Tailwind CSS |
 | **Database** | PostgreSQL 16 |
 | **Cache/Session** | Redis (ioredis) |
 | **Real-time** | Socket.IO 4.8 |
@@ -61,25 +63,29 @@ Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 | **Validation** | Zod 4.4 |
 | **Logging** | Winston |
 | **API Docs** | Swagger UI (swagger-jsdoc) |
-| **Testing** | Jest |
+| **Testing** | Jest (27 tests, 6 suites) |
 | **Container** | Docker + Docker Compose |
-| **Frontend** | *Chưa implement* |
 
 ## 📁 Cấu trúc dự án
 
 ```text
 KTHP-LTW/
 ├── docs/                    # Tài liệu dự án
-│   ├── 00-project-init.md
 │   ├── 01-system-design.md
 │   ├── 02-backend.md
-│   ├── 03-frontend.md
 │   ├── 04-testing.md
 │   ├── 05-deployment.md
+│   ├── 07-bug-after-test(FE).md
 │   ├── setup.md
 │   ├── features.md
+│   ├── improvements.md
 │   ├── architecture.md
-│   └── api-reference.md
+│   ├── api-reference.md
+│   └── frontend-handoff.md
+├── specs/                   # Feature specifications
+│   ├── 001-backend-hardening/
+│   ├── 002-manager-permissions/
+│   └── frontend-handoff/
 ├── src/
 │   ├── BE_THLTW/            # Backend (Node.js/Express)
 │   │   ├── src/
@@ -91,84 +97,32 @@ KTHP-LTW/
 │   │   │   ├── sockets/
 │   │   │   ├── config/
 │   │   │   └── utils/
-│   │   ├── __tests__/
+│   │   ├── __tests__/       # Jest tests (27 tests)
 │   │   ├── Dockerfile
 │   │   ├── docker-compose.yml
 │   │   └── package.json
-│   └── FE_THLTW/            # Frontend (chưa implement)
-└── agent-skills/            # AI agent skill definitions
+│   └── FE_THLTW/            # Frontend (React + Vite)
+│       ├── src/
+│       │   ├── pages/       # Customer, Staff, KDS, Admin, Auth
+│       │   ├── layouts/
+│       │   ├── contexts/
+│       │   └── utils/
+│       └── package.json
+└── README.md
 ```
 
 ## ✨ Tính năng
 
-### 🔐 Authentication & Authorization
+Xem chi tiết tại [docs/features.md](docs/features.md)
 
-- ✅ Đăng ký tài khoản (bcrypt hash password)
-- ✅ Đăng nhập — trả về access token (15m) + refresh token (7d)
-- ✅ Refresh access token
-- ✅ Logout — invalidate refresh token
-- ✅ Role-based access control: `customer`, `staff`, `kds`, `admin`
+### Highlights
 
-### 👥 Customer (Khách hàng)
-
-- ✅ Xem menu (danh sách món, giá, danh mục, trạng thái)
-- ✅ Đặt món — tạo đơn hàng mới
-- ✅ Theo dõi trạng thái đơn hàng real-time
-- ✅ Thanh toán qua VNPay — nhận URL redirect
-- ✅ Xem lịch sử đơn hàng
-
-### 👔 Staff (Nhân viên)
-
-- ✅ Xem danh sách đơn hàng theo bàn
-- ✅ Cập nhật trạng thái đơn hàng
-- ✅ Quản lý trạng thái bàn (trống / có khách / đang dọn)
-- ✅ Nhận thông báo real-time khi có đơn mới hoặc món sẵn sàng
-
-### 👨‍🍳 KDS — Kitchen Display System (Bếp)
-
-- ✅ Hiển thị queue món cần chế biến
-- ✅ Xác nhận từng món đã hoàn thành
-- ✅ Nhận đơn mới real-time qua Socket.IO
-- ✅ Phát sự kiện `order:item_ready` khi món xong
-
-### 🔧 Admin
-
-- ✅ CRUD users, tables, QR codes
-- ✅ CRUD menu categories, items, options
-- ✅ Xem báo cáo doanh thu (theo ngày / tuần / tháng)
-- ✅ Export báo cáo ra file Excel (exceljs)
-
-### 💳 Payment — VNPay
-
-- ✅ Tạo URL thanh toán VNPay
-- ✅ Xử lý webhook callback từ VNPay
-- ✅ Idempotency — tránh xử lý trùng giao dịch
-- ✅ Cập nhật trạng thái đơn sau thanh toán thành công
-
-### ⚡ Real-time (Socket.IO)
-
-- ✅ Đơn mới → KDS
-- ✅ Món sẵn sàng → Staff
-- ✅ Cập nhật trạng thái đơn → Customer
-- ✅ Cập nhật trạng thái bàn → Staff
-
-### 🏗️ Infrastructure & DevOps
-
-- ✅ Docker multi-stage build
-- ✅ Docker Compose (postgres, seeder, indexer, backend)
-- ✅ Health check endpoint `/api/health`
-- ✅ DB migrations
-- ✅ DB seed data
-- ✅ Daily quota reset (node-cron, 00:00 Asia/Ho_Chi_Minh)
-
-### 🧪 Developer Experience
-
-- ✅ Swagger UI tại `/api/docs` (dev only)
-- ✅ Postman collection
-- ✅ Structured logging (Winston)
-- ✅ Request ID tracking
-- ✅ Environment validation on startup
-- ✅ Jest test suite (auth, order, kds, vnpay)
+- ✅ **Backend**: Express 5 API với JWT auth, Socket.IO realtime, VNPay integration
+- ✅ **Frontend**: React + Vite với customer, staff, KDS, admin interfaces
+- ✅ **Database**: PostgreSQL với 30+ indexes, optimistic locking, quota management
+- ✅ **Testing**: 27 Jest tests covering auth, orders, sessions, KDS, payments, permissions
+- ✅ **Security**: Token rotation, session tokens, webhook idempotency, role-based access
+- ✅ **DevOps**: Docker Compose, health checks, structured logging, seed data
 
 ## 🚀 Khởi động nhanh
 
@@ -254,25 +208,27 @@ http://localhost:5000/api
 
 | Prefix | Module | Mô tả |
 | ------ | ------ | ----- |
-| `/api/auth` | auth.routes.js | Đăng nhập, đăng ký, refresh token, logout |
-| `/api/customer` | customer.routes.js | Menu, đặt món, theo dõi đơn, thanh toán |
-| `/api/staff` | staff.routes.js | Quản lý đơn, bàn, trạng thái |
-| `/api/kds` | kds.routes.js | Màn hình bếp, xác nhận món |
-| `/api/admin` | admin.routes.js | Báo cáo, quản lý user, export |
-| `/api/webhooks` | webhook.routes.js | VNPay payment callback |
+| `/api/auth` | auth.routes.js | Login, refresh token, logout |
+| `/api/customer` | customer.routes.js | QR scan, menu, orders, requests, VNPay |
+| `/api/staff` | staff.routes.js | Tables, sessions, requests, checkout, cancel |
+| `/api/kds` | kds.routes.js | Kitchen queue, item status updates |
+| `/api/admin` | admin.routes.js | Dashboard, reports, CRUD users/tables/menu/QR |
+| `/api/webhooks` | webhook.routes.js | VNPay IPN callback |
 | `/api/health` | — | Health check endpoint |
 
 ### Authentication
 
-**Staff** dùng JWT access token:
+**Staff** dùng JWT access token (15m expiry):
 
 ```text
 Authorization: Bearer <accessToken>
 ```
 
-**Customer** dùng session token:
+**Customer** dùng JWT session token (24h expiry):
 
 ```text
+Authorization: Bearer <session_token>
+```
 Authorization: Bearer <session_token>
 ```
 
@@ -367,7 +323,9 @@ npm run docker:reset     # Reset DB và rebuild
 - [API Reference](docs/api-reference.md) — Tài liệu API đầy đủ
 - [Features](docs/features.md) — Danh sách tính năng
 - [Testing](docs/04-testing.md) — Hướng dẫn testing
-- [Deployment](docs/05-deployment.md) — Hướng dẫn deploy
+- [Improvements](docs/improvements.md) — Lịch sử fixes và improvements
+- [Frontend Handoff](docs/frontend-handoff.md) — Tài liệu bàn giao frontend
+- [Frontend Issues](docs/07-bug-after-test(FE).md) — Known issues frontend cần fix
 
 ## 🤝 Contributing
 

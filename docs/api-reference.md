@@ -228,11 +228,11 @@ Admin endpoints đã implement:
 
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
-| `GET` | `/admin/reports/revenue?from=2026-05-01&to=2026-05-12&group_by=day` | ADMIN | Báo cáo doanh thu |
-| `GET` | `/admin/reports/menu` | ADMIN | Báo cáo món bán |
-| `GET` | `/admin/reports/kds` | ADMIN | Báo cáo KDS |
-| `GET` | `/admin/reports/export` | ADMIN | Export Excel |
-| `POST` | `/admin/menu/reset-quota` | ADMIN | Reset quota món |
+| `GET` | `/admin/reports/revenue?from=2026-05-01&to=2026-05-12&group_by=day` | ADMIN/MANAGER | Báo cáo doanh thu |
+| `GET` | `/admin/reports/menu` | ADMIN/MANAGER | Báo cáo món bán |
+| `GET` | `/admin/reports/kds` | ADMIN/MANAGER | Báo cáo KDS |
+| `GET` | `/admin/reports/export` | ADMIN/MANAGER | Export Excel vận hành |
+| `POST` | `/admin/menu/reset-quota` | ADMIN/MANAGER | Reset quota món |
 
 Admin CRUD endpoints:
 
@@ -240,16 +240,20 @@ Admin CRUD endpoints:
 |---|---|---|---|
 | `GET/POST` | `/admin/users` | ADMIN | Danh sách / tạo nhân viên |
 | `PUT/DELETE` | `/admin/users/{id}` | ADMIN | Cập nhật / vô hiệu hóa nhân viên |
-| `GET/POST` | `/admin/tables` | ADMIN | Danh sách / tạo bàn |
-| `PUT/DELETE` | `/admin/tables/{id}` | ADMIN | Cập nhật / xóa bàn khả dụng |
-| `GET/POST` | `/admin/qr_codes` | ADMIN | Danh sách / tạo QR |
-| `PATCH/DELETE` | `/admin/qr_codes/{id}/toggle`, `/admin/qr_codes/{id}` | ADMIN | Bật/tắt / xóa QR |
-| `GET/POST` | `/admin/menu/categories` | ADMIN | Danh sách / tạo category |
-| `PUT/DELETE` | `/admin/menu/categories/{id}` | ADMIN | Cập nhật / vô hiệu hóa category |
-| `GET/POST` | `/admin/menu/items` | ADMIN | Danh sách / tạo món |
-| `PUT/DELETE` | `/admin/menu/items/{id}` | ADMIN | Cập nhật / vô hiệu hóa món |
-| `GET/POST` | `/admin/menu/items/{id}/options` | ADMIN | Danh sách / tạo option |
-| `PUT/DELETE` | `/admin/menu/options/{id}` | ADMIN | Cập nhật / vô hiệu hóa option |
+| `GET/POST` | `/admin/tables` | ADMIN/MANAGER | Danh sách / tạo bàn |
+| `PUT/DELETE` | `/admin/tables/{id}` | ADMIN/MANAGER | Cập nhật / xóa bàn khả dụng |
+| `GET/POST` | `/admin/qr_codes` | ADMIN/MANAGER | Danh sách / tạo QR |
+| `PATCH/DELETE` | `/admin/qr_codes/{id}/toggle`, `/admin/qr_codes/{id}` | ADMIN/MANAGER | Bật/tắt / xóa QR |
+| `GET/POST` | `/admin/menu/categories` | ADMIN/MANAGER | Danh sách / tạo category |
+| `PUT/DELETE` | `/admin/menu/categories/{id}` | ADMIN/MANAGER | Cập nhật / vô hiệu hóa category |
+| `GET/POST` | `/admin/menu/items` | ADMIN/MANAGER | Danh sách / tạo món |
+| `PUT/DELETE` | `/admin/menu/items/{id}` | ADMIN/MANAGER | Cập nhật / vô hiệu hóa món |
+| `GET/POST` | `/admin/menu/items/{id}/options` | ADMIN/MANAGER | Danh sách / tạo option |
+| `PUT/DELETE` | `/admin/menu/options/{id}` | ADMIN/MANAGER | Cập nhật / vô hiệu hóa option |
+
+Manager được phép dùng các endpoint vận hành phía trên nhưng luôn nhận `403`
+ở user-management (`/admin/users`) và không được truy cập dữ liệu tài khoản,
+role, security config, hoặc secret.
 
 ## Webhooks
 

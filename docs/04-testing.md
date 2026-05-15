@@ -28,6 +28,7 @@ Không còn test `.skip`.
 | `__tests__/kds.test.js` | Cập nhật item status, order status transitions |
 | `__tests__/vnpay.test.js` | Tạo payment URL, verify webhook signature, idempotency |
 | `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, enum validation, parsed data write-back to `req` |
+| `__tests__/manager-permissions.test.js` | Role matrix for manager operational admin access, admin-only users, staff operations, and KDS HTTP denial |
 
 ## Test Helpers
 
@@ -68,6 +69,29 @@ npm test -- --detectOpenHandles
 - API tests cho route thật bằng `supertest`.
 - Bo sung unit/integration test rieng cho VNPay webhook amount mismatch va Redis fallback.
 - Socket.IO auth tests cho `/customer`, `/kitchen`, `/staff`.
+
+## Manager Permissions Verification Matrix
+
+Run the focused backend authorization suite:
+
+```powershell
+cd src/BE_THLTW
+npm test -- manager-permissions.test.js
+```
+
+Expected coverage:
+
+| Role | Allowed checks | Denied checks |
+|---|---|---|
+| ADMIN | Admin operational endpoints, user-management endpoints | KDS HTTP unless explicitly changed |
+| MANAGER | Admin operational endpoints, staff tables/requests, checkout/cancel/force-close | `/admin/users`, KDS HTTP |
+| CASHIER | Staff tables/requests, checkout/cancel | Admin operational endpoints, user management, force-close, KDS HTTP |
+| WAITER | Staff tables/requests | Checkout/cancel, admin operational endpoints, user management, KDS HTTP |
+| KITCHEN | KDS HTTP endpoints | Staff/admin operational endpoints and user management |
+
+Frontend validation remains `npm run build` in `src/FE_THLTW`, followed by
+manual route checks for manager default routing, hidden user management, and
+role-appropriate redirects on direct URLs.
 
 ## Backend Hardening Test Scope
 

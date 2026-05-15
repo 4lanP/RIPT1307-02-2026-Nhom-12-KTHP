@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
-const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { authenticateStaff, authorizeStaffRoles } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validate.middleware');
 const {
   idParamSchema,
@@ -24,7 +24,10 @@ const {
   exportReportSchema,
 } = require('../validators/admin.validator');
 
-router.use(authenticateStaff(['ADMIN']));
+const ADMIN_ROLES = ['ADMIN'];
+const OPERATIONAL_ADMIN_ROLES = ['ADMIN', 'MANAGER'];
+
+router.use(authenticateStaff(OPERATIONAL_ADMIN_ROLES));
 
 /**
  * @swagger
@@ -233,10 +236,10 @@ router.get('/reports/export', validate(exportReportSchema), adminController.expo
  */
 router.post('/menu/reset-quota', validate(emptySchema), adminController.resetMenuQuota);
 
-router.get('/users', validate(emptySchema), adminController.listUsers);
-router.post('/users', validate(createUserSchema), adminController.createUser);
-router.put('/users/:id', validate(updateUserSchema), adminController.updateUser);
-router.delete('/users/:id', validate(idParamSchema), adminController.deleteUser);
+router.get('/users', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.listUsers);
+router.post('/users', authorizeStaffRoles(ADMIN_ROLES), validate(createUserSchema), adminController.createUser);
+router.put('/users/:id', authorizeStaffRoles(ADMIN_ROLES), validate(updateUserSchema), adminController.updateUser);
+router.delete('/users/:id', authorizeStaffRoles(ADMIN_ROLES), validate(idParamSchema), adminController.deleteUser);
 
 router.get('/tables', validate(emptySchema), adminController.listTables);
 router.post('/tables', validate(createTableSchema), adminController.createTable);
