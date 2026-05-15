@@ -14,8 +14,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload?.length) {
     return (
       <div className="bg-gray-900 text-white p-4 rounded-2xl shadow-xl border border-gray-800 animate-fade-in">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
-        <p className="text-lg font-black">{formatCurrency(payload[0].value)}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{label}</p>
+        <p className="text-lg font-bold">{formatCurrency(payload[0].value)}</p>
       </div>
     )
   }
@@ -73,13 +73,13 @@ const AdminReportsPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Trung Tâm Báo Cáo</h1>
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Trung Tâm Báo Cáo</h1>
           <p className="text-gray-400 font-medium mt-1 text-base">Phân tích sâu hiệu quả kinh doanh của hệ thống.</p>
         </div>
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="flex items-center gap-2 bg-emerald-500 text-white px-8 py-4 rounded-[20px] text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+          className="flex items-center gap-2 bg-emerald-500 text-white px-8 py-4 rounded-[20px] text-xs font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
         >
           <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} strokeWidth={3} />
           {exporting ? 'Đang chuẩn bị...' : 'Xuất Dữ Liệu Excel'}
@@ -87,16 +87,16 @@ const AdminReportsPage = () => {
       </div>
 
       {/* Date Filters & Controls */}
-      <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6">
+      <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           <div className="relative w-full sm:w-auto">
              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-             <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-full sm:w-44 bg-[#F9FBF9] border-none rounded-xl pl-12 pr-4 py-3 text-xs font-black text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" />
+             <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-full sm:w-44 bg-[#F9FBF9] border-none rounded-xl pl-12 pr-4 py-3 text-xs font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" />
           </div>
-          <span className="text-gray-200 font-black hidden sm:block">/</span>
+          <span className="text-gray-200 font-bold hidden sm:block">/</span>
           <div className="relative w-full sm:w-auto">
              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-             <input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-full sm:w-44 bg-[#F9FBF9] border-none rounded-xl pl-12 pr-4 py-3 text-xs font-black text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" />
+             <input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-full sm:w-44 bg-[#F9FBF9] border-none rounded-xl pl-12 pr-4 py-3 text-xs font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" />
           </div>
         </div>
 
@@ -105,7 +105,7 @@ const AdminReportsPage = () => {
             <button
               key={g}
               onClick={() => setGroupBy(g)}
-              className={`flex-1 lg:flex-none px-8 py-2.5 rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all
+              className={`flex-1 lg:flex-none px-8 py-2.5 rounded-[12px] text-[10px] font-bold uppercase tracking-widest transition-all
                 ${groupBy === g ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >
               {g === 'day' ? 'Ngày' : g === 'week' ? 'Tuần' : 'Tháng'}
@@ -116,20 +116,20 @@ const AdminReportsPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-8 rounded-[28px] border border-gray-100 shadow-sm">
            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6"><DollarSign className="w-6 h-6" /></div>
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Doanh thu thời kỳ</p>
-           <p className="text-3xl font-black text-gray-900">{formatCurrency(totalRevenue)}</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Doanh thu thời kỳ</p>
+           <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
         </div>
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-8 rounded-[28px] border border-gray-100 shadow-sm">
            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6"><ShoppingBag className="w-6 h-6" /></div>
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Số lượng đơn hàng</p>
-           <p className="text-3xl font-black text-gray-900">{totalOrders} <span className="text-gray-400 text-sm font-bold uppercase ml-1">đơn</span></p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Số lượng đơn hàng</p>
+           <p className="text-3xl font-bold text-gray-900">{totalOrders} <span className="text-gray-400 text-sm font-bold uppercase ml-1">đơn</span></p>
         </div>
-        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-8 rounded-[28px] border border-gray-100 shadow-sm">
            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6"><ArrowUpRight className="w-6 h-6" /></div>
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trung bình hóa đơn</p>
-           <p className="text-3xl font-black text-gray-900">{formatCurrency(totalOrders > 0 ? totalRevenue / totalOrders : 0)}</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Trung bình hóa đơn</p>
+           <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalOrders > 0 ? totalRevenue / totalOrders : 0)}</p>
         </div>
       </div>
 
@@ -138,18 +138,18 @@ const AdminReportsPage = () => {
       ) : (
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Main Chart */}
-          <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="lg:col-span-2 bg-white p-10 rounded-[28px] border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-10">
                <div>
-                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">Biểu Đồ Doanh Thu</h2>
-                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Sự biến động qua thời gian</p>
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Biểu Đồ Doanh Thu</h2>
+                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">Sự biến động qua thời gian</p>
                </div>
                <TrendingUp className="w-8 h-8 text-emerald-500 opacity-20" />
             </div>
             
             <div className="h-[350px]">
               {revenue.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs tracking-widest bg-[#F9FBF9] rounded-[32px] border border-dashed border-gray-200">Không có dữ liệu trong khoảng này</div>
+                <div className="h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs tracking-widest bg-[#F9FBF9] rounded-[24px] border border-dashed border-gray-200">Không có dữ liệu trong khoảng này</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={revenue}>
@@ -171,11 +171,11 @@ const AdminReportsPage = () => {
           </div>
 
           {/* Distribution Pie */}
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="bg-white p-10 rounded-[28px] border border-gray-100 shadow-sm">
              <div className="flex items-center justify-between mb-10">
                 <div>
-                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Tỷ Trọng Món Ăn</h2>
-                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Cơ cấu doanh thu sản phẩm</p>
+                   <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Tỷ Trọng Món Ăn</h2>
+                   <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">Cơ cấu doanh thu sản phẩm</p>
                 </div>
                 <PieIcon className="w-8 h-8 text-blue-500 opacity-20" />
              </div>
@@ -201,16 +201,16 @@ const AdminReportsPage = () => {
                {menuReport.slice(0, 4).map((item, i) => (
                  <div key={i} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter truncate">{item.name}</span>
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter truncate">{item.name}</span>
                  </div>
                ))}
              </div>
           </div>
 
           {/* Ranking List */}
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="bg-white p-10 rounded-[28px] border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-10">
-               <h2 className="text-2xl font-black text-gray-900 tracking-tight">Bảng Xếp Hạng</h2>
+               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Bảng Xếp Hạng</h2>
                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
                   <UtensilsCrossed className="w-5 h-5" />
                </div>
@@ -224,10 +224,10 @@ const AdminReportsPage = () => {
                   <div key={idx} className="group">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-gray-300">0{idx + 1}</span>
-                        <span className="text-sm font-black text-gray-900 group-hover:text-emerald-600 transition-colors">{item.name}</span>
+                        <span className="text-[10px] font-bold text-gray-300">0{idx + 1}</span>
+                        <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">{item.name}</span>
                       </div>
-                      <span className="text-xs font-black text-gray-400">{item.total_quantity} Lượt</span>
+                      <span className="text-xs font-bold text-gray-400">{item.total_quantity} Lượt</span>
                     </div>
                     <div className="h-1.5 bg-gray-50 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: COLORS[idx % COLORS.length] }} />
