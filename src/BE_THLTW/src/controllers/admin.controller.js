@@ -1,5 +1,6 @@
 const reportService = require('../services/report.service');
 const adminService = require('../services/admin.service');
+const dishImageStorageService = require('../services/dishImageStorage.service');
 const { successResponse } = require('../utils/response.util');
 
 const send = (res, status, message, data) => successResponse(res, status, message, data);
@@ -49,6 +50,19 @@ async function resetMenuQuota(req, res, next) {
   }
 }
 
+async function uploadMenuImage(req, res, next) {
+  try {
+    const result = await dishImageStorageService.storeDishImage(req.file, {
+      requestId: req.id,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
+    return send(res, 201, 'Upload dish image successfully', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 function handler(serviceMethod, status, message, getArgs) {
   return async (req, res, next) => {
     try {
@@ -66,6 +80,7 @@ module.exports = {
   getKdsReport,
   exportReport,
   resetMenuQuota,
+  uploadMenuImage,
 
   listUsers: handler(adminService.listUsers, 200, 'Users loaded', () => []),
   createUser: handler(adminService.createUser, 201, 'User created', (req) => [req.body]),

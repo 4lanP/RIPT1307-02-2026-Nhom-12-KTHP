@@ -51,6 +51,9 @@ Các biến local tối thiểu:
 - JWT dev secrets
 - VNPay placeholder
 - `FRONTEND_URL=http://localhost:3000`
+- `DISH_IMAGE_STORAGE_DIR=./uploads/dish-images`
+- `DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5001/uploads/dish-images` khi chạy Docker Compose
+- `DISH_IMAGE_MAX_BYTES=5242880`
 
 ### Reset DB Docker
 
@@ -83,6 +86,9 @@ Chỉnh `.env` để dùng PostgreSQL local, thường là:
 ```env
 DATABASE_URL=postgres://restaurant_user:<local-db-password>@localhost:5432/restaurant_dbs
 REDIS_URL=redis://localhost:6379
+DISH_IMAGE_STORAGE_DIR=./uploads/dish-images
+DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5000/uploads/dish-images
+DISH_IMAGE_MAX_BYTES=5242880
 ```
 
 Tạo DB và schema:
@@ -148,3 +154,4 @@ Invoke-RestMethod -Method Post http://localhost:5000/api/auth/login `
 | Seeder/indexer không chạy lại | Chạy `docker compose down -v` để xóa volume DB |
 | Swagger không mở | Đảm bảo backend `NODE_ENV=development` trong compose |
 | Frontend CORS lỗi | Thêm origin vào `FRONTEND_URL` |
+| Upload ảnh món lỗi đường dẫn public | Kiểm tra `DISH_IMAGE_STORAGE_DIR` tồn tại được ghi và `DISH_IMAGE_PUBLIC_BASE_URL` là URL tuyệt đối |

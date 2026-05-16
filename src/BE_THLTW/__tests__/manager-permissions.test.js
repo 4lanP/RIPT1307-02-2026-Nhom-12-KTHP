@@ -32,6 +32,7 @@ jest.mock('../src/controllers/admin.controller', () => ({
   createItem: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   updateItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   deleteItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  uploadMenuImage: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   listOptions: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   createOption: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   updateOption: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
@@ -110,6 +111,7 @@ describe('Manager operations permission matrix', () => {
     ['GET', '/admin/tables'],
     ['GET', '/admin/menu/categories'],
     ['GET', '/admin/menu/items'],
+    ['POST', '/admin/menu/images'],
     ['POST', '/admin/menu/reset-quota'],
   ])('allows MANAGER to access operational admin route %s %s', async (method, path) => {
     const response = await makeRequest(app, method, path, 'MANAGER');
