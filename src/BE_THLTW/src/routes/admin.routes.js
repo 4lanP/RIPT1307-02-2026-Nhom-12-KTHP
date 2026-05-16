@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { authenticateStaff, authorizeStaffRoles } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validate.middleware');
+const { createDishImageUpload } = require('../middlewares/upload.middleware');
 const {
   idParamSchema,
   createUserSchema,
@@ -257,6 +258,7 @@ router.put('/menu/categories/:id', validate(updateCategorySchema), adminControll
 router.delete('/menu/categories/:id', validate(idParamSchema), adminController.deleteCategory);
 
 router.get('/menu/items', validate(listItemsSchema), adminController.listItems);
+router.post('/menu/images', createDishImageUpload(), adminController.uploadMenuImage);
 router.post('/menu/items', validate(createItemSchema), adminController.createItem);
 router.put('/menu/items/:id', validate(updateItemSchema), adminController.updateItem);
 router.delete('/menu/items/:id', validate(idParamSchema), adminController.deleteItem);
@@ -836,4 +838,3 @@ router.delete('/menu/options/:id', validate(idParamSchema), adminController.dele
  */
 
 module.exports = router;
-

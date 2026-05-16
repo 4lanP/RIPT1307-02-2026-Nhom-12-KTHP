@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
-import { UtensilsCrossed, Plus, Edit2, Trash2, X, Check, RefreshCw, Flame, Wine, Salad, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
+import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search, ImagePlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const STATIONS = ['GRILL', 'BAR', 'COLD']
@@ -13,7 +13,7 @@ const STATION_COLORS = {
   COLD: 'bg-emerald-50 text-emerald-600 border-emerald-100' 
 }
 
-const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '' }
+const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '', image_url: '' }
 
 const AdminMenuPage = () => {
   const [categories, setCategories] = useState([])
@@ -26,6 +26,7 @@ const AdminMenuPage = () => {
   const [stationFilter, setStationFilter] = useState('')
   const [resetting, setResetting] = useState(false)
   const [search, setSearch] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => { loadAll() }, [])
 
@@ -44,6 +45,7 @@ const AdminMenuPage = () => {
   const openCreate = () => {
     setEditItem(null)
     setForm({ ...defaultItem, category_id: categories[0]?.id || '' })
+    setUploadingImage(false)
     setModalOpen(true)
   }
 
@@ -57,8 +59,35 @@ const AdminMenuPage = () => {
       category_id: item.category_id,
       daily_quota: item.daily_quota ?? '',
       daily_quota_default: item.daily_quota_default ?? '',
+      image_url: item.image_url || '',
     })
+    setUploadingImage(false)
     setModalOpen(true)
+  }
+
+  const getErrorMessage = (err, fallback) => {
+    if (err?.errors?.[0]?.message) return err.errors[0].message
+    if (err?.message) return err.message
+    return fallback
+  }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      const response = await adminApi.uploadMenuImage(file)
+      const imageUrl = response.data?.url
+      if (!imageUrl) throw new Error('Không nhận được URL ảnh')
+      setForm(f => ({ ...f, image_url: imageUrl }))
+      toast.success('Đã tải ảnh món')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Lỗi tải ảnh món'))
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const handleSave = async () => {
@@ -69,6 +98,7 @@ const AdminMenuPage = () => {
         price: parseFloat(form.price),
         daily_quota: form.daily_quota !== '' ? parseInt(form.daily_quota) : null,
         daily_quota_default: form.daily_quota_default !== '' ? parseInt(form.daily_quota_default) : null,
+        image_url: form.image_url || null,
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
@@ -199,9 +229,13 @@ const AdminMenuPage = () => {
                   <tr key={item.id} className="group hover:bg-[#F9FBF9] transition-colors">
                     <td className="pl-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
-                          <UtensilsCrossed className="w-6 h-6" />
-                        </div>
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} className="w-14 h-14 object-cover rounded-2xl border border-gray-100 group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
+                            <UtensilsCrossed className="w-6 h-6" />
+                          </div>
+                        )}
                         <div>
                           <p className="text-gray-900 font-bold text-base leading-tight">{item.name}</p>
                           <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{item.id}</p>
@@ -281,6 +315,39 @@ const AdminMenuPage = () => {
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all h-24 resize-none" placeholder="Nguyên liệu, cách chế biến..." />
               </div>
 
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Ảnh món ăn</label>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-40 h-32 bg-[#F9FBF9] border border-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-gray-300">
+                    {form.image_url ? (
+                      <img src={form.image_url} alt={form.name || 'Ảnh món ăn'} className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-8 h-8" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <input
+                      type="url"
+                      value={form.image_url}
+                      onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+                      className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
+                      placeholder="URL ảnh món"
+                    />
+                    <label className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${uploadingImage ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer'}`}>
+                      <ImagePlus className="w-4 h-4" />
+                      {uploadingImage ? 'Đang tải ảnh...' : 'Tải ảnh lên'}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Khu vực trạm bếp</label>
@@ -315,7 +382,7 @@ const AdminMenuPage = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || uploadingImage}
                 className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
               >
                 {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editItem ? 'Cập Nhật Món Ăn' : 'Thêm Vào Menu'}
