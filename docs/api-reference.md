@@ -196,7 +196,11 @@ Status hợp lệ: `PREPARING`, `READY`, `SERVED`.
 
 ## Staff
 
-Staff endpoints cho role `CASHIER`, `MANAGER`, `ADMIN`.
+Staff HTTP access:
+
+- `WAITER`, `CASHIER`, `MANAGER`, `ADMIN`: table/session lookup and customer request handling.
+- `CASHIER`, `MANAGER`, `ADMIN`: cash checkout and order item cancellation.
+- `MANAGER`, `ADMIN`: force-close session.
 
 | Method | Path | Auth | Mô tả |
 |---|---|---|---|
@@ -263,11 +267,9 @@ Hiện chưa yêu cầu auth khi connect socket.
 
 | Event | Chiều | Payload |
 |---|---|---|
-| `join_session` | Client -> Server | `{ "session_id": 1 }` |
+| `join_session` | Client -> Server | `{ "session_id": 1, "session_token": "<session_token>" }` |
 | `order_status_updated` | Server -> Client | `{ "order_id": 1, "new_status": "READY", "changed_at": "..." }` |
 | `session_closed` | Server -> Client | `{ "reason": "PAID" }` |
-
-Rủi ro còn lại: client biết `session_id` có thể join room session khác. Nên xác thực bằng session token trước production.
 
 ### `/kitchen`
 
@@ -288,3 +290,30 @@ io('http://localhost:5000/staff', {
   auth: { token: accessToken }
 });
 ```
+
+## Error Response Shape
+
+All validation and application errors should use the shared JSON shape:
+
+```json
+{
+  "success": false,
+  "message": "Human readable error",
+  "errors": []
+}
+```
+
+Provider-specific callbacks such as VNPay IPN still return the provider contract (`RspCode` and `Message`) so the payment provider can interpret the result.
+
+## Customer Socket Session Join
+
+The `/customer` namespace requires an explicit `join_session` event after connection:
+
+```js
+socket.emit('join_session', {
+  session_id: activeSessionId,
+  session_token: sessionToken
+});
+```
+
+The backend verifies that the token is a session token, that it belongs to the requested session, and that the session is still active before joining the room.
