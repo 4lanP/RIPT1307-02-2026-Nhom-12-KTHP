@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
-import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search, ImagePlus } from 'lucide-react'
+import ModalPortal from '../../components/ModalPortal'
+import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const STATIONS = ['GRILL', 'BAR', 'COLD']
@@ -13,7 +14,9 @@ const STATION_COLORS = {
   COLD: 'bg-emerald-50 text-emerald-600 border-emerald-100' 
 }
 
-const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '', image_url: '' }
+const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '' }
+
+const parseNumberInput = (value) => Number(String(value).replace(',', '.'))
 
 const AdminMenuPage = () => {
   const [categories, setCategories] = useState([])
@@ -26,7 +29,6 @@ const AdminMenuPage = () => {
   const [stationFilter, setStationFilter] = useState('')
   const [resetting, setResetting] = useState(false)
   const [search, setSearch] = useState('')
-  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => { loadAll() }, [])
 
@@ -45,7 +47,6 @@ const AdminMenuPage = () => {
   const openCreate = () => {
     setEditItem(null)
     setForm({ ...defaultItem, category_id: categories[0]?.id || '' })
-    setUploadingImage(false)
     setModalOpen(true)
   }
 
@@ -59,46 +60,43 @@ const AdminMenuPage = () => {
       category_id: item.category_id,
       daily_quota: item.daily_quota ?? '',
       daily_quota_default: item.daily_quota_default ?? '',
-      image_url: item.image_url || '',
     })
-    setUploadingImage(false)
     setModalOpen(true)
   }
 
-  const getErrorMessage = (err, fallback) => {
-    if (err?.errors?.[0]?.message) return err.errors[0].message
-    if (err?.message) return err.message
-    return fallback
-  }
-
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-
-    setUploadingImage(true)
-    try {
-      const response = await adminApi.uploadMenuImage(file)
-      const imageUrl = response.data?.url
-      if (!imageUrl) throw new Error('Không nhận được URL ảnh')
-      setForm(f => ({ ...f, image_url: imageUrl }))
-      toast.success('Đã tải ảnh món')
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Lỗi tải ảnh món'))
-    } finally {
-      setUploadingImage(false)
-    }
-  }
-
   const handleSave = async () => {
+    const price = parseNumberInput(form.price)
+    const categoryId = Number(form.category_id)
+    if (form.name.trim().length < 2) {
+      toast.error('Tên món phải có ít nhất 2 ký tự')
+      return
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error('Giá bán phải lớn hơn 0')
+      return
+    }
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
+      toast.error('Vui lòng chọn danh mục món')
+      return
+    }
+    const dailyQuota = form.daily_quota !== '' ? parseNumberInput(form.daily_quota) : undefined
+    const dailyQuotaDefault = form.daily_quota_default !== '' ? parseNumberInput(form.daily_quota_default) : undefined
+    if ((dailyQuota !== undefined && (!Number.isInteger(dailyQuota) || dailyQuota < 0)) ||
+        (dailyQuotaDefault !== undefined && (!Number.isInteger(dailyQuotaDefault) || dailyQuotaDefault < 0))) {
+      toast.error('Quota phải là số nguyên không âm')
+      return
+    }
+
     setSaving(true)
     try {
       const data = {
-        ...form,
-        price: parseFloat(form.price),
-        daily_quota: form.daily_quota !== '' ? parseInt(form.daily_quota) : null,
-        daily_quota_default: form.daily_quota_default !== '' ? parseInt(form.daily_quota_default) : null,
-        image_url: form.image_url || null,
+        name: form.name.trim(),
+        description: form.description.trim(),
+        station: form.station,
+        category_id: categoryId,
+        price,
+        daily_quota: dailyQuota,
+        daily_quota_default: dailyQuotaDefault,
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
@@ -109,7 +107,7 @@ const AdminMenuPage = () => {
       }
       setModalOpen(false)
       loadAll()
-    } catch (err) { toast.error('Lỗi lưu dữ liệu') }
+    } catch { toast.error('Lỗi lưu dữ liệu') }
     finally { setSaving(false) }
   }
 
@@ -143,21 +141,22 @@ const AdminMenuPage = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Quản Lý Thực Đơn</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Quản Lý Thực Đơn</h1>
           <p className="text-gray-400 font-medium mt-1 text-base">Tổng số {items.length} món ăn đang kinh doanh tại 3POS.</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleResetQuota} 
             disabled={resetting} 
-            className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-emerald-600 hover:border-emerald-100 hover:bg-emerald-50 transition-all shadow-sm"
+            className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-emerald-600 hover:border-emerald-100 hover:bg-emerald-50 transition-all shadow-sm"
           >
             <RefreshCw className={`w-4 h-4 ${resetting ? 'animate-spin' : ''}`} />
             Reset Quota
           </button>
           <button 
             onClick={openCreate} 
-            className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+            disabled={categories.length === 0}
+            className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" strokeWidth={3} />
             Thêm món mới
@@ -166,7 +165,7 @@ const AdminMenuPage = () => {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+      <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
            <input 
@@ -181,7 +180,7 @@ const AdminMenuPage = () => {
         <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
           <button
             onClick={() => setStationFilter('')}
-            className={`px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap
+            className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
               ${!stationFilter ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
           >
             Tất cả
@@ -192,7 +191,7 @@ const AdminMenuPage = () => {
               <button
                 key={s}
                 onClick={() => setStationFilter(s)}
-                className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap
+                className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
                   ${stationFilter === s ? `${STATION_COLORS[s]} border shadow-sm` : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
               >
                 <Icon className="w-4 h-4" />
@@ -204,17 +203,17 @@ const AdminMenuPage = () => {
       </div>
 
       {/* Menu Table */}
-      <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-50">
-                <th className="pl-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Món ăn</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Phân loại</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Giá bán</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Quota</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Trạng thái</th>
-                <th className="pr-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Thao tác</th>
+                <th className="pl-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Món ăn</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Phân loại</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Giá bán</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Quota</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</th>
+                <th className="pr-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -229,39 +228,35 @@ const AdminMenuPage = () => {
                   <tr key={item.id} className="group hover:bg-[#F9FBF9] transition-colors">
                     <td className="pl-8 py-6">
                       <div className="flex items-center gap-4">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt={item.name} className="w-14 h-14 object-cover rounded-2xl border border-gray-100 group-hover:scale-105 transition-transform" />
-                        ) : (
-                          <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
-                            <UtensilsCrossed className="w-6 h-6" />
-                          </div>
-                        )}
+                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
+                          <UtensilsCrossed className="w-6 h-6" />
+                        </div>
                         <div>
-                          <p className="text-gray-900 font-bold text-base leading-tight">{item.name}</p>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{item.id}</p>
+                          <p className="text-gray-900 font-black text-base leading-tight">{item.name}</p>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{String(item.id || '----')}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6">
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${colorClass} text-[10px] font-bold uppercase tracking-widest shadow-sm`}>
+                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${colorClass} text-[10px] font-black uppercase tracking-widest shadow-sm`}>
                         <StationIcon className="w-3 h-3" />
                         {STATION_LABELS[item.station]}
                       </div>
                     </td>
                     <td className="px-6">
-                      <span className="text-gray-900 font-bold text-base">{formatCurrency(item.price)}</span>
+                      <span className="text-gray-900 font-black text-base">{formatCurrency(item.price)}</span>
                     </td>
                     <td className="px-6 text-center">
                        <div className="flex flex-col items-center">
-                          <span className="text-gray-900 font-bold text-sm">{item.daily_quota ?? '∞'}</span>
+                          <span className="text-gray-900 font-black text-sm">{item.daily_quota ?? '∞'}</span>
                           <div className="w-12 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                             <div className="h-full bg-emerald-500" style={{ width: item.daily_quota_default ? `${(item.daily_quota / item.daily_quota_default) * 100}%` : '100%' }} />
+                             <div className="h-full bg-emerald-500" style={{ width: item.daily_quota_default ? `${Math.max(0, Math.min(100, (item.daily_quota / item.daily_quota_default) * 100))}%` : '100%' }} />
                           </div>
-                          <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">/ {item.daily_quota_default ?? '∞'}</span>
+                          <span className="text-[8px] font-black text-gray-400 uppercase mt-1">/ {item.daily_quota_default ?? '∞'}</span>
                        </div>
                     </td>
                     <td className="px-6">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter ${item.is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                         {item.is_available ? 'Sẵn sàng' : 'Tạm hết'}
                       </span>
                     </td>
@@ -285,12 +280,13 @@ const AdminMenuPage = () => {
 
       {/* Modern Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-2xl animate-[bounce-in_0.4s_ease-out] overflow-hidden">
+          <div className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[calc(100vh-3rem)] animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col">
             <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{editItem ? 'Chỉnh Sửa Món Ăn' : 'Thêm Món Mới'}</h3>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editItem ? 'Chỉnh Sửa Món Ăn' : 'Thêm Món Mới'}</h3>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Thông tin chi tiết thực đơn</p>
                </div>
                <button onClick={() => setModalOpen(false)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
@@ -298,98 +294,66 @@ const AdminMenuPage = () => {
                </button>
             </div>
             
-            <div className="p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="p-6 sm:p-10 space-y-8 overflow-y-auto custom-scrollbar flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Tên món ăn</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Tên món ăn</label>
                     <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="Ví dụ: Bít tết bò Mỹ" />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Giá bán (VND)</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Giá bán (VND)</label>
                     <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="150000" />
                  </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Mô tả chi tiết</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Mô tả chi tiết</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all h-24 resize-none" placeholder="Nguyên liệu, cách chế biến..." />
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Ảnh món ăn</label>
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-40 h-32 bg-[#F9FBF9] border border-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-gray-300">
-                    {form.image_url ? (
-                      <img src={form.image_url} alt={form.name || 'Ảnh món ăn'} className="w-full h-full object-cover" />
-                    ) : (
-                      <ImagePlus className="w-8 h-8" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <input
-                      type="url"
-                      value={form.image_url}
-                      onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
-                      className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
-                      placeholder="URL ảnh món"
-                    />
-                    <label className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${uploadingImage ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer'}`}>
-                      <ImagePlus className="w-4 h-4" />
-                      {uploadingImage ? 'Đang tải ảnh...' : 'Tải ảnh lên'}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Khu vực trạm bếp</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Khu vực trạm bếp</label>
                     <select value={form.station} onChange={e => setForm(f => ({ ...f, station: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
                        {STATIONS.map(s => <option key={s} value={s}>{STATION_LABELS[s]}</option>)}
                     </select>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Danh mục món</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Danh mục món</label>
                     <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
-                       <option value="">Không có danh mục</option>
+                       <option value="" disabled>Chọn danh mục</option>
                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                  </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-8 p-6 bg-[#F9FBF9] rounded-[24px] border border-gray-50">
+              <div className="grid grid-cols-2 gap-8 p-6 bg-[#F9FBF9] rounded-[32px] border border-gray-50">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-1">Quota hôm nay</label>
+                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-1">Quota hôm nay</label>
                     <input type="number" value={form.daily_quota} onChange={e => setForm(f => ({ ...f, daily_quota: e.target.value }))} className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="50" />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-1">Mặc định/Ngày</label>
+                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-1">Mặc định/Ngày</label>
                     <input type="number" value={form.daily_quota_default} onChange={e => setForm(f => ({ ...f, daily_quota_default: e.target.value }))} className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="50" />
                  </div>
               </div>
             </div>
 
-            <div className="px-10 py-8 bg-gray-50 flex gap-4">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 flex-shrink-0 border-t border-gray-100">
+              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
                 Hủy bỏ
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || uploadingImage}
-                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                disabled={saving}
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
               >
                 {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editItem ? 'Cập Nhật Món Ăn' : 'Thêm Vào Menu'}
               </button>
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )

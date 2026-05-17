@@ -32,7 +32,7 @@ import AdminQRPage from './pages/admin/AdminQRPage'
 const ProtectedRoute = ({ children, roles }) => {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
-  if (roles && !roles.includes(user.role)) return <Navigate to={getDefaultRoute(user.role)} replace />
+  if (roles && !roles.includes(user.role)) return <Navigate to="/login" replace />
   return children
 }
 
@@ -50,7 +50,7 @@ const AppRoutes = () => {
 
       {/* KDS */}
       <Route path="/kds" element={
-        <ProtectedRoute roles={['KITCHEN']}>
+        <ProtectedRoute roles={['KITCHEN', 'ADMIN']}>
           <KDSPage />
         </ProtectedRoute>
       } />
@@ -65,7 +65,7 @@ const AppRoutes = () => {
         <Route path="tables/:id" element={<StaffTableDetailPage />} />
         <Route path="requests" element={<StaffRequestsPage />} />
         <Route path="admin/dashboard" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminDashboardPage />
           </ProtectedRoute>
         } />
@@ -75,22 +75,22 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } />
         <Route path="admin/tables" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminTablesPage />
           </ProtectedRoute>
         } />
         <Route path="admin/menu" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminMenuPage />
           </ProtectedRoute>
         } />
         <Route path="admin/reports" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminReportsPage />
           </ProtectedRoute>
         } />
         <Route path="admin/qr" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['ADMIN']}>
             <AdminQRPage />
           </ProtectedRoute>
         } />
@@ -105,8 +105,7 @@ const AppRoutes = () => {
 const getDefaultRoute = (role) => {
   if (role === 'KITCHEN') return '/kds'
   if (role === 'ADMIN') return '/admin/dashboard'
-  if (role === 'MANAGER') return '/admin/dashboard'
-  return '/tables' // CASHIER, WAITER
+  return '/tables' // MANAGER, CASHIER, WAITER
 }
 
 const App = () => (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
-import { getRoleLabel, formatDateShort } from '../../lib/utils'
-import { Users, Plus, Edit2, Trash2, X, Check, UserCircle, Mail, Shield, Search } from 'lucide-react'
+import { getRoleLabel } from '../../lib/utils'
+import ModalPortal from '../../components/ModalPortal'
+import { Plus, Edit2, Trash2, X, Mail, Shield, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const ROLES = ['ADMIN', 'MANAGER', 'CASHIER', 'KITCHEN', 'WAITER']
@@ -42,20 +43,41 @@ const AdminUsersPage = () => {
 
   const openEdit = (user) => {
     setEditUser(user)
-    setForm({ full_name: user.full_name, email: user.email, password: '', role: user.role })
+    setForm({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      password: '',
+      role: user.role || 'WAITER',
+    })
     setModalOpen(true)
   }
 
   const handleSave = async () => {
+    const payload = {
+      full_name: form.full_name.trim(),
+      email: form.email.trim(),
+      role: form.role,
+    }
+    if (payload.full_name.length < 2) {
+      toast.error('Tên nhân viên phải có ít nhất 2 ký tự')
+      return
+    }
+    if (!payload.email) {
+      toast.error('Vui lòng nhập email')
+      return
+    }
+    if (!editUser && form.password.length < 8) {
+      toast.error('Mật khẩu phải có ít nhất 8 ký tự')
+      return
+    }
+
     setSaving(true)
     try {
       if (editUser) {
-        const data = { full_name: form.full_name, role: form.role }
-        if (form.password) data.password = form.password
-        await adminApi.updateUser(editUser.id, data)
+        await adminApi.updateUser(editUser.id, payload)
         toast.success('Đã cập nhật nhân viên')
       } else {
-        await adminApi.createUser(form)
+        await adminApi.createUser({ ...payload, password: form.password })
         toast.success('Đã tạo nhân viên mới')
       }
       setModalOpen(false)
@@ -73,9 +95,9 @@ const AdminUsersPage = () => {
     } catch { toast.error('Lỗi xóa') }
   }
 
-  const filteredUsers = users.filter(u => 
-    u.full_name.toLowerCase().includes(search.toLowerCase()) || 
-    u.email.toLowerCase().includes(search.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    (u.full_name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -83,12 +105,12 @@ const AdminUsersPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Hệ Thống Nhân Sự</h1>
-          <p className="text-gray-400 font-medium mt-1 text-base">3POS hiện đang có <span className="text-emerald-600 font-bold">{users.length} nhân viên</span> vận hành.</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Hệ Thống Nhân Sự</h1>
+          <p className="text-gray-400 font-medium mt-1 text-base">3POS hiện đang có <span className="text-emerald-600 font-black">{users.length} nhân viên</span> vận hành.</p>
         </div>
         <button 
           onClick={openCreate} 
-          className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+          className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
         >
           <Plus className="w-4 h-4" strokeWidth={3} />
           Thêm nhân viên
@@ -97,7 +119,7 @@ const AdminUsersPage = () => {
 
       {/* Search & Stats Section */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-         <div className="lg:col-span-3 bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex items-center">
+         <div className="lg:col-span-3 bg-white p-4 rounded-[32px] border border-gray-100 shadow-sm flex items-center">
             <div className="relative w-full">
                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                <input 
@@ -109,45 +131,47 @@ const AdminUsersPage = () => {
                />
             </div>
          </div>
-         <div className="bg-emerald-500 p-6 rounded-[24px] shadow-lg shadow-emerald-500/20 text-white flex flex-col justify-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Đang hoạt động</p>
-            <p className="text-3xl font-bold">{users.filter(u => u.is_active !== false).length} / {users.length}</p>
+         <div className="bg-emerald-500 p-6 rounded-[32px] shadow-lg shadow-emerald-500/20 text-white flex flex-col justify-center">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Đang hoạt động</p>
+            <p className="text-3xl font-black">{users.filter(u => u.is_active !== false).length} / {users.length}</p>
          </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-50">
-                <th className="pl-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nhân viên</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vị trí / Quyền</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email liên hệ</th>
-                <th className="px-6 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Trạng thái</th>
-                <th className="pr-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Hành động</th>
+                <th className="pl-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Nhân viên</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vị trí / Quyền</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email liên hệ</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</th>
+                <th className="pr-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr><td colSpan="5" className="py-20 text-center"><div className="w-10 h-10 border-4 border-emerald-50 border-t-emerald-500 rounded-full animate-spin mx-auto" /></td></tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr><td colSpan="5" className="py-20 text-center text-gray-400 font-bold">Không tìm thấy nhân viên phù hợp</td></tr>
               ) : filteredUsers.map(user => {
                 const theme = ROLE_THEMES[user.role] || ROLE_THEMES.WAITER
                 return (
                   <tr key={user.id} className="group hover:bg-[#F9FBF9] transition-colors">
                     <td className="pl-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className={`w-14 h-14 rounded-[20px] bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-950/5 group-hover:scale-105 transition-transform`}>
+                        <div className={`w-14 h-14 rounded-[20px] bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-white font-black text-lg shadow-lg shadow-emerald-950/5 group-hover:scale-105 transition-transform`}>
                           {user.full_name?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div>
-                          <p className="text-gray-900 font-bold text-base leading-tight">{user.full_name}</p>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{user.id.toString().slice(-4)}</p>
+                          <p className="text-gray-900 font-black text-base leading-tight">{user.full_name}</p>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{String(user.id || '').slice(-4) || '----'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6">
-                      <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${theme.bg} ${theme.color} ${theme.border} text-[10px] font-bold uppercase tracking-widest shadow-sm`}>
+                      <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${theme.bg} ${theme.color} ${theme.border} text-[10px] font-black uppercase tracking-widest shadow-sm`}>
                         <Shield className="w-3 h-3" />
                         {getRoleLabel(user.role)}
                       </div>
@@ -159,7 +183,7 @@ const AdminUsersPage = () => {
                        </div>
                     </td>
                     <td className="px-6">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter ${user.is_active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${user.is_active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                         {user.is_active !== false ? 'Hoạt động' : 'Vô hiệu'}
                       </span>
                     </td>
@@ -183,12 +207,13 @@ const AdminUsersPage = () => {
 
       {/* User Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-lg animate-[bounce-in_0.4s_ease-out] overflow-hidden">
+          <div className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl w-full max-w-lg max-h-[calc(100vh-3rem)] animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col">
             <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{editUser ? 'Sửa Nhân Viên' : 'Thêm Nhân Viên'}</h3>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editUser ? 'Sửa Nhân Viên' : 'Thêm Nhân Viên'}</h3>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Thông tin nhân sự 3POS</p>
                </div>
                <button onClick={() => setModalOpen(false)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
@@ -196,46 +221,47 @@ const AdminUsersPage = () => {
                </button>
             </div>
             
-            <div className="p-10 space-y-6">
+            <div className="p-6 sm:p-10 space-y-6 overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Họ và tên</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Họ và tên</label>
                 <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="Nguyễn Văn A" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Địa chỉ Email</label>
+                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="email@beanfarm.com" />
               </div>
 
               {!editUser && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Địa chỉ Email</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="email@beanfarm.com" />
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Mật khẩu đăng nhập</label>
+                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="••••••••" />
                 </div>
               )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">{editUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu đăng nhập'}</label>
-                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="••••••••" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Chức vụ / Vai trò</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Chức vụ / Vai trò</label>
                 <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
                   {ROLES.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="px-10 py-8 bg-gray-50 flex gap-4">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 flex-shrink-0">
+              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
                 Hủy bỏ
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
               >
                 {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editUser ? 'Cập Nhật Nhân Viên' : 'Tạo Tài Khoản'}
               </button>
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )

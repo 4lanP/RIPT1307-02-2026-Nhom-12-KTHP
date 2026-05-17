@@ -120,13 +120,6 @@ export const adminApi = {
 
   // Menu Items
   getMenuItems: () => api.get('/admin/menu/items'),
-  uploadMenuImage: (file) => {
-    const formData = new FormData()
-    formData.append('image', file)
-    return api.post('/admin/menu/images', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-  },
   createMenuItem: (data) => api.post('/admin/menu/items', data),
   updateMenuItem: (id, data) => api.put(`/admin/menu/items/${id}`, data),
   deleteMenuItem: (id) => api.delete(`/admin/menu/items/${id}`),
