@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { getStatusLabel, getStatusClass } from '../../lib/utils'
-import { Table2, Plus, Edit2, Trash2, X, Check, Users, RefreshCw } from 'lucide-react'
+import ModalPortal from '../../components/ModalPortal'
+import { Table2, Plus, Edit2, Trash2, X, Users, RefreshCw, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const defaultForm = { name: '', capacity: 4 }
+const defaultForm = { name: '', zone: 'Tầng 1', capacity: 4 }
 
 const AdminTablesPage = () => {
   const [tables, setTables] = useState([])
@@ -32,18 +33,37 @@ const AdminTablesPage = () => {
 
   const openEdit = (table) => {
     setEditTable(table)
-    setForm({ name: table.name, capacity: table.capacity || 4 })
+    setForm({ name: table.name || '', zone: table.zone || 'Tầng 1', capacity: table.capacity || 4 })
     setModalOpen(true)
   }
 
   const handleSave = async () => {
+    const capacity = Number(form.capacity)
+    const payload = {
+      name: form.name.trim(),
+      zone: form.zone.trim(),
+      capacity,
+    }
+    if (!payload.name) {
+      toast.error('Vui lòng nhập tên bàn')
+      return
+    }
+    if (!payload.zone) {
+      toast.error('Vui lòng nhập khu vực bàn')
+      return
+    }
+    if (!Number.isInteger(capacity) || capacity < 1 || capacity > 20) {
+      toast.error('Sức chứa phải từ 1 đến 20 khách')
+      return
+    }
+
     setSaving(true)
     try {
       if (editTable) {
-        await adminApi.updateTable(editTable.id, form)
+        await adminApi.updateTable(editTable.id, payload)
         toast.success('Đã cập nhật cấu hình bàn')
       } else {
-        await adminApi.createTable(form)
+        await adminApi.createTable(payload)
         toast.success('Đã thêm bàn mới vào hệ thống')
       }
       setModalOpen(false)
@@ -134,7 +154,8 @@ const AdminTablesPage = () => {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
           <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out] overflow-hidden">
             <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
@@ -154,10 +175,18 @@ const AdminTablesPage = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Khu vực</label>
+                <div className="relative">
+                  <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input type="text" value={form.zone} onChange={e => setForm(f => ({ ...f, zone: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="Ví dụ: Tầng 1" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Số lượng khách tối đa</label>
                 <div className="relative">
                   <Users className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: parseInt(e.target.value) }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" min="1" max="20" />
+                  <input type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" min="1" max="20" />
                 </div>
               </div>
 
@@ -181,6 +210,7 @@ const AdminTablesPage = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )

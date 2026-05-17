@@ -41,7 +41,7 @@ const OrderCard = ({ order, onUpdateItem }) => {
       <div className="p-5 border-b border-gray-50 bg-[#F9FBF9]/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center shadow-sm">
-            <span className="text-gray-900 font-black text-lg">#{order.id.toString().slice(-3)}</span>
+            <span className="text-gray-900 font-black text-lg">#{String(order.id || '').slice(-3) || '---'}</span>
           </div>
           <div>
             <h3 className="text-gray-900 font-black text-base leading-tight">{order.table_name || 'Bàn Mang Về'}</h3>

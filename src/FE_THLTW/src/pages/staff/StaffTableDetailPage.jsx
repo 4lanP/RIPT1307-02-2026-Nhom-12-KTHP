@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { staffApi } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { formatCurrency, formatDateShort, getStatusLabel, getStatusClass } from '../../lib/utils'
+import ModalPortal from '../../components/ModalPortal'
 import {
   ArrowLeft, CreditCard, X, AlertTriangle, DollarSign,
-  Clock, CheckCircle, UtensilsCrossed, RefreshCw, ChevronRight, User
+  Clock, CheckCircle, UtensilsCrossed, RefreshCw, Table2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -280,7 +281,8 @@ const StaffTableDetailPage = () => {
 
       {/* Modern Confirm Modal */}
       {checkoutOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setCheckoutOpen(false)} />
           <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
             <div className="w-20 h-20 bg-emerald-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100 text-emerald-500">
@@ -315,6 +317,7 @@ const StaffTableDetailPage = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )

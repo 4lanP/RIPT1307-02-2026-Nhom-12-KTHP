@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
-import { UtensilsCrossed, Plus, Edit2, Trash2, X, Check, RefreshCw, Flame, Wine, Salad, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
+import ModalPortal from '../../components/ModalPortal'
+import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const STATIONS = ['GRILL', 'BAR', 'COLD']
@@ -14,6 +15,8 @@ const STATION_COLORS = {
 }
 
 const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '' }
+
+const parseNumberInput = (value) => Number(String(value).replace(',', '.'))
 
 const AdminMenuPage = () => {
   const [categories, setCategories] = useState([])
@@ -62,13 +65,38 @@ const AdminMenuPage = () => {
   }
 
   const handleSave = async () => {
+    const price = parseNumberInput(form.price)
+    const categoryId = Number(form.category_id)
+    if (form.name.trim().length < 2) {
+      toast.error('Tên món phải có ít nhất 2 ký tự')
+      return
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error('Giá bán phải lớn hơn 0')
+      return
+    }
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
+      toast.error('Vui lòng chọn danh mục món')
+      return
+    }
+    const dailyQuota = form.daily_quota !== '' ? parseNumberInput(form.daily_quota) : undefined
+    const dailyQuotaDefault = form.daily_quota_default !== '' ? parseNumberInput(form.daily_quota_default) : undefined
+    if ((dailyQuota !== undefined && (!Number.isInteger(dailyQuota) || dailyQuota < 0)) ||
+        (dailyQuotaDefault !== undefined && (!Number.isInteger(dailyQuotaDefault) || dailyQuotaDefault < 0))) {
+      toast.error('Quota phải là số nguyên không âm')
+      return
+    }
+
     setSaving(true)
     try {
       const data = {
-        ...form,
-        price: parseFloat(form.price),
-        daily_quota: form.daily_quota !== '' ? parseInt(form.daily_quota) : null,
-        daily_quota_default: form.daily_quota_default !== '' ? parseInt(form.daily_quota_default) : null,
+        name: form.name.trim(),
+        description: form.description.trim(),
+        station: form.station,
+        category_id: categoryId,
+        price,
+        daily_quota: dailyQuota,
+        daily_quota_default: dailyQuotaDefault,
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
@@ -79,7 +107,7 @@ const AdminMenuPage = () => {
       }
       setModalOpen(false)
       loadAll()
-    } catch (err) { toast.error('Lỗi lưu dữ liệu') }
+    } catch { toast.error('Lỗi lưu dữ liệu') }
     finally { setSaving(false) }
   }
 
@@ -127,7 +155,8 @@ const AdminMenuPage = () => {
           </button>
           <button 
             onClick={openCreate} 
-            className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+            disabled={categories.length === 0}
+            className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" strokeWidth={3} />
             Thêm món mới
@@ -204,7 +233,7 @@ const AdminMenuPage = () => {
                         </div>
                         <div>
                           <p className="text-gray-900 font-black text-base leading-tight">{item.name}</p>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{item.id}</p>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">ID: #{String(item.id || '----')}</p>
                         </div>
                       </div>
                     </td>
@@ -221,7 +250,7 @@ const AdminMenuPage = () => {
                        <div className="flex flex-col items-center">
                           <span className="text-gray-900 font-black text-sm">{item.daily_quota ?? '∞'}</span>
                           <div className="w-12 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                             <div className="h-full bg-emerald-500" style={{ width: item.daily_quota_default ? `${(item.daily_quota / item.daily_quota_default) * 100}%` : '100%' }} />
+                             <div className="h-full bg-emerald-500" style={{ width: item.daily_quota_default ? `${Math.max(0, Math.min(100, (item.daily_quota / item.daily_quota_default) * 100))}%` : '100%' }} />
                           </div>
                           <span className="text-[8px] font-black text-gray-400 uppercase mt-1">/ {item.daily_quota_default ?? '∞'}</span>
                        </div>
@@ -251,9 +280,10 @@ const AdminMenuPage = () => {
 
       {/* Modern Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-2xl animate-[bounce-in_0.4s_ease-out] overflow-hidden">
+          <div className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[calc(100vh-3rem)] animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col">
             <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
                <div>
                   <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editItem ? 'Chỉnh Sửa Món Ăn' : 'Thêm Món Mới'}</h3>
@@ -264,7 +294,7 @@ const AdminMenuPage = () => {
                </button>
             </div>
             
-            <div className="p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="p-6 sm:p-10 space-y-8 overflow-y-auto custom-scrollbar flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Tên món ăn</label>
@@ -291,7 +321,7 @@ const AdminMenuPage = () => {
                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Danh mục món</label>
                     <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
-                       <option value="">Không có danh mục</option>
+                       <option value="" disabled>Chọn danh mục</option>
                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                  </div>
@@ -309,20 +339,21 @@ const AdminMenuPage = () => {
               </div>
             </div>
 
-            <div className="px-10 py-8 bg-gray-50 flex gap-4">
+            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 flex-shrink-0 border-t border-gray-100">
               <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
                 Hủy bỏ
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
               >
                 {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editItem ? 'Cập Nhật Món Ăn' : 'Thêm Vào Menu'}
               </button>
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )

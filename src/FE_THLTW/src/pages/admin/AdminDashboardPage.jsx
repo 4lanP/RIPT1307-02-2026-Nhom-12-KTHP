@@ -84,7 +84,7 @@ const AdminDashboardPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">Analytics Dashboard</h1>
-          <p className="text-gray-400 font-medium mt-1 text-base">Chào buổi sáng! Đây là dữ liệu kinh doanh của 3POS.</p>
+          <p className="text-gray-400 font-medium mt-1 text-base">Dữ liệu kinh doanh của 3POS.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-white p-1.5 rounded-[20px] border border-gray-100 flex shadow-sm">

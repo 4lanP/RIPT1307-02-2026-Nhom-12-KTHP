@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
-import { QrCode, Plus, Trash2, ToggleLeft, ToggleRight, X, Check, Copy, ExternalLink, RefreshCw } from 'lucide-react'
+import ModalPortal from '../../components/ModalPortal'
+import { QrCode, Plus, Trash2, ToggleLeft, ToggleRight, X, Copy, ExternalLink, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const AdminQRPage = () => {
@@ -26,9 +27,14 @@ const AdminQRPage = () => {
   }
 
   const handleCreate = async () => {
+    const tableId = Number(form.table_id)
+    if (!Number.isInteger(tableId) || tableId <= 0) {
+      toast.error('Vui lòng chọn bàn để tạo mã QR')
+      return
+    }
+
     setSaving(true)
     try {
-      const tableId = parseInt(form.table_id)
       const table = tables.find(t => t.id === tableId)
       const code = form.code || `BF-${table?.name?.replace(/\s/g, '-') || 'TABLE'}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
       await adminApi.createQRCode({ table_id: tableId, code })
@@ -56,9 +62,13 @@ const AdminQRPage = () => {
     } catch { toast.error('Lỗi xóa') }
   }
 
-  const copyCode = (code) => {
-    navigator.clipboard.writeText(code)
-    toast.success('Đã lưu mã vào bộ nhớ tạm')
+  const copyCode = async (code) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      toast.success('Đã lưu mã vào bộ nhớ tạm')
+    } catch {
+      toast.error('Không thể sao chép mã')
+    }
   }
 
   return (
@@ -75,7 +85,8 @@ const AdminQRPage = () => {
            </button>
            <button 
              onClick={() => { setForm({ table_id: tables[0]?.id || '', code: '' }); setModalOpen(true) }} 
-             className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+             disabled={tables.length === 0}
+             className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
            >
              <Plus className="w-4 h-4" strokeWidth={3} />
              Tạo mã QR mới
@@ -143,7 +154,8 @@ const AdminQRPage = () => {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
           <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out] overflow-hidden">
             <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
@@ -160,6 +172,7 @@ const AdminQRPage = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Lựa chọn bàn ăn</label>
                 <select value={form.table_id} onChange={e => setForm(f => ({ ...f, table_id: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
+                  <option value="" disabled>Chọn bàn</option>
                   {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
@@ -191,6 +204,7 @@ const AdminQRPage = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )
