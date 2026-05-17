@@ -28,6 +28,8 @@ Không còn test `.skip`.
 | `__tests__/kds.test.js` | Cập nhật item status, order status transitions |
 | `__tests__/vnpay.test.js` | Tạo payment URL, verify webhook signature, idempotency |
 | `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, enum validation, parsed data write-back to `req` |
+| `__tests__/manager-permissions.test.js` | Role matrix for manager operational admin access, admin-only users, staff operations, and KDS HTTP denial |
+| `__tests__/dish-image-upload.test.js` | Upload ảnh món, validate file, lưu storage, `image_url`, và role ADMIN/MANAGER |
 
 ## Test Helpers
 
@@ -68,6 +70,52 @@ npm test -- --detectOpenHandles
 - API tests cho route thật bằng `supertest`.
 - Bo sung unit/integration test rieng cho VNPay webhook amount mismatch va Redis fallback.
 - Socket.IO auth tests cho `/customer`, `/kitchen`, `/staff`.
+
+## Manager Permissions Verification Matrix
+
+Run the focused backend authorization suite:
+
+```powershell
+cd src/BE_THLTW
+npm test -- manager-permissions.test.js
+```
+
+Expected coverage:
+
+| Role | Allowed checks | Denied checks |
+|---|---|---|
+| ADMIN | Admin operational endpoints, user-management endpoints | KDS HTTP unless explicitly changed |
+| MANAGER | Admin operational endpoints, staff tables/requests, checkout/cancel/force-close | `/admin/users`, KDS HTTP |
+| CASHIER | Staff tables/requests, checkout/cancel | Admin operational endpoints, user management, force-close, KDS HTTP |
+| WAITER | Staff tables/requests | Checkout/cancel, admin operational endpoints, user management, KDS HTTP |
+| KITCHEN | KDS HTTP endpoints | Staff/admin operational endpoints and user management |
+
+Frontend validation remains `npm run build` in `src/FE_THLTW`, followed by
+manual route checks for manager default routing, hidden user management, and
+role-appropriate redirects on direct URLs.
+
+## Dish Image Upload Verification
+
+Run focused upload tests:
+
+```powershell
+cd src/BE_THLTW
+npm test -- dish-image-upload.test.js
+```
+
+Run authorization regression after upload route changes:
+
+```powershell
+cd src/BE_THLTW
+npm test -- manager-permissions.test.js
+```
+
+Manual checks:
+
+1. Login as `ADMIN` or `MANAGER`.
+2. Open admin menu, create or edit a dish, upload JPEG/PNG/WebP under 5 MB.
+3. Confirm the preview appears, save the dish, and verify `image_url` renders in the menu.
+4. Try missing file, text file, oversized file, malformed image bytes, `CASHIER`, `WAITER`, `KITCHEN`, and no token; all must fail without changing the dish image.
 
 ## Backend Hardening Test Scope
 

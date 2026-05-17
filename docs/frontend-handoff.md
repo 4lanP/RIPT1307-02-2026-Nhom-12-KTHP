@@ -55,7 +55,8 @@ Password123!
 | Staff HTTP: tables/sessions/requests | staff access token | `WAITER`, `CASHIER`, `MANAGER`, `ADMIN` |
 | Staff HTTP: checkout/cancel item | staff access token | `CASHIER`, `MANAGER`, `ADMIN` |
 | Staff force close | staff access token | `MANAGER`, `ADMIN` |
-| Admin HTTP | staff access token | `ADMIN` |
+| Admin operational HTTP: dashboard/reports/menu/tables/QR | staff access token | `MANAGER`, `ADMIN` |
+| Admin user-management HTTP: users/roles | staff access token | `ADMIN` |
 | Kitchen socket | staff access token | `ADMIN`, `KITCHEN` |
 | Staff socket | staff access token | `ADMIN`, `CASHIER`, `MANAGER`, `WAITER` |
 | Customer socket | session token trong `join_session` | chỉ session đang active của khách |
@@ -89,11 +90,17 @@ Nhân viên/Thu ngân:
 5. `GET /staff/requests`, `PATCH /staff/requests/{id}/resolve`.
 6. Tùy chọn: `PATCH /staff/orders/items/{id}/cancel` cho cashier/manager/admin.
 
-Admin:
+Admin/Manager vận hành:
 
 - Báo cáo: `/admin/reports/revenue`, `/admin/reports/menu`, `/admin/reports/kds`, `/admin/reports/export`.
 - Reset quota: `POST /admin/menu/reset-quota`.
-- CRUD users/tables/QR/menu qua `/admin/users`, `/admin/tables`, `/admin/qr_codes`, `/admin/menu/categories`, `/admin/menu/items`, `/admin/menu/options`.
+- CRUD tables/QR/menu qua `/admin/tables`, `/admin/qr_codes`, `/admin/menu/categories`, `/admin/menu/items`, `/admin/menu/options`.
+- Manager sau đăng nhập vào `/admin/dashboard`, thấy dashboard/reports/menu/tables/QR, staff tables, và requests.
+- Manager không thấy `/admin/users`; truy cập trực tiếp `/admin/users` phải bị từ chối hoặc chuyển về route phù hợp.
+
+Admin-only:
+
+- CRUD users qua `/admin/users` chỉ dành cho `ADMIN`.
 
 ## FE Phải Xử Lý
 

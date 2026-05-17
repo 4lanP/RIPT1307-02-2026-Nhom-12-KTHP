@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
-const { authenticateStaff } = require('../middlewares/auth.middleware');
+const { authenticateStaff, authorizeStaffRoles } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validate.middleware');
+const { createDishImageUpload } = require('../middlewares/upload.middleware');
 const {
   idParamSchema,
   createUserSchema,
@@ -24,7 +25,10 @@ const {
   exportReportSchema,
 } = require('../validators/admin.validator');
 
-router.use(authenticateStaff(['ADMIN']));
+const ADMIN_ROLES = ['ADMIN'];
+const OPERATIONAL_ADMIN_ROLES = ['ADMIN', 'MANAGER'];
+
+router.use(authenticateStaff(OPERATIONAL_ADMIN_ROLES));
 
 /**
  * @swagger
@@ -233,10 +237,10 @@ router.get('/reports/export', validate(exportReportSchema), adminController.expo
  */
 router.post('/menu/reset-quota', validate(emptySchema), adminController.resetMenuQuota);
 
-router.get('/users', validate(emptySchema), adminController.listUsers);
-router.post('/users', validate(createUserSchema), adminController.createUser);
-router.put('/users/:id', validate(updateUserSchema), adminController.updateUser);
-router.delete('/users/:id', validate(idParamSchema), adminController.deleteUser);
+router.get('/users', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.listUsers);
+router.post('/users', authorizeStaffRoles(ADMIN_ROLES), validate(createUserSchema), adminController.createUser);
+router.put('/users/:id', authorizeStaffRoles(ADMIN_ROLES), validate(updateUserSchema), adminController.updateUser);
+router.delete('/users/:id', authorizeStaffRoles(ADMIN_ROLES), validate(idParamSchema), adminController.deleteUser);
 
 router.get('/tables', validate(emptySchema), adminController.listTables);
 router.post('/tables', validate(createTableSchema), adminController.createTable);
@@ -254,6 +258,7 @@ router.put('/menu/categories/:id', validate(updateCategorySchema), adminControll
 router.delete('/menu/categories/:id', validate(idParamSchema), adminController.deleteCategory);
 
 router.get('/menu/items', validate(listItemsSchema), adminController.listItems);
+router.post('/menu/images', createDishImageUpload(), adminController.uploadMenuImage);
 router.post('/menu/items', validate(createItemSchema), adminController.createItem);
 router.put('/menu/items/:id', validate(updateItemSchema), adminController.updateItem);
 router.delete('/menu/items/:id', validate(idParamSchema), adminController.deleteItem);
@@ -833,4 +838,3 @@ router.delete('/menu/options/:id', validate(idParamSchema), adminController.dele
  */
 
 module.exports = router;
-

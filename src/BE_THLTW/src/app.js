@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const routes = require('./routes');
 const errorHandler = require('./middlewares/error.middleware');
 const { requestId, responseTime } = require('./middlewares/requestTracking.middleware');
 const logger = require('./utils/logger');
+const { dishImageStorage } = require('./config/storage');
 
 const app = express();
 
@@ -41,6 +43,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(dishImageStorage.publicPath, express.static(path.resolve(dishImageStorage.directory)));
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');

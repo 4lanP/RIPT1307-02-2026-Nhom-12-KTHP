@@ -87,8 +87,13 @@ services:
       VNPAY_URL: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:3000/payment-result}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      DISH_IMAGE_STORAGE_DIR: /app/uploads/dish-images
+      DISH_IMAGE_PUBLIC_BASE_URL: ${DISH_IMAGE_PUBLIC_BASE_URL:-http://localhost:5001/uploads/dish-images}
+      DISH_IMAGE_MAX_BYTES: ${DISH_IMAGE_MAX_BYTES:-5242880}
     ports:
-      - "5000:5000"
+      - "5001:5000"
+    volumes:
+      - dish_image_uploads:/app/uploads/dish-images
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
       interval: 30s
@@ -97,4 +102,6 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  dish_image_uploads:
     driver: local

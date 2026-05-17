@@ -9,4 +9,12 @@ specs
 !.env.example
 *.log
 node_modules/
+dist/
+build/
 coverage/
+uploads/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.idea/

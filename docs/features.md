@@ -4,42 +4,51 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 
 ## Authentication & Authorization
 
-- [x] Đăng ký tài khoản (bcrypt hash password)
 - [x] Đăng nhập — trả về access token (15m) + refresh token (7d)
-- [x] Refresh access token
+- [x] Refresh access token với token rotation
 - [x] Logout — invalidate refresh token
-- [x] Role-based access control: `customer`, `staff`, `kds`, `admin`
+- [x] Role-based access control: `CUSTOMER`, `WAITER`, `CASHIER`, `KITCHEN`, `MANAGER`, `ADMIN`
+- [x] JWT-based session tokens cho customer (24h expiry)
 
 ## Customer (Khách hàng)
 
-- [x] Xem menu (danh sách món, giá, danh mục, trạng thái)
-- [x] Đặt món — tạo đơn hàng mới
-- [x] Theo dõi trạng thái đơn hàng real-time
-- [x] Thanh toán qua VNPay — nhận URL redirect
-- [x] Xem lịch sử đơn hàng
+- [x] Quét QR code để tạo session (JWT-based session token)
+- [x] Xem menu theo station (GRILL/BAR/COLD) hoặc category
+- [x] Đặt món với options và note
+- [x] Theo dõi trạng thái đơn hàng real-time qua Socket.IO
+- [x] Gọi nhân viên hoặc yêu cầu thanh toán
+- [x] Tạo URL thanh toán VNPay
+- [x] Frontend: React + Vite với customer scan và menu pages
 
 ## Staff (Nhân viên)
 
-- [x] Xem danh sách đơn hàng theo bàn
-- [x] Cập nhật trạng thái đơn hàng
-- [x] Quản lý trạng thái bàn (trống / có khách / đang dọn)
-- [x] Nhận thông báo real-time khi có đơn mới hoặc món sẵn sàng
+- [x] Xem danh sách bàn và trạng thái (AVAILABLE/OCCUPIED)
+- [x] Xem chi tiết session của bàn
+- [x] Xử lý yêu cầu khách hàng (gọi nhân viên, thanh toán)
+- [x] Checkout tiền mặt (CASHIER/MANAGER/ADMIN)
+- [x] Hủy món (CASHIER/MANAGER/ADMIN)
+- [x] Force close session (MANAGER/ADMIN)
+- [x] Nhận thông báo real-time qua Socket.IO
+- [x] Frontend: Staff tables, table detail, requests pages
 
 ## KDS — Kitchen Display System (Bếp)
 
-- [x] Hiển thị queue món cần chế biến
-- [x] Xác nhận từng món đã hoàn thành
-- [x] Nhận đơn mới real-time qua Socket.IO
-- [x] Phát sự kiện `order:item_ready` khi món xong
+- [x] Hiển thị queue món theo station (GRILL/BAR/COLD)
+- [x] Cập nhật trạng thái món: PENDING → PREPARING → READY → SERVED
+- [x] Nhận đơn mới real-time qua Socket.IO namespace `/kitchen`
+- [x] Phát sự kiện khi món sẵn sàng
+- [x] Frontend: KDS page với realtime updates
 
-## Admin
+## Admin & Manager
 
-- [x] CRUD users, tables, QR codes
-- [x] CRUD menu categories, items, options
-- [x] Xem báo cáo doanh thu (theo ngày / tuần / tháng)
-- [x] Export báo cáo ra file Excel (exceljs)
-- [x] Quản lý người dùng
-- [x] Xem tổng quan hoạt động nhà hàng
+- [x] Dashboard với tổng quan hoạt động
+- [x] Báo cáo doanh thu, menu, KDS performance
+- [x] Export báo cáo Excel (exceljs)
+- [x] CRUD users (ADMIN only)
+- [x] CRUD tables, QR codes (MANAGER/ADMIN)
+- [x] CRUD menu categories, items, options (MANAGER/ADMIN)
+- [x] Reset daily quota (MANAGER/ADMIN)
+- [x] Frontend: Admin dashboard, reports, users, tables, QR, menu pages
 
 ## Payment — VNPay
 
@@ -50,10 +59,11 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 
 ## Real-time (Socket.IO)
 
-- [x] Đơn mới → KDS
-- [x] Món sẵn sàng → Staff
-- [x] Cập nhật trạng thái đơn → Customer
-- [x] Cập nhật trạng thái bàn → Staff
+- [x] Customer namespace `/customer` — order updates, session closed
+- [x] Kitchen namespace `/kitchen` — new orders by station
+- [x] Staff namespace `/staff` — table status, customer requests
+- [x] Socket authentication với JWT/session tokens
+- [x] Room-based event routing
 
 ## Infrastructure & DevOps
 
@@ -71,11 +81,25 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [x] Structured logging (Winston)
 - [x] Request ID tracking
 - [x] Environment validation on startup
-- [x] Jest test suite (auth, order, kds, vnpay)
+- [x] Jest test suite: 6 suites, 27 tests (auth, order, session, kds, vnpay, validation, manager-permissions)
+- [x] Backend hardening: secret hygiene, socket auth, migration safety
 
-## Chưa implement
+## Frontend (React + Vite)
 
-- [ ] Frontend (React / Vue / Next.js)
+- [x] Customer: QR scan, menu browsing, ordering
+- [x] Staff: Table management, session detail, request handling
+- [x] KDS: Kitchen display with realtime updates
+- [x] Admin: Dashboard, reports, users, tables, QR, menu management
+- [x] Auth: Login, token refresh, protected routes
+- [x] Socket.IO integration cho realtime updates
+- [x] Tailwind CSS styling
+- [x] React Router v6
+
+## Chưa implement / Cần cải thiện
+
+- [ ] Frontend: ESLint, tests, bundle optimization
+- [ ] Frontend: Form validation, error handling improvements
+- [ ] Frontend: API/socket contract alignment với backend
 - [ ] CI/CD pipeline
 - [ ] Reverse proxy (Nginx)
 - [ ] Email notifications
