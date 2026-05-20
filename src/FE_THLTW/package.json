@@ -18,7 +18,9 @@
     "react-hot-toast": "^2.4.1",
     "lucide-react": "^0.395.0",
     "qrcode": "^1.5.3",
-    "date-fns": "^3.6.0"
+    "date-fns": "^3.6.0",
+    "antd": "^5.18.0",
+    "@ant-design/icons": "^5.3.7"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
