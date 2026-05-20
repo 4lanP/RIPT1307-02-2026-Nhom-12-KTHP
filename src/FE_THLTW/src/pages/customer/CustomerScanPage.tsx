@@ -1,20 +1,28 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { customerApi } from '../../lib/api'
 import { QrCode, Scan, ArrowRight, UtensilsCrossed } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const CustomerScanPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [qrCode, setQrCode] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleScan = async (e) => {
-    e.preventDefault()
-    if (!qrCode.trim()) return
+  useEffect(() => {
+    const qrParam = searchParams.get('qr')
+    if (qrParam) {
+      const trimmed = qrParam.trim()
+      setQrCode(trimmed)
+      autoScan(trimmed)
+    }
+  }, [searchParams])
+
+  const autoScan = async (code) => {
     setLoading(true)
     try {
-      const res = await customerApi.scan(qrCode.trim())
+      const res = await customerApi.scan(code)
       const sessionToken = res.data.session_token
       sessionStorage.setItem('session_token', sessionToken)
       toast.success('Chào mừng bạn đến với 3POS!')
@@ -24,6 +32,12 @@ const CustomerScanPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleScan = async (e) => {
+    e.preventDefault()
+    if (!qrCode.trim()) return
+    await autoScan(qrCode.trim())
   }
 
   const demoQRs = [

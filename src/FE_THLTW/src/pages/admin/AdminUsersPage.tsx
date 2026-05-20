@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { getRoleLabel } from '../../lib/utils'
-import ModalPortal from '../../components/ModalPortal'
-import { Plus, Edit2, Trash2, X, Mail, Shield, Search } from 'lucide-react'
+import { Modal, Form, Input, Select, Button } from 'antd'
+import { Plus, Edit2, Trash2, Mail, Shield, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const ROLES = ['ADMIN', 'MANAGER', 'CASHIER', 'KITCHEN', 'WAITER']
@@ -205,64 +205,96 @@ const AdminUsersPage = () => {
         </div>
       </div>
 
-      {/* User Modal */}
-      {modalOpen && (
-        <ModalPortal>
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl w-full max-w-lg max-h-[calc(100vh-3rem)] animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col">
-            <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
-               <div>
-                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editUser ? 'Sửa Nhân Viên' : 'Thêm Nhân Viên'}</h3>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Thông tin nhân sự 3POS</p>
-               </div>
-               <button onClick={() => setModalOpen(false)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
-                  <X className="w-5 h-5" strokeWidth={3} />
-               </button>
-            </div>
-            
-            <div className="p-6 sm:p-10 space-y-6 overflow-y-auto custom-scrollbar">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Họ và tên</label>
-                <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="Nguyễn Văn A" />
-              </div>
+      {/* User Modal - Ant Design Integration */}
+      <Modal
+        title={<span className="text-xl font-black text-gray-900">{editUser ? 'Sửa Nhân Viên' : 'Thêm Nhân Viên'}</span>}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        footer={null}
+        centered
+        width={480}
+        styles={{
+          mask: {
+            backdropFilter: 'blur(6px)',
+            backgroundColor: 'rgba(17, 24, 39, 0.4)'
+          }
+        }}
+      >
+        <Form
+          layout="vertical"
+          onFinish={handleSave}
+          initialValues={form}
+          className="mt-6 space-y-4"
+        >
+          <Form.Item
+            label={<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Họ và tên</span>}
+            required
+          >
+            <Input
+              value={form.full_name}
+              onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+              placeholder="Nguyễn Văn A"
+              className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
+            />
+          </Form.Item>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Địa chỉ Email</label>
-                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="email@beanfarm.com" />
-              </div>
+          <Form.Item
+            label={<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Địa chỉ Email</span>}
+            required
+          >
+            <Input
+              type="email"
+              value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              placeholder="email@beanfarm.com"
+              className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
+            />
+          </Form.Item>
 
-              {!editUser && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Mật khẩu đăng nhập</label>
-                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" placeholder="••••••••" />
-                </div>
-              )}
+          {!editUser && (
+            <Form.Item
+              label={<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Mật khẩu đăng nhập</span>}
+              required
+            >
+              <Input.Password
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="••••••••"
+                className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all"
+              />
+            </Form.Item>
+          )}
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Chức vụ / Vai trò</label>
-                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all appearance-none">
-                  {ROLES.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
-                </select>
-              </div>
-            </div>
+          <Form.Item
+            label={<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Chức vụ / Vai trò</span>}
+            required
+          >
+            <Select
+              value={form.role}
+              onChange={val => setForm(f => ({ ...f, role: val }))}
+              options={ROLES.map(r => ({ label: getRoleLabel(r), value: r }))}
+              className="w-full h-12 bg-[#F9FBF9] rounded-2xl font-bold"
+            />
+          </Form.Item>
 
-            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 flex-shrink-0">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
-                Hủy bỏ
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
-              >
-                {saving ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : editUser ? 'Cập Nhật Nhân Viên' : 'Tạo Tài Khoản'}
-              </button>
-            </div>
+          <div className="flex gap-4 pt-4 border-t border-gray-50 mt-6">
+            <Button
+              onClick={() => setModalOpen(false)}
+              className="flex-1 h-12 border-none bg-gray-50 text-gray-500 rounded-xl font-bold hover:bg-gray-100 hover:text-gray-700"
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={saving}
+              className="flex-[2] h-12 bg-emerald-500 hover:bg-emerald-600 border-none text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+            >
+              {editUser ? 'Cập Nhật' : 'Tạo Tài Khoản'}
+            </Button>
           </div>
-        </div>
-        </ModalPortal>
-      )}
+        </Form>
+      </Modal>
     </div>
   )
 }

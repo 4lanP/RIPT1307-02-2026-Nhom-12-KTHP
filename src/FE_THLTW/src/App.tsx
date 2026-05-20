@@ -29,11 +29,16 @@ import AdminMenuPage from './pages/admin/AdminMenuPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminQRPage from './pages/admin/AdminQRPage'
 
-const ProtectedRoute = ({ children, roles }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  roles?: string[]
+}
+
+const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
   if (roles && !roles.includes(user.role)) return <Navigate to="/login" replace />
-  return children
+  return children as React.ReactElement
 }
 
 const AppRoutes = () => {
