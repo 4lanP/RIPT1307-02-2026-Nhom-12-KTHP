@@ -1,18 +1,29 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import { authApi } from '../lib/api'
 import { disconnectAll } from '../lib/socket'
+import { User } from '../types'
 
-const AuthContext = createContext(null)
+interface AuthContextType {
+  user: User | null
+  login: (email: string, password: string) => Promise<User>
+  logout: () => Promise<void>
+  isAdmin: boolean
+  isManager: boolean
+  isStaff: boolean
+  isKitchen: boolean
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+const AuthContext = createContext<AuthContextType | null>(null)
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(() => {
     try {
       const u = localStorage.getItem('user')
       return u ? JSON.parse(u) : null
     } catch { return null }
   })
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login({ email, password })
     const { accessToken, refreshToken, user: userData } = res.data
     localStorage.setItem('accessToken', accessToken)
@@ -31,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = user?.role === 'ADMIN'
   const isManager = user?.role === 'MANAGER'
-  const isStaff = ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'].includes(user?.role)
+  const isStaff = ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'].includes(user?.role || '')
   const isKitchen = user?.role === 'KITCHEN'
 
   return (

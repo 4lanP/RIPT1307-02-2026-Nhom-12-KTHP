@@ -1,4 +1,4 @@
-export const formatCurrency = (amount) => {
+export const formatCurrency = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return '0 ₫'
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -6,7 +6,7 @@ export const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-export const formatDate = (dateStr) => {
+export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '—'
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
@@ -17,7 +17,7 @@ export const formatDate = (dateStr) => {
   }).format(new Date(dateStr))
 }
 
-export const formatDateShort = (dateStr) => {
+export const formatDateShort = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '—'
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
@@ -27,8 +27,8 @@ export const formatDateShort = (dateStr) => {
   }).format(new Date(dateStr))
 }
 
-export const getStatusLabel = (status) => {
-  const labels = {
+export const getStatusLabel = (status: string): string => {
+  const labels: Record<string, string> = {
     PENDING: 'Chờ xử lý',
     PREPARING: 'Đang chuẩn bị',
     READY: 'Sẵn sàng',
@@ -44,8 +44,8 @@ export const getStatusLabel = (status) => {
   return labels[status] || status
 }
 
-export const getStatusClass = (status) => {
-  const classes = {
+export const getStatusClass = (status: string): string => {
+  const classes: Record<string, string> = {
     PENDING: 'badge-pending',
     PREPARING: 'badge-preparing',
     READY: 'badge-ready',
@@ -60,8 +60,8 @@ export const getStatusClass = (status) => {
   return classes[status] || 'badge'
 }
 
-export const getStationLabel = (station) => {
-  const labels = {
+export const getStationLabel = (station: string): string => {
+  const labels: Record<string, string> = {
     GRILL: '🔥 Nướng',
     BAR: '🍹 Bar',
     COLD: '🥗 Lạnh',
@@ -69,8 +69,8 @@ export const getStationLabel = (station) => {
   return labels[station] || station
 }
 
-export const getRoleLabel = (role) => {
-  const labels = {
+export const getRoleLabel = (role: string): string => {
+  const labels: Record<string, string> = {
     ADMIN: 'Quản trị viên',
     MANAGER: 'Quản lý',
     CASHIER: 'Thu ngân',
