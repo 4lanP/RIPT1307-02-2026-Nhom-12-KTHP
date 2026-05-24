@@ -8,7 +8,7 @@ async function getRevenueReport(from, to, groupBy) {
   const truncGroup = validGroups.includes(groupBy) ? groupBy : 'day';
 
   const query = `
-    SELECT DATE_TRUNC($1, paid_at) as period, method, SUM(amount) as total_amount
+    SELECT DATE_TRUNC($1, paid_at) as date, method, SUM(amount) as total, COUNT(id) as order_count
     FROM PAYMENTS 
     WHERE status = 'COMPLETED' AND paid_at >= $2 AND paid_at <= $3
     GROUP BY 1, method 
@@ -20,12 +20,12 @@ async function getRevenueReport(from, to, groupBy) {
 
 async function getMenuReport() {
   const query = `
-    SELECT mi.name, SUM(oi.quantity) as total_sold
+    SELECT mi.name, SUM(oi.quantity) as total_quantity
     FROM ORDER_ITEMS oi 
     JOIN MENU_ITEMS mi ON mi.id = oi.menu_item_id
     WHERE oi.status = 'SERVED'
-    GROUP BY mi.id 
-    ORDER BY total_sold DESC 
+    GROUP BY mi.id, mi.name
+    ORDER BY total_quantity DESC
     LIMIT 20
   `;
   const { rows } = await pool.query(query);
