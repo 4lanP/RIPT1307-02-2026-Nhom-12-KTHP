@@ -10,7 +10,9 @@ const { dishImageStorage } = require('./config/storage');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // Request tracking middlewares
 app.use(requestId);
