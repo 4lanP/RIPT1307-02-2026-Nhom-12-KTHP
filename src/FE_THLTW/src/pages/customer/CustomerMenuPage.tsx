@@ -9,6 +9,7 @@ import {
   UtensilsCrossed, ArrowLeft, Search, Heart, Star, ChevronRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import ModalPortal from '../../components/ModalPortal'
 
 const STATIONS = [
   { value: '', label: 'Tất cả', icon: UtensilsCrossed, color: 'bg-emerald-50 text-emerald-600' },
@@ -30,6 +31,25 @@ const CustomerMenuPage = () => {
   const [placing, setPlacing] = useState(false)
   const [note, setNote] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [paying, setPaying] = useState(false)
+
+  const handleVNPayPayment = async () => {
+    setPaying(true)
+    try {
+      const res = await customerApi.createVNPayPayment()
+      if (res.data?.payment_url) {
+        toast.success('Đang chuyển hướng đến VNPay...')
+        window.location.href = res.data.payment_url
+      } else {
+        toast.error('Không thể khởi tạo cổng thanh toán')
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Có lỗi xảy ra khi tạo link thanh toán')
+    } finally {
+      setPaying(false)
+    }
+  }
 
   const sessionToken = sessionStorage.getItem('session_token')
 
@@ -82,7 +102,14 @@ const CustomerMenuPage = () => {
     try {
       const params = station ? { station } : {}
       const res = await customerApi.getMenu(params)
-      setMenu(res.data || [])
+      const categories = res.data || []
+      const flatItems = categories.flatMap(cat => 
+        (cat.items || []).map(item => ({
+          ...item,
+          category_name: cat.name
+        }))
+      )
+      setMenu(flatItems)
     } catch {
       toast.error('Không tải được menu')
     }
@@ -353,7 +380,7 @@ const CustomerMenuPage = () => {
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tạm tính</p>
               <p className="text-lg font-black text-gray-900">{formatCurrency(session?.subtotal || 0)}</p>
             </div>
-            <button onClick={requestBill} className="ml-auto w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all">
+            <button onClick={() => setPaymentModalOpen(true)} className="ml-auto w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all" title="Thanh toán hóa đơn">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -507,6 +534,80 @@ const CustomerMenuPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Premium Payment Modal for Customer */}
+      {paymentModalOpen && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-emerald-950/40 backdrop-blur-sm" onClick={() => !paying && setPaymentModalOpen(false)} />
+          <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col">
+            <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Thanh toán</h3>
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Lựa chọn phương thức thanh toán</p>
+              </div>
+              <button onClick={() => !paying && setPaymentModalOpen(false)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
+                <X className="w-5 h-5" strokeWidth={3} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              {/* Bill Details Summary */}
+              <div className="bg-[#F9FBF9] rounded-[32px] p-6 space-y-3 border border-gray-50">
+                <div className="flex justify-between items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <span>Tạm tính</span>
+                  <span className="text-gray-700">{formatCurrency(session?.subtotal || 0)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <span>Thuế VAT (8%)</span>
+                  <span className="text-gray-700">{formatCurrency(session?.tax_amount || 0)}</span>
+                </div>
+                {session?.discount_amount > 0 && (
+                  <div className="flex justify-between items-center text-xs font-bold text-red-400 uppercase tracking-wider">
+                    <span>Giảm giá</span>
+                    <span>-{formatCurrency(session?.discount_amount || 0)}</span>
+                  </div>
+                )}
+                <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tổng tiền cần thu</span>
+                  <span className="text-2xl font-black text-emerald-600 tracking-tight">{formatCurrency(session?.final_amount || 0)}</span>
+                </div>
+              </div>
+
+              {/* Payment Methods Options */}
+              <div className="grid gap-4">
+                <button
+                  onClick={handleVNPayPayment}
+                  disabled={paying || (session?.final_amount || 0) <= 0}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-[0_12px_24px_-8px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:-translate-y-0.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {paying ? (
+                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" strokeWidth={2.5} />
+                      <span className="text-base">Thanh toán Online (VNPay QR)</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    requestBill()
+                    setPaymentModalOpen(false)
+                  }}
+                  disabled={paying}
+                  className="w-full bg-gray-900 hover:bg-black text-white font-black py-5 rounded-[24px] shadow-lg shadow-gray-200 flex items-center justify-center gap-3 transition-all hover:-translate-y-0.5 active:scale-98"
+                >
+                  <Bell className="w-5 h-5" />
+                  <span className="text-base">Gọi nhân viên thu tiền mặt</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
       )}
 
       <style>{`

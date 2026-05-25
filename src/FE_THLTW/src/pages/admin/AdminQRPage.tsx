@@ -3,6 +3,7 @@ import { adminApi } from '../../lib/api'
 import ModalPortal from '../../components/ModalPortal'
 import { QrCode, Plus, Trash2, ToggleLeft, ToggleRight, X, Copy, ExternalLink, RefreshCw, Download, Printer } from 'lucide-react'
 import toast from 'react-hot-toast'
+import QRCode from 'qrcode'
 
 const TableQRCode = ({ code, className }) => {
   const [qrUrl, setQrUrl] = useState('')
@@ -11,20 +12,18 @@ const TableQRCode = ({ code, className }) => {
     let active = true
     const scanUrl = `${window.location.origin}/scan?qr=${encodeURIComponent(code)}`
     
-    import('qrcode').then(QRCode => {
-      QRCode.default.toDataURL(scanUrl, {
-        width: 300,
-        margin: 1,
-        color: {
-          dark: '#10b981', // emerald-500
-          light: '#ffffff'
-        }
-      })
-      .then(url => {
-        if (active) setQrUrl(url)
-      })
-      .catch(err => console.error('Failed to generate QR:', err))
+    QRCode.toDataURL(scanUrl, {
+      width: 300,
+      margin: 1,
+      color: {
+        dark: '#10b981', // emerald-500
+        light: '#ffffff'
+      }
     })
+    .then(url => {
+      if (active) setQrUrl(url)
+    })
+    .catch(err => console.error('Failed to generate QR:', err))
 
     return () => {
       active = false
@@ -114,147 +113,147 @@ const AdminQRPage = () => {
 
   const downloadHighResQR = (qr) => {
     const scanUrl = `${window.location.origin}/scan?qr=${encodeURIComponent(qr.code)}`
-    import('qrcode').then(QRCode => {
-      QRCode.default.toDataURL(scanUrl, {
-        width: 1200,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      })
-      .then(url => {
-        const link = document.createElement('a')
-        link.download = `3POS-QR-${qr.table_name?.replace(/\s/g, '-') || 'Table'}-${qr.code}.png`
-        link.href = url
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        toast.success('Đã tải xuống QR độ phân giải cao để in ấn!')
-      })
-      .catch(() => toast.error('Không thể tải xuống mã QR'))
+    QRCode.toDataURL(scanUrl, {
+      width: 1200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
     })
+    .then(url => {
+      const link = document.createElement('a')
+      link.download = `3POS-QR-${qr.table_name?.replace(/\s/g, '-') || 'Table'}-${qr.code}.png`
+      link.href = url
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success('Đã tải xuống QR độ phân giải cao để in ấn!')
+    })
+    .catch(() => toast.error('Không thể tải xuống mã QR'))
   }
 
   const printPlacard = (qr) => {
     const scanUrl = `${window.location.origin}/scan?qr=${encodeURIComponent(qr.code)}`
-    import('qrcode').then(QRCode => {
-      QRCode.default.toDataURL(scanUrl, {
-        width: 600,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      })
-      .then(qrUrl => {
-        const printWindow = window.open('', '_blank')
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Placard Bàn - ${qr.table_name || 'Bàn ' + qr.table_id}</title>
-              <style>
-                body {
-                  font-family: system-ui, -apple-system, sans-serif;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  height: 100vh;
-                  margin: 0;
-                  background-color: #ffffff;
-                  color: #111827;
-                }
-                .placard {
-                  border: 6px solid #10b981;
-                  border-radius: 40px;
-                  padding: 50px;
-                  text-align: center;
-                  max-width: 450px;
-                  box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-                }
-                .logo {
-                  font-size: 42px;
-                  font-weight: 900;
-                  color: #10b981;
-                  margin-bottom: 5px;
-                  letter-spacing: 0.05em;
-                }
-                .tagline {
-                  font-size: 13px;
-                  color: #4b5563;
-                  text-transform: uppercase;
-                  letter-spacing: 0.2em;
-                  margin-bottom: 35px;
-                  font-weight: 800;
-                }
-                .qr-container {
-                  background: #f9fafb;
-                  padding: 24px;
-                  border-radius: 32px;
-                  border: 2px dashed #e5e7eb;
-                  display: inline-block;
-                  margin-bottom: 35px;
-                }
-                .qr-image {
-                  width: 280px;
-                  height: 280px;
-                  display: block;
-                }
-                .instruction {
-                  font-size: 18px;
-                  font-weight: 900;
-                  letter-spacing: 0.1em;
-                  margin-bottom: 8px;
-                  text-transform: uppercase;
-                  color: #111827;
-                }
-                .sub-instruction {
-                  font-size: 12px;
-                  color: #6b7280;
-                  margin-bottom: 30px;
-                  font-weight: 500;
-                }
-                .table-badge {
-                  background: #111827;
-                  color: #ffffff;
-                  font-size: 28px;
-                  font-weight: 900;
-                  padding: 14px 40px;
-                  border-radius: 20px;
-                  display: inline-block;
-                  letter-spacing: 0.05em;
-                }
-                @media print {
-                  body { height: auto; }
-                  .placard { border: 4px solid #000000; box-shadow: none; }
-                  .table-badge { background: #000000; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="placard">
-                <div class="logo">3POS</div>
-                <div class="tagline">Hệ Thống Đặt Món Tại Bàn</div>
-                <div class="qr-container">
-                  <img class="qr-image" src="${qrUrl}" alt="QR" />
-                </div>
-                <div class="instruction">QUÉT MÃ ĐỂ ĐẶT MÓN</div>
-                <div class="sub-instruction">Sử dụng camera điện thoại để quét mã QR và chọn món</div>
-                <div class="table-badge">${(qr.table_name || 'Bàn ' + qr.table_id).toUpperCase()}</div>
-              </div>
-              <script>
-                window.onload = function() {
-                  window.print();
-                }
-              </script>
-            </body>
-          </html>
-        `)
-        printWindow.document.close()
-      })
-      .catch(() => toast.error('Không thể khởi tạo bản in'))
+    QRCode.toDataURL(scanUrl, {
+      width: 600,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
     })
+    .then(qrUrl => {
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        toast.error('Không thể mở cửa sổ in. Vui lòng cho phép popup.')
+        return
+      }
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Placard Bàn - ${qr.table_name || 'Bàn ' + qr.table_id}</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #ffffff;
+                color: #111827;
+              }
+              .placard {
+                border: 6px solid #10b981;
+                border-radius: 40px;
+                padding: 50px;
+                text-align: center;
+                max-width: 450px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+              }
+              .logo {
+                font-size: 42px;
+                font-weight: 900;
+                color: #10b981;
+                margin-bottom: 5px;
+                letter-spacing: 0.05em;
+              }
+              .tagline {
+                font-size: 13px;
+                color: #4b5563;
+                text-transform: uppercase;
+                letter-spacing: 0.2em;
+                margin-bottom: 35px;
+                font-weight: 800;
+              }
+              .qr-container {
+                background: #f9fafb;
+                padding: 24px;
+                border-radius: 32px;
+                border: 2px dashed #e5e7eb;
+                display: inline-block;
+                margin-bottom: 35px;
+              }
+              .qr-image {
+                width: 280px;
+                height: 280px;
+                display: block;
+              }
+              .instruction {
+                font-size: 18px;
+                font-weight: 900;
+                letter-spacing: 0.1em;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                color: #111827;
+              }
+              .sub-instruction {
+                font-size: 12px;
+                color: #6b7280;
+                margin-bottom: 30px;
+                font-weight: 500;
+              }
+              .table-badge {
+                background: #111827;
+                color: #ffffff;
+                font-size: 28px;
+                font-weight: 900;
+                padding: 14px 40px;
+                border-radius: 20px;
+                display: inline-block;
+                letter-spacing: 0.05em;
+              }
+              @media print {
+                body { height: auto; }
+                .placard { border: 4px solid #000000; box-shadow: none; }
+                .table-badge { background: #000000; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="placard">
+              <div class="logo">3POS</div>
+              <div class="tagline">Hệ Thống Đặt Món Tại Bàn</div>
+              <div class="qr-container">
+                <img class="qr-image" src="${qrUrl}" alt="QR" />
+              </div>
+              <div class="instruction">QUÉT MÃ ĐỂ ĐẶT MÓN</div>
+              <div class="sub-instruction">Sử dụng camera điện thoại để quét mã QR và chọn món</div>
+              <div class="table-badge">${(qr.table_name || 'Bàn ' + qr.table_id).toUpperCase()}</div>
+            </div>
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+    })
+    .catch(() => toast.error('Không thể khởi tạo bản in'))
   }
 
   return (

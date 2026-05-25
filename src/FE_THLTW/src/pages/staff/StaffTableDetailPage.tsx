@@ -13,13 +13,15 @@ import toast from 'react-hot-toast'
 const StaffTableDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAdmin, isManager } = useAuth()
+  const { user, isAdmin, isManager } = useAuth()
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [processing, setProcessing] = useState(false)
   const [forceClosing, setForceClosing] = useState(false)
+
+  const canCheckout = isAdmin || isManager || user?.role === 'CASHIER'
 
   useEffect(() => {
     loadSession()
@@ -30,7 +32,7 @@ const StaffTableDetailPage = () => {
     try {
       const res = await staffApi.getTableSession(id)
       setSession(res.data)
-      setAmount(String(res.data?.final_amount || res.data?.subtotal || ''))
+      setAmount('')
     } catch {
       toast.error('Không có phiên hoạt động')
       navigate('/tables')
@@ -41,7 +43,7 @@ const StaffTableDetailPage = () => {
 
   const handleCheckout = async () => {
     const amtNum = parseInt(amount)
-    if (!amtNum || amtNum < (session?.final_amount || 0)) {
+    if (isNaN(amtNum) || amtNum < (session?.final_amount || 0)) {
       toast.error(`Số tiền không đủ`)
       return
     }
@@ -231,49 +233,71 @@ const StaffTableDetailPage = () => {
                 <p className="text-3xl font-black text-emerald-700">{formatCurrency(finalAmount)}</p>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Số tiền khách đưa</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    min={finalAmount}
-                    className="w-full bg-[#F9FBF9] border border-gray-100 rounded-[20px] pl-12 pr-6 py-4 text-xl font-black text-gray-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-                    placeholder={String(finalAmount)}
-                  />
+              {!canCheckout ? (
+                <div className="bg-amber-50 border border-amber-100 text-amber-700 p-6 rounded-[28px] text-xs font-bold leading-relaxed space-y-2">
+                  <p>⚠️ Quyền hạn của bạn ({user?.role === 'WAITER' ? 'Phục vụ' : user?.role || 'Khác'}) không được phép thanh toán hóa đơn.</p>
+                  <p>Vui lòng liên hệ Thu ngân hoặc Quản lý để hoàn tất thanh toán hoặc giải phóng bàn.</p>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Số tiền khách đưa</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
+                        min={finalAmount}
+                        className="w-full bg-[#F9FBF9] border border-gray-100 rounded-[20px] pl-12 pr-6 py-4 text-xl font-black text-gray-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                        placeholder={String(finalAmount)}
+                      />
+                    </div>
+                  </div>
 
-              {/* Suggestions */}
-              <div className="grid grid-cols-2 gap-2">
-                {[finalAmount, Math.ceil(finalAmount / 50000) * 50000, Math.ceil(finalAmount / 100000) * 100000, Math.ceil(finalAmount / 500000) * 500000].filter((v, i, a) => a.indexOf(v) === i).slice(0, 4).map(amt => (
-                  <button
-                    key={amt}
-                    onClick={() => setAmount(String(amt))}
-                    className="py-3 px-2 rounded-xl text-[10px] font-black text-gray-500 border border-gray-100 hover:bg-white hover:border-emerald-200 hover:text-emerald-600 hover:shadow-sm transition-all text-center uppercase tracking-tighter"
-                  >
-                    {formatCurrency(amt)}
-                  </button>
-                ))}
-              </div>
+                  {/* Suggestions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[finalAmount, Math.ceil(finalAmount / 50000) * 50000, Math.ceil(finalAmount / 100000) * 100000, Math.ceil(finalAmount / 500000) * 500000].filter((v, i, a) => a.indexOf(v) === i).slice(0, 4).map(amt => (
+                      <button
+                        key={amt}
+                        onClick={() => setAmount(String(amt))}
+                        className="py-3 px-2 rounded-xl text-[10px] font-black text-gray-500 border border-gray-100 hover:bg-white hover:border-emerald-200 hover:text-emerald-600 hover:shadow-sm transition-all text-center uppercase tracking-tighter"
+                      >
+                        {formatCurrency(amt)}
+                      </button>
+                    ))}
+                  </div>
 
-              {amount && parseInt(amount) > finalAmount && (
-                <div className="flex items-center justify-between px-2 pt-4 border-t border-gray-50">
-                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiền thối lại</span>
-                   <span className="text-xl font-black text-emerald-600">{formatCurrency(change)}</span>
-                </div>
+                  {amount && parseInt(amount) > finalAmount && (
+                    <div className="flex items-center justify-between px-2 pt-4 border-t border-gray-50">
+                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiền thối lại</span>
+                       <span className="text-xl font-black text-emerald-600">{formatCurrency(change)}</span>
+                    </div>
+                  )}
+
+                  {allItems.length === 0 ? (
+                    <button
+                      onClick={() => {
+                        setAmount('0')
+                        setCheckoutOpen(true)
+                      }}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
+                    >
+                      <CheckCircle className="w-6 h-6" strokeWidth={3} />
+                      <span className="text-lg">Giải phóng bàn trống</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setCheckoutOpen(true)}
+                      disabled={!amount || parseInt(amount) < finalAmount}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-100 disabled:text-gray-400 text-white font-black py-5 rounded-[24px] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
+                    >
+                      <CheckCircle className="w-6 h-6" strokeWidth={3} />
+                      <span className="text-lg">Hoàn tất hóa đơn</span>
+                    </button>
+                  )}
+                </>
               )}
-
-              <button
-                onClick={() => setCheckoutOpen(true)}
-                disabled={!amount || parseInt(amount) < finalAmount}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-100 disabled:text-gray-400 text-white font-black py-5 rounded-[24px] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
-              >
-                <CheckCircle className="w-6 h-6" strokeWidth={3} />
-                <span className="text-lg">Hoàn tất hóa đơn</span>
-              </button>
             </div>
           </div>
         </div>

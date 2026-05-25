@@ -26,11 +26,48 @@ const StatCard = ({ icon: Icon, label, value, color, trend }) => (
   </div>
 )
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    return `${day}/${month}`
+  } catch {
+    return dateStr
+  }
+}
+
+const formatFullDate = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const year = d.getFullYear()
+    return `${day}/${month}/${year}`
+  } catch {
+    return dateStr
+  }
+}
+
+const formatYAxis = (value) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')}M`
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}K`
+  }
+  return value
+}
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 text-white p-4 rounded-2xl shadow-xl border border-gray-800 animate-fade-in">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{formatFullDate(label)}</p>
         <p className="text-lg font-black">{formatCurrency(payload[0].value)}</p>
       </div>
     )
@@ -68,7 +105,23 @@ const AdminDashboardPage = () => {
         adminApi.getMenuReport(),
         staffApi.getTables(),
       ])
-      setRevenue(revRes.data || [])
+      const rawRevenue = revRes.data || []
+      const aggregatedRevenue = rawRevenue.reduce((acc, current) => {
+        const dateKey = current.date
+        const existing = acc.find(item => item.date === dateKey)
+        if (existing) {
+          existing.total += Number(current.total || 0)
+          existing.order_count += Number(current.order_count || 0)
+        } else {
+          acc.push({
+            ...current,
+            total: Number(current.total || 0),
+            order_count: Number(current.order_count || 0)
+          })
+        }
+        return acc
+      }, [])
+      setRevenue(aggregatedRevenue)
       setMenuReport((menuRes.data || []).slice(0, 5))
       setTables(tableRes.data || [])
     } catch { toast.error('Lỗi tải dữ liệu') }
@@ -167,13 +220,14 @@ const AdminDashboardPage = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                    tickFormatter={formatDate}
                     dy={15}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
-                    tickFormatter={v => `${(v / 1000000).toFixed(1)}M`}
+                    tickFormatter={formatYAxis}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area 
