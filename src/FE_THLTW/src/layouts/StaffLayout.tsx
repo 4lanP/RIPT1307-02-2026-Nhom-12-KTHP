@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { staffApi } from '../lib/api'
+import { getStaffSocket } from '../lib/socket'
 import {
   LayoutGrid, Users, UtensilsCrossed, BarChart3, QrCode,
   Table2, Bell, LogOut, ChefHat, Menu, X, Search
@@ -26,6 +28,38 @@ const StaffLayout = () => {
   const { user, logout, isKitchen } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activeRequestsCount, setActiveRequestsCount] = useState(0)
+
+  useEffect(() => {
+    loadRequestsCount()
+    const accessToken = localStorage.getItem('accessToken')
+    if (!accessToken) return
+    const socket = getStaffSocket(accessToken)
+    
+    const handleNewRequest = () => {
+      loadRequestsCount()
+    }
+    
+    socket.on('new_request', handleNewRequest)
+    socket.on('table:status_update', handleNewRequest)
+    
+    const interval = setInterval(loadRequestsCount, 10000)
+    
+    return () => {
+      socket.off('new_request', handleNewRequest)
+      socket.off('table:status_update', handleNewRequest)
+      clearInterval(interval)
+    }
+  }, [])
+
+  const loadRequestsCount = async () => {
+    try {
+      const res = await staffApi.getRequests()
+      setActiveRequestsCount(res.data?.length || 0)
+    } catch {
+      // ignore
+    }
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -137,9 +171,17 @@ const StaffLayout = () => {
           </div>
           
           <div className="flex items-center gap-5">
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white"></span>
+            <button 
+              onClick={() => navigate('/requests')}
+              className="relative p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
+              title="Xem yêu cầu từ khách hàng"
+            >
+              <Bell className="w-5.5 h-5.5" />
+              {activeRequestsCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center px-1 animate-pulse">
+                  {activeRequestsCount}
+                </span>
+              )}
             </button>
             <div className="h-8 w-px bg-gray-200"></div>
             <div className="flex items-center gap-3">

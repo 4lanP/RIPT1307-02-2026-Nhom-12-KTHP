@@ -12,7 +12,11 @@ const api = axios.create({
 // Request interceptor — attach token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('session_token')
+    const isCustomerUrl = config.url?.startsWith('/customer')
+    const token = isCustomerUrl
+      ? (sessionStorage.getItem('session_token') || localStorage.getItem('accessToken'))
+      : (localStorage.getItem('accessToken') || sessionStorage.getItem('session_token'))
+      
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -26,7 +30,8 @@ api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
+    const isCustomerUrl = original?.url?.startsWith('/customer')
+    if (error.response?.status === 401 && !original._retry && !isCustomerUrl) {
       original._retry = true
       const refreshToken = localStorage.getItem('refreshToken')
       if (refreshToken) {
