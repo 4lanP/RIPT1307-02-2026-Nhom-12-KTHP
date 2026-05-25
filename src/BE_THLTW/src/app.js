@@ -52,12 +52,10 @@ const swaggerSpec = require('./config/swagger');
 
 app.use('/api', routes);
 
-if (process.env.NODE_ENV !== 'production') {
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: 'Restaurant API Docs',
-    customCss: '.swagger-ui .topbar { display: none }',
-  }));
-}
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'Restaurant API Docs',
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
 app.get('/api/docs.json', (req, res) => res.json(swaggerSpec));
 
 app.use(errorHandler);
