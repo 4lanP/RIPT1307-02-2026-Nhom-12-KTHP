@@ -17,7 +17,15 @@ async function scan(qr_code) {
     const table = tableRes.rows[0];
 
     if (table.status === 'OCCUPIED') {
-      throw new ConflictError('Bàn đang có khách, vui lòng liên hệ nhân viên');
+      const activeSession = await client.query(
+        `SELECT id FROM SESSIONS WHERE table_id = $1 AND status = 'ACTIVE' LIMIT 1`,
+        [table.id]
+      );
+      if (activeSession.rows.length > 0) {
+        await client.query('COMMIT');
+        const session_token = generateSessionToken(activeSession.rows[0].id);
+        return { session_token, table_name: table.name };
+      }
     }
 
     const sessionRes = await client.query(

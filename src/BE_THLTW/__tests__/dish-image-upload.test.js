@@ -139,7 +139,8 @@ describe('Dish image upload', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.body).toEqual(expect.objectContaining({ success: false, errors: expect.any(Array) }));
+    expect(response.body.success).toBe(false);
+    expect(Array.isArray(response.body.errors)).toBe(true);
   });
 
   it('rejects unsupported file types', async () => {

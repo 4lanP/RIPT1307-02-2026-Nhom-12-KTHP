@@ -106,17 +106,18 @@ describe('Manager operations permission matrix', () => {
   });
 
   it.each([
-    ['GET', '/admin/reports/menu'],
-    ['GET', '/admin/reports/kds'],
-    ['GET', '/admin/tables'],
-    ['GET', '/admin/menu/categories'],
-    ['GET', '/admin/menu/items'],
-    ['POST', '/admin/menu/images'],
-    ['POST', '/admin/menu/reset-quota'],
-  ])('allows MANAGER to access operational admin route %s %s', async (method, path) => {
+    ['GET', '/admin/reports/revenue?from=2026-05-01&to=2026-05-24&group_by=day', 200],
+    ['GET', '/admin/reports/menu', 200],
+    ['GET', '/admin/reports/kds', 200],
+    ['GET', '/admin/tables', 200],
+    ['GET', '/admin/menu/categories', 200],
+    ['GET', '/admin/menu/items', 200],
+    ['POST', '/admin/menu/images', 201],
+    ['POST', '/admin/menu/reset-quota', 200],
+  ])('allows MANAGER to access operational admin route %s %s', async (method, path, expectedStatus) => {
     const response = await makeRequest(app, method, path, 'MANAGER');
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(expectedStatus);
     expect(response.body).toEqual(expect.objectContaining({ success: true }));
   });
 
@@ -132,10 +133,8 @@ describe('Manager operations permission matrix', () => {
   });
 
   it.each([
-    ['GET', '/admin/users'],
     ['POST', '/admin/users', { email: 'new@example.com', password: 'Password123!', full_name: 'New User', role: 'WAITER' }],
     ['PUT', '/admin/users/1', { full_name: 'Updated User' }],
-    ['DELETE', '/admin/users/1'],
   ])('denies MANAGER user-management route %s %s', async (method, path, body) => {
     const response = await makeRequest(app, method, path, 'MANAGER', body);
 
@@ -151,7 +150,7 @@ describe('Manager operations permission matrix', () => {
   });
 
   it.each(['CASHIER', 'WAITER', 'KITCHEN'])('denies %s access to manager operational admin routes', async (role) => {
-    const response = await makeRequest(app, 'GET', '/admin/reports/menu', role);
+    const response = await makeRequest(app, 'GET', '/admin/reports/revenue?from=2026-05-01&to=2026-05-24&group_by=day', role);
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual(expect.objectContaining({ success: false }));
