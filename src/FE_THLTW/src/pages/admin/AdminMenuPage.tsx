@@ -153,9 +153,9 @@ const AdminMenuPage = () => {
             <RefreshCw className={`w-4 h-4 ${resetting ? 'animate-spin' : ''}`} />
             Reset Quota
           </button>
-          <button 
-            onClick={openCreate} 
-            disabled={categories.length === 0}
+          <button
+            onClick={openCreate}
+            disabled={loading}
             className="flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" strokeWidth={3} />

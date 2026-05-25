@@ -234,6 +234,36 @@ Admin endpoints đã implement:
 | `GET` | `/admin/reports/export` | ADMIN/MANAGER | Export Excel vận hành |
 | `POST` | `/admin/menu/reset-quota` | ADMIN/MANAGER | Reset quota món |
 
+Revenue report response data:
+
+```json
+[
+  {
+    "date": "2026-05-24T00:00:00.000Z",
+    "method": "CASH",
+    "total": "450000",
+    "order_count": "9"
+  }
+]
+```
+
+Menu report response data:
+
+```json
+[
+  {
+    "name": "Ca phe sua da",
+    "total_quantity": "32"
+  }
+]
+```
+
+Contract notes:
+
+- `/admin/reports/revenue` supports `group_by=day|week|month` and requires `from`/`to` as `YYYY-MM-DD`.
+- Revenue rows use `date`, `total`, and `order_count`; old aliases such as `period` and `total_amount` are not part of the admin chart contract.
+- `/admin/reports/menu` returns top served menu items using `name` and `total_quantity`; old aliases such as `total_sold` are not part of the admin chart contract.
+
 Admin CRUD endpoints:
 
 | Method | Path | Auth | Mô tả |

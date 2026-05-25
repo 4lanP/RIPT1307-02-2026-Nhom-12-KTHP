@@ -154,6 +154,81 @@ async function seed() {
     }
     console.log(`✅ Seeded categories, items and options.`);
 
+    // --- MOCK OPERATIONAL DATA FOR DASHBOARD ---
+    console.log('Seeding mock operational data for dashboard analytics...');
+    const itemsRes = await client.query('SELECT id, name, price FROM MENU_ITEMS');
+    const items = itemsRes.rows;
+    const tablesRes = await client.query('SELECT id FROM TABLES');
+    const tableIds = tablesRes.rows.map(r => r.id);
+    const qrCodesRes = await client.query('SELECT id, table_id FROM QR_CODES');
+    const qrCodes = qrCodesRes.rows;
+    
+    const now = new Date();
+    let paymentCount = 1;
+    
+    for (let d = 7; d >= 0; d--) {
+      const sessionDate = new Date();
+      sessionDate.setDate(now.getDate() - d);
+      
+      // 2 completed sessions per day
+      for (let s = 1; s <= 2; s++) {
+        const tableId = tableIds[(d * 2 + s) % tableIds.length];
+        const qrCode = qrCodes.find(q => q.table_id === tableId);
+        
+        const randomItem1 = items[(d + s) % items.length];
+        const randomItem2 = items[(d + s + 1) % items.length];
+        
+        const qty1 = 2;
+        const qty2 = 1;
+        const subtotal = (randomItem1.price * qty1) + (randomItem2.price * qty2);
+        const tax = Math.round(subtotal * 0.1);
+        const finalAmount = subtotal + tax;
+        
+        // Insert closed session
+        const sessionRes = await client.query(
+          `INSERT INTO SESSIONS (table_id, qr_code_id, status, subtotal, discount_amount, tax_amount, final_amount, started_at, ended_at)
+           VALUES ($1, $2, 'CLOSED', $3, 0, $4, $5, $6, $6) RETURNING id`,
+          [tableId, qrCode ? qrCode.id : null, subtotal, tax, finalAmount, sessionDate]
+        );
+        const sessionId = sessionRes.rows[0].id;
+        
+        // Insert order
+        const orderRes = await client.query(
+          `INSERT INTO ORDERS (session_id, table_id, status, created_at)
+           VALUES ($1, $2, 'SERVED', $3) RETURNING id`,
+          [sessionId, tableId, sessionDate]
+        );
+        const orderId = orderRes.rows[0].id;
+        
+        // Insert order items (served status)
+        await client.query(
+          `INSERT INTO ORDER_ITEMS (order_id, menu_item_id, quantity, unit_price, status)
+           VALUES ($1, $2, $3, $4, 'SERVED')`,
+          [orderId, randomItem1.id, qty1, randomItem1.price]
+        );
+        
+        await client.query(
+          `INSERT INTO ORDER_ITEMS (order_id, menu_item_id, quantity, unit_price, status)
+           VALUES ($1, $2, $3, $4, 'SERVED')`,
+          [orderId, randomItem2.id, qty2, randomItem2.price]
+        );
+        
+        // Insert completed payment
+        await client.query(
+          `INSERT INTO PAYMENTS (session_id, method, amount, status, transaction_id, paid_at)
+           VALUES ($1, $2, $3, 'COMPLETED', $4, $5)`,
+          [
+            sessionId,
+            s % 2 === 0 ? 'CASH' : 'VNPAY',
+            finalAmount,
+            `TXN-${sessionDate.getTime()}-${paymentCount++}`,
+            sessionDate
+          ]
+        );
+      }
+    }
+    console.log('✅ Seeded mock operational data successfully.');
+
     await client.query('COMMIT');
     console.log('🌱 Seed hoàn tất!');
   } catch (err) {

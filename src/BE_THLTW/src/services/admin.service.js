@@ -166,7 +166,7 @@ async function toggleQrCode(id) {
 }
 
 async function deleteQrCode(id) {
-  const { rows } = await pool.query('DELETE FROM QR_CODES WHERE id = $1 RETURNING *', [id]);
+  const { rows } = await pool.query('UPDATE QR_CODES SET is_active = false WHERE id = $1 RETURNING *', [id]);
   ensureFound(rows, 'QR code not found');
   return { success: true };
 }

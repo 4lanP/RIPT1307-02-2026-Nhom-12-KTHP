@@ -10,18 +10,19 @@ import {
 import toast from 'react-hot-toast'
 
 // Ma trận vai trò theo frontend-handoff.md:
-// Staff HTTP: CASHIER, MANAGER, ADMIN → /tables, /requests
+// Staff HTTP: CASHIER, MANAGER, ADMIN, WAITER -> /tables, /requests
 // Staff force-close: MANAGER, ADMIN (xử lý trong trang detail)
-// Admin HTTP: chỉ ADMIN → /admin/*
+// Admin operational HTTP: ADMIN, MANAGER -> dashboard/reports/menu/tables/QR
+// Admin user management: chỉ ADMIN -> /admin/users
 const navItems = [
   { to: '/tables', icon: Table2, label: 'Quản lý bàn', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
   { to: '/requests', icon: Bell, label: 'Yêu cầu', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
-  { to: '/admin/dashboard', icon: LayoutGrid, label: 'Dashboard', roles: ['ADMIN'] },
-  { to: '/admin/reports', icon: BarChart3, label: 'Báo cáo', roles: ['ADMIN'] },
-  { to: '/admin/menu', icon: UtensilsCrossed, label: 'Menu', roles: ['ADMIN'] },
+  { to: '/admin/dashboard', icon: LayoutGrid, label: 'Dashboard', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/reports', icon: BarChart3, label: 'Báo cáo', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/menu', icon: UtensilsCrossed, label: 'Menu', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/users', icon: Users, label: 'Nhân viên', roles: ['ADMIN'] },
-  { to: '/admin/tables', icon: Table2, label: 'Quản lý bàn (Admin)', roles: ['ADMIN'] },
-  { to: '/admin/qr', icon: QrCode, label: 'Mã QR', roles: ['ADMIN'] },
+  { to: '/admin/tables', icon: Table2, label: 'Quản lý bàn (Admin)', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/qr', icon: QrCode, label: 'Mã QR', roles: ['ADMIN', 'MANAGER'] },
 ]
 
 const StaffLayout = () => {

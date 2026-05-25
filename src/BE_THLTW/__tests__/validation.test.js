@@ -116,6 +116,32 @@ describe('Validation middleware', () => {
     expectValidationError(next.mock.calls[0][0], ['query.from', 'query.to']);
   });
 
+  it('accepts admin revenue report date filters and allowed grouping values', () => {
+    ['day', 'week', 'month'].forEach((group_by) => {
+      const req = {
+        body: {},
+        query: { from: '2026-05-01', to: '2026-05-24', group_by },
+        params: {},
+      };
+      const { res, next } = runValidation(revenueReportSchema, req);
+
+      expect(next).toHaveBeenCalledWith();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+  });
+
+  it('rejects unsupported admin revenue report grouping values before controller code runs', () => {
+    const req = {
+      body: {},
+      query: { from: '2026-05-01', to: '2026-05-24', group_by: 'quarter' },
+      params: {},
+    };
+    const { next } = runValidation(revenueReportSchema, req);
+
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400 }));
+    expectValidationError(next.mock.calls[0][0], ['query.group_by']);
+  });
+
   it('accepts empty endpoints and rejects unexpected query values', () => {
     const valid = runValidation(emptySchema, { body: {}, query: {}, params: {} });
     expect(valid.next).toHaveBeenCalledWith();

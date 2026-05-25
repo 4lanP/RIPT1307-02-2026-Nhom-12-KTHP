@@ -8,7 +8,7 @@ async function getOrdersByStation(station) {
       t.name as table_name, 
       o.created_at, 
       json_agg(json_build_object(
-        'order_item_id', oi.id,
+        'id', oi.id,
         'menu_item_id', mi.id,
         'name', mi.name,
         'quantity', oi.quantity,
