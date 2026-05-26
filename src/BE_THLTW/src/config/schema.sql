@@ -4,7 +4,7 @@ CREATE TYPE table_status AS ENUM ('AVAILABLE', 'OCCUPIED');
 CREATE TYPE session_status AS ENUM ('ACTIVE', 'CLOSED');
 CREATE TYPE order_status AS ENUM ('PENDING', 'PREPARING', 'READY', 'SERVED', 'CANCELLED');
 CREATE TYPE order_item_status AS ENUM ('PENDING', 'PREPARING', 'READY', 'SERVED', 'CANCELLED');
-CREATE TYPE payment_method AS ENUM ('CASH', 'VNPAY');
+CREATE TYPE payment_method AS ENUM ('CASH', 'VNPAY', 'BANK_TRANSFER');
 CREATE TYPE payment_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 CREATE TYPE request_type AS ENUM ('CALL_STAFF', 'REQUEST_BILL', 'OTHER');
 CREATE TYPE request_status AS ENUM ('OPEN', 'RESOLVED');
@@ -130,6 +130,16 @@ CREATE TABLE PAYMENTS (
     paid_at TIMESTAMP
 );
 
+CREATE TABLE RESTAURANT_SETTINGS (
+    key VARCHAR(100) PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+INSERT INTO RESTAURANT_SETTINGS (key, value)
+VALUES ('bank_config', '{"bank_id":"","account_number":"","account_owner":""}'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+
 CREATE TABLE ORDER_STATUS_LOGS (
     id SERIAL PRIMARY KEY,
     order_id INT REFERENCES ORDERS(id),
@@ -147,13 +157,4 @@ CREATE TABLE CUSTOMER_REQUESTS (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP
 );
-
-CREATE TABLE RESTAURANT_SETTINGS (
-    key VARCHAR(100) PRIMARY KEY,
-    value JSONB NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO RESTAURANT_SETTINGS (key, value) VALUES 
-('bank_config', '{"bank_id": "", "account_number": "", "account_owner": ""}'::jsonb);
 

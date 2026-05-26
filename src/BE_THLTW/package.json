@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "test": "jest --runInBand --forceExit",
     "seed": "node src/config/seed.js",
+    "migrate:bank-settings": "node src/config/migrateBankSettings.js",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down -v && docker compose up --build",
