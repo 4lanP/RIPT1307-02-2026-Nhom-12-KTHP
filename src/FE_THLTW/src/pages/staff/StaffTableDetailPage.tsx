@@ -150,6 +150,8 @@ const StaffTableDetailPage = () => {
             </button>
           )}
         </div>
+      </div>
+
       {session.pending_bank_transfer && (
         <div className="bg-emerald-50 border-2 border-emerald-300 rounded-[28px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm animate-pulse">
           <div className="flex items-center gap-4">
