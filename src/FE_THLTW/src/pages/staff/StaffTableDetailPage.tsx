@@ -251,7 +251,7 @@ const StaffTableDetailPage = () => {
                           </span>
                         </td>
                         <td className="py-5 text-right font-black text-gray-900 text-sm">
-                          {formatCurrency(item.price * item.quantity)}
+                          {formatCurrency(Number(item.unit_price ?? item.price ?? 0) * item.quantity)}
                         </td>
                         <td className="py-5 text-right">
                           {!['SERVED', 'CANCELLED'].includes(item.status) && (
