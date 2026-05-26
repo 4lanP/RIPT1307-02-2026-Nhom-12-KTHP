@@ -71,6 +71,16 @@ async function forceCloseSession(req, res, next) {
   }
 }
 
+async function confirmBankTransfer(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await sessionService.confirmBankTransfer(id);
+    return successResponse(res, 200, 'Xac nhan chuyen khoan thanh cong', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getTables,
   getTableSession,
@@ -79,4 +89,5 @@ module.exports = {
   getRequests,
   resolveRequest,
   forceCloseSession,
+  confirmBankTransfer,
 };

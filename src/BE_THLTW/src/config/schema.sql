@@ -147,3 +147,13 @@ CREATE TABLE CUSTOMER_REQUESTS (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP
 );
+
+CREATE TABLE RESTAURANT_SETTINGS (
+    key VARCHAR(100) PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO RESTAURANT_SETTINGS (key, value) VALUES 
+('bank_config', '{"bank_id": "", "account_number": "", "account_owner": ""}'::jsonb);
+

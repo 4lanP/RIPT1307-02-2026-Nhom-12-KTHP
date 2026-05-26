@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { staffApi } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { getStaffSocket } from '../../lib/socket'
 import { formatCurrency, formatDateShort, getStatusLabel, getStatusClass } from '../../lib/utils'
 import ModalPortal from '../../components/ModalPortal'
 import {
   ArrowLeft, CreditCard, X, AlertTriangle, DollarSign,
-  Clock, CheckCircle, UtensilsCrossed, RefreshCw, Table2
+  Clock, CheckCircle, UtensilsCrossed, RefreshCw, Table2, Landmark
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -14,9 +15,10 @@ const StaffTableDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, isAdmin, isManager } = useAuth()
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [bankConfirmOpen, setBankConfirmOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [processing, setProcessing] = useState(false)
   const [forceClosing, setForceClosing] = useState(false)
@@ -25,6 +27,21 @@ const StaffTableDetailPage = () => {
 
   useEffect(() => {
     loadSession()
+    const accessToken = localStorage.getItem('accessToken')
+    if (!accessToken) return
+    const socket = getStaffSocket(accessToken)
+
+    const handleUpdate = () => {
+      loadSession()
+    }
+
+    socket.on('bank_transfer_requested', handleUpdate)
+    socket.on('table:status_update', handleUpdate)
+
+    return () => {
+      socket.off('bank_transfer_requested', handleUpdate)
+      socket.off('table:status_update', handleUpdate)
+    }
   }, [id])
 
   const loadSession = async () => {
@@ -79,6 +96,20 @@ const StaffTableDetailPage = () => {
     } catch { toast.error('Lỗi') }
   }
 
+  const handleConfirmBankTransfer = async () => {
+    setProcessing(true)
+    try {
+      await staffApi.confirmBankTransfer(session.id)
+      toast.success(`✅ Giao dịch đã được duyệt thành công!`)
+      setBankConfirmOpen(false)
+      navigate('/tables')
+    } catch (err) {
+      toast.error('Duyệt giao dịch thất bại')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
@@ -119,7 +150,27 @@ const StaffTableDetailPage = () => {
             </button>
           )}
         </div>
-      </div>
+      {session.pending_bank_transfer && (
+        <div className="bg-emerald-50 border-2 border-emerald-300 rounded-[28px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+              <Landmark className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-gray-900 font-bold">Khách đã chuyển khoản!</h4>
+              <p className="text-gray-600 text-sm">
+                Số tiền: <strong className="text-emerald-700">{formatCurrency(finalAmount)}</strong> · Giao dịch: <strong className="text-gray-800">{session.pending_bank_transfer.transaction_id}</strong>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setBankConfirmOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-2xl shadow-md transition-all active:scale-95 text-sm"
+          >
+            Xác nhận đã nhận tiền
+          </button>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Details */}
@@ -337,6 +388,48 @@ const StaffTableDetailPage = () => {
                 className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
               >
                 {processing ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Xác nhận thu tiền'}
+              </button>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {/* Modern Bank Transfer Confirm Modal */}
+      {bankConfirmOpen && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setBankConfirmOpen(false)} />
+          <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
+            <div className="w-20 h-20 bg-emerald-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100 text-emerald-500">
+               <Landmark className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-center text-gray-900 mb-4 tracking-tight">Xác nhận chuyển khoản</h3>
+            <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed">
+              Vui lòng kiểm tra app ngân hàng của bạn để đảm bảo đã nhận đủ số tiền:
+              <br />
+              <strong className="text-emerald-600 text-xl font-black block mt-2">{formatCurrency(finalAmount)}</strong>
+            </p>
+            <div className="bg-[#F9FBF9] rounded-[32px] p-6 space-y-3 mb-8 border border-gray-50 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-xs">Mã giao dịch</span>
+                <span className="text-gray-800 font-bold">{session.pending_bank_transfer?.transaction_id}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-xs">Bàn</span>
+                <span className="text-gray-800 font-bold">{session.table_name}</span>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setBankConfirmOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleConfirmBankTransfer}
+                disabled={processing}
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {processing ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Xác nhận đã nhận'}
               </button>
             </div>
           </div>

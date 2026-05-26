@@ -159,6 +159,14 @@ const updateOptionSchema = z.object({
   }),
 });
 
+const saveBankSettingsSchema = z.object({
+  body: z.object({
+    bank_id: z.string().min(1, 'Mã ngân hàng không được để trống'),
+    account_number: z.string().regex(/^[A-Za-z0-9]+$/, 'Số tài khoản chỉ được chứa chữ cái và số').min(6).max(20),
+    account_owner: z.string().min(1, 'Tên chủ tài khoản không được để trống'),
+  }),
+});
+
 module.exports = {
   idParamSchema,
   createUserSchema,
@@ -178,4 +186,5 @@ module.exports = {
   emptySchema,
   revenueReportSchema,
   exportReportSchema,
+  saveBankSettingsSchema,
 };

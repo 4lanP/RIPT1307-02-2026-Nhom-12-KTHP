@@ -57,9 +57,11 @@ const StaffTablesPage = () => {
     const socket = getStaffSocket(accessToken)
     socket.on('table:status_update', () => loadTables())
     socket.on('new_request', () => toast('🔔 Yêu cầu mới từ khách!', { icon: '📢' }))
+    socket.on('bank_transfer_requested', () => loadTables())
     return () => {
       socket.off('table:status_update')
       socket.off('new_request')
+      socket.off('bank_transfer_requested')
     }
   }, [])
 

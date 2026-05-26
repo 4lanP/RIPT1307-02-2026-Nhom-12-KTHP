@@ -315,6 +315,46 @@ async function deleteOption(id) {
   return ensureFound(rows, 'Menu option not found');
 }
 
+async function getBankSettings() {
+  const { rows } = await pool.query(
+    `SELECT value FROM RESTAURANT_SETTINGS WHERE key = 'bank_config'`
+  );
+  if (rows.length === 0) {
+    return { bank_id: '', account_number: '', account_owner: '' };
+  }
+  return rows[0].value;
+}
+
+async function saveBankSettings(data) {
+  const bankConfig = {
+    bank_id: (data.bank_id || '').trim(),
+    account_number: (data.account_number || '').trim(),
+    account_owner: (data.account_owner || '').trim().toUpperCase(),
+  };
+
+  if (!bankConfig.bank_id || !bankConfig.account_number || !bankConfig.account_owner) {
+    throw new ValidationError('Thông tin tài khoản ngân hàng không được để trống');
+  }
+
+  if (!/^[A-Za-z0-9]+$/.test(bankConfig.account_number)) {
+    throw new ValidationError('Số tài khoản chỉ được chứa chữ cái và số');
+  }
+
+  if (bankConfig.account_number.length < 6 || bankConfig.account_number.length > 20) {
+    throw new ValidationError('Số tài khoản phải từ 6 đến 20 ký tự');
+  }
+
+  const { rows } = await pool.query(
+    `INSERT INTO RESTAURANT_SETTINGS (key, value, updated_at)
+     VALUES ('bank_config', $1, NOW())
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+     RETURNING value`,
+    [JSON.stringify(bankConfig)]
+  );
+
+  return rows[0].value;
+}
+
 module.exports = {
   listUsers,
   createUser,
@@ -340,4 +380,6 @@ module.exports = {
   createOption,
   updateOption,
   deleteOption,
+  getBankSettings,
+  saveBankSettings,
 };

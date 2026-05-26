@@ -37,12 +37,15 @@ jest.mock('../src/controllers/admin.controller', () => ({
   createOption: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   updateOption: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   deleteOption: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  getBankSettings: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  saveBankSettings: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
 }));
 
 jest.mock('../src/controllers/staff.controller', () => ({
   getTables: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   getTableSession: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   checkoutCash: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  confirmBankTransfer: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   getRequests: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   resolveRequest: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   cancelItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),

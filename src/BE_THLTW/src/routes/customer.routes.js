@@ -360,6 +360,8 @@ router.get('/orders', authenticateSession, validate(emptySchema), customerContro
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/payment/vnpay', authenticateSession, validate(createPaymentSchema), customerController.createPayment);
+router.get('/payment/bank-details', authenticateSession, validate(emptySchema), customerController.getPaymentBankDetails);
+router.post('/payment/bank-transfer', authenticateSession, validate(emptySchema), customerController.requestBankTransfer);
 
 module.exports = router;
 

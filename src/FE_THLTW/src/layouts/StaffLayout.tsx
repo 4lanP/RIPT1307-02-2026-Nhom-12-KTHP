@@ -5,7 +5,7 @@ import { staffApi } from '../lib/api'
 import { getStaffSocket } from '../lib/socket'
 import {
   LayoutGrid, Users, UtensilsCrossed, BarChart3, QrCode,
-  Table2, Bell, LogOut, ChefHat, Menu, X, Search
+  Table2, Bell, LogOut, ChefHat, Menu, X, Search, Landmark
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -23,6 +23,7 @@ const navItems = [
   { to: '/admin/users', icon: Users, label: 'Nhân viên', roles: ['ADMIN'] },
   { to: '/admin/tables', icon: Table2, label: 'Quản lý bàn (Admin)', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/qr', icon: QrCode, label: 'Mã QR', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/settings', icon: Landmark, label: 'Cài đặt ngân hàng', roles: ['ADMIN'] },
 ]
 
 const StaffLayout = () => {
@@ -30,6 +31,36 @@ const StaffLayout = () => {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeRequestsCount, setActiveRequestsCount] = useState(0)
+
+  const playChime = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      const osc1 = audioCtx.createOscillator()
+      const gain1 = audioCtx.createGain()
+      osc1.connect(gain1)
+      gain1.connect(audioCtx.destination)
+      osc1.type = 'sine'
+      osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime) // D5
+      gain1.gain.setValueAtTime(0.1, audioCtx.currentTime)
+      gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4)
+      osc1.start(audioCtx.currentTime)
+      osc1.stop(audioCtx.currentTime + 0.4)
+
+      const osc2 = audioCtx.createOscillator()
+      const gain2 = audioCtx.createGain()
+      osc2.connect(gain2)
+      gain2.connect(audioCtx.destination)
+      osc2.type = 'sine'
+      osc2.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15) // A5
+      gain2.gain.setValueAtTime(0.15, audioCtx.currentTime + 0.15)
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6)
+      osc2.start(audioCtx.currentTime + 0.15)
+      osc2.stop(audioCtx.currentTime + 0.6)
+    } catch (e) {
+      console.error('Audio chime failed to play', e)
+    }
+  }
 
   useEffect(() => {
     loadRequestsCount()
@@ -40,15 +71,46 @@ const StaffLayout = () => {
     const handleNewRequest = () => {
       loadRequestsCount()
     }
+
+    const handleBankTransferRequested = (data: any) => {
+      playChime()
+      toast.success(
+        (t) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold text-gray-900">💳 Yêu cầu chuyển khoản!</span>
+            <span className="text-sm text-gray-600">
+              {data.table_name} đang chờ xác nhận số tiền{' '}
+              <strong className="text-emerald-600 font-bold">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.amount)}
+              </strong>
+            </span>
+          </div>
+        ),
+        {
+          duration: 8000,
+          icon: '🏦',
+          style: {
+            borderRadius: '20px',
+            background: '#ffffff',
+            color: '#111827',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            border: '1px solid #e5e7eb',
+            padding: '16px'
+          }
+        }
+      )
+    }
     
     socket.on('new_request', handleNewRequest)
     socket.on('table:status_update', handleNewRequest)
+    socket.on('bank_transfer_requested', handleBankTransferRequested)
     
     const interval = setInterval(loadRequestsCount, 10000)
     
     return () => {
       socket.off('new_request', handleNewRequest)
       socket.off('table:status_update', handleNewRequest)
+      socket.off('bank_transfer_requested', handleBankTransferRequested)
       clearInterval(interval)
     }
   }, [])

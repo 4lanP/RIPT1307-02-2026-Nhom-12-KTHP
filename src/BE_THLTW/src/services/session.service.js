@@ -172,6 +172,13 @@ async function getTableActiveSession(table_id) {
   // Lấy chi tiết bill
   const { getSessionOrders } = require('./order.service');
   session.orders = await getSessionOrders(session.id);
+
+  // Check for pending bank transfer payment
+  const paymentRes = await pool.query(
+    `SELECT * FROM PAYMENTS WHERE session_id = $1 AND method = 'BANK_TRANSFER' AND status = 'PENDING' LIMIT 1`,
+    [session.id]
+  );
+  session.pending_bank_transfer = paymentRes.rows.length > 0 ? paymentRes.rows[0] : null;
   
   return session;
 }
@@ -310,6 +317,126 @@ async function resolveRequest(request_id) {
   return { success: true };
 }
 
+async function getPaymentBankDetails(session_id) {
+  const sessionRes = await pool.query(
+    `SELECT s.id as session_id, s.final_amount, t.name as table_name
+     FROM SESSIONS s
+     JOIN TABLES t ON t.id = s.table_id
+     WHERE s.id = $1 AND s.status = 'ACTIVE'`,
+    [session_id]
+  );
+  if (sessionRes.rows.length === 0) {
+    throw new NotFoundError('Phiên thanh toán không tồn tại hoặc đã đóng');
+  }
+  const session = sessionRes.rows[0];
+
+  const settingsRes = await pool.query(
+    `SELECT value FROM RESTAURANT_SETTINGS WHERE key = 'bank_config'`
+  );
+  if (settingsRes.rows.length === 0) {
+    return null;
+  }
+  const bankConfig = settingsRes.rows[0].value;
+  if (!bankConfig.bank_id || !bankConfig.account_number || !bankConfig.account_owner) {
+    return null;
+  }
+
+  return {
+    bank_id: bankConfig.bank_id,
+    account_number: bankConfig.account_number,
+    account_owner: bankConfig.account_owner,
+    final_amount: parseFloat(session.final_amount),
+    table_name: session.table_name,
+    session_id: session.session_id,
+  };
+}
+
+async function requestBankTransfer(session_id) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const sessionRes = await client.query(
+      `SELECT s.*, t.name as table_name FROM SESSIONS s JOIN TABLES t ON t.id = s.table_id WHERE s.id = $1 AND s.status = 'ACTIVE' FOR UPDATE`,
+      [session_id]
+    );
+    if (sessionRes.rows.length === 0) throw new NotFoundError('Session không tồn tại hoặc đã đóng');
+    const session = sessionRes.rows[0];
+
+    // Check if there is already a pending bank payment to avoid duplicates
+    const paymentCheck = await client.query(
+      `SELECT id FROM PAYMENTS WHERE session_id = $1 AND method = 'BANK_TRANSFER' AND status = 'PENDING'`,
+      [session_id]
+    );
+
+    if (paymentCheck.rows.length === 0) {
+      await client.query(
+        `INSERT INTO PAYMENTS (session_id, method, amount, status, transaction_id)
+         VALUES ($1, 'BANK_TRANSFER', $2, 'PENDING', $3)`,
+        [session_id, session.final_amount, `BT-${session_id}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    // Notify staff
+    const { getIO } = require('../sockets/io');
+    const io = getIO();
+    io.of('/staff').emit('bank_transfer_requested', {
+      session_id: session.id,
+      table_id: session.table_id,
+      table_name: session.table_name,
+      amount: parseFloat(session.final_amount),
+      requested_at: new Date()
+    });
+
+    return { success: true };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function confirmBankTransfer(session_id) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const sessionRes = await client.query(`SELECT table_id, status, final_amount FROM SESSIONS WHERE id = $1 FOR UPDATE`, [session_id]);
+    if (sessionRes.rows.length === 0) throw new NotFoundError('Session không tồn tại');
+    const session = sessionRes.rows[0];
+    if (session.status !== 'ACTIVE') {
+      throw new ConflictError('Session is already closed');
+    }
+    const table_id = session.table_id;
+
+    // 1. Cập nhật PAYMENT sang COMPLETED
+    await client.query(
+      `UPDATE PAYMENTS SET status = 'COMPLETED', paid_at = NOW() WHERE session_id = $1 AND method = 'BANK_TRANSFER' AND status = 'PENDING'`,
+      [session_id]
+    );
+
+    // 2. Cập nhật SESSION và TABLE
+    await client.query(`UPDATE SESSIONS SET status = 'CLOSED', ended_at = NOW() WHERE id = $1`, [session_id]);
+    await client.query(`UPDATE TABLES SET status = 'AVAILABLE' WHERE id = $1`, [table_id]);
+
+    await client.query('COMMIT');
+
+    // 3. Emit sockets
+    const { getIO } = require('../sockets/io');
+    const io = getIO();
+    io.of('/staff').emit('table_status_changed', { table_id, status: 'AVAILABLE' });
+    io.of('/customer').to(session_id).emit('session_closed', { reason: 'PAID' });
+
+    return { success: true };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   scan,
   getSession,
@@ -323,4 +450,7 @@ module.exports = {
   cancelOrderItem,
   getRequests,
   resolveRequest,
+  getPaymentBankDetails,
+  requestBankTransfer,
+  confirmBankTransfer,
 };

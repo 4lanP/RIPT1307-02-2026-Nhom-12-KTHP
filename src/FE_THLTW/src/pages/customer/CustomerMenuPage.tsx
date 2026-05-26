@@ -6,7 +6,7 @@ import { getCustomerSocket } from '../../lib/socket'
 import {
   ShoppingCart, Plus, Minus, Trash2, X, ChevronDown, ChevronUp,
   Flame, Wine, Salad, Bell, CreditCard, CheckCircle, Clock,
-  UtensilsCrossed, ArrowLeft, Search, Heart, Star, ChevronRight
+  UtensilsCrossed, ArrowLeft, Search, Heart, Star, ChevronRight, Landmark, Copy, Check, ExternalLink
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ModalPortal from '../../components/ModalPortal'
@@ -33,6 +33,33 @@ const CustomerMenuPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [paying, setPaying] = useState(false)
+  const [bankDetails, setBankDetails] = useState(null)
+  const [bankModalOpen, setBankModalOpen] = useState(false)
+  const [confirmingBank, setConfirmingBank] = useState(false)
+
+  const openPaymentModal = async () => {
+    setPaymentModalOpen(true)
+    try {
+      const res = await customerApi.getPaymentBankDetails()
+      setBankDetails(res.data)
+    } catch {
+      setBankDetails(null)
+    }
+  }
+
+  const handleBankTransfer = async () => {
+    setConfirmingBank(true)
+    try {
+      await customerApi.requestBankTransfer()
+      toast.success('Đã gửi yêu cầu xác nhận chuyển khoản đến nhân viên!')
+      setBankModalOpen(false)
+      setPaymentModalOpen(false)
+    } catch (err: any) {
+      toast.error(err?.message || 'Có lỗi xảy ra, vui lòng thử lại!')
+    } finally {
+      setConfirmingBank(false)
+    }
+  }
 
   const handleVNPayPayment = async () => {
     setPaying(true)
@@ -380,7 +407,7 @@ const CustomerMenuPage = () => {
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tạm tính</p>
               <p className="text-lg font-black text-gray-900">{formatCurrency(session?.subtotal || 0)}</p>
             </div>
-            <button onClick={() => setPaymentModalOpen(true)} className="ml-auto w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all" title="Thanh toán hóa đơn">
+            <button onClick={openPaymentModal} className="ml-auto w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all" title="Thanh toán hóa đơn">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -592,6 +619,17 @@ const CustomerMenuPage = () => {
                   )}
                 </button>
 
+                {bankDetails && (
+                  <button
+                    onClick={() => setBankModalOpen(true)}
+                    disabled={paying || (session?.final_amount || 0) <= 0}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-5 rounded-[24px] shadow-[0_12px_24px_-8px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:-translate-y-0.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Landmark className="w-5 h-5" strokeWidth={2.5} />
+                    <span className="text-base">Chuyển khoản Ngân hàng (VietQR)</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     requestBill()
@@ -604,6 +642,139 @@ const CustomerMenuPage = () => {
                   <span className="text-base">Gọi nhân viên thu tiền mặt</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {/* Dynamic VietQR Payment Modal */}
+      {bankModalOpen && bankDetails && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-emerald-950/40 backdrop-blur-sm" onClick={() => !confirmingBank && setBankModalOpen(false)} />
+          <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                  <Landmark className="w-5 h-5 text-emerald-500" />
+                  Chuyển Khoản Ngân Hàng
+                </h3>
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Quét mã VietQR để thanh toán</p>
+              </div>
+              <button onClick={() => !confirmingBank && setBankModalOpen(false)} className="w-8 h-8 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-lg flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-none">
+              {/* VietQR Chime */}
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-[#f0f9f4] border-2 border-dashed border-emerald-200 p-4 rounded-[36px] inline-block shadow-inner relative group">
+                  <div className="w-56 h-56 bg-white p-2 rounded-[28px] flex items-center justify-center shadow-md">
+                    <img 
+                      src={`https://img.vietqr.io/image/${bankDetails.bank_id}-${bankDetails.account_number}-compact.png?amount=${bankDetails.final_amount}&addInfo=${encodeURIComponent(`Thanh toan ${bankDetails.table_name} Don #${bankDetails.session_id}`)}&accountName=${encodeURIComponent(bankDetails.account_owner)}`} 
+                      alt="VietQR Payment Code" 
+                      className="w-full h-full object-contain rounded-xl"
+                    />
+                  </div>
+                  {/* Flashing line scanner */}
+                  <div className="absolute top-6 left-6 right-6 h-[2px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-[scan_2.5s_ease-in-out_infinite] pointer-events-none" />
+                </div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-3">Mở app ngân hàng quét mã QR để thanh toán tự động</p>
+              </div>
+
+              {/* Copyable Details */}
+              <div className="space-y-3 bg-[#F9FBF9] p-5 rounded-[28px] border border-gray-100">
+                {/* Bank */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Ngân hàng</span>
+                  <span className="font-black text-gray-900">{bankDetails.bank_id}</span>
+                </div>
+                
+                {/* STK */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Số tài khoản</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-black text-gray-900">{bankDetails.account_number}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(bankDetails.account_number)
+                        toast.success('Đã sao chép số tài khoản!')
+                      }}
+                      className="text-gray-400 hover:text-emerald-500 transition-colors p-1"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Owner */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Chủ tài khoản</span>
+                  <span className="font-black text-gray-900">{bankDetails.account_owner}</span>
+                </div>
+
+                {/* Amount */}
+                <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Số tiền</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-emerald-600 text-sm">{formatCurrency(bankDetails.final_amount)}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(bankDetails.final_amount.toString())
+                        toast.success('Đã sao chép số tiền!')
+                      }}
+                      className="text-gray-400 hover:text-emerald-500 transition-colors p-1"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Memo */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 font-bold uppercase tracking-wider">Nội dung CK</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-gray-700 truncate max-w-[150px]">{`Thanh toan ${bankDetails.table_name} Don #${bankDetails.session_id}`}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(`Thanh toan ${bankDetails.table_name} Don #${bankDetails.session_id}`)
+                        toast.success('Đã sao chép nội dung!')
+                      }}
+                      className="text-gray-400 hover:text-emerald-500 transition-colors p-1"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex gap-4">
+              <button 
+                onClick={() => !confirmingBank && setBankModalOpen(false)}
+                className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleBankTransfer}
+                disabled={confirmingBank}
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest py-4.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {confirmingBank ? (
+                  <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" strokeWidth={3} />
+                    Tôi đã chuyển khoản
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
