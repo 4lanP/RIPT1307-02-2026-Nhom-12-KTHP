@@ -111,4 +111,7 @@ module.exports = {
   createOption: handler(adminService.createOption, 201, 'Menu option created', (req) => [req.params.id, req.body]),
   updateOption: handler(adminService.updateOption, 200, 'Menu option updated', (req) => [req.params.id, req.body]),
   deleteOption: handler(adminService.deleteOption, 200, 'Menu option disabled', (req) => [req.params.id]),
+
+  getBankSettings: handler(adminService.getBankSettings, 200, 'Bank settings loaded', () => []),
+  saveBankSettings: handler(adminService.saveBankSettings, 200, 'Bank settings saved', (req) => [req.body]),
 };

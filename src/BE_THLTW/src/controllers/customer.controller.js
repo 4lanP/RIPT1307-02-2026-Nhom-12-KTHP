@@ -77,6 +77,26 @@ async function createPayment(req, res, next) {
   }
 }
 
+async function getPaymentBankDetails(req, res, next) {
+  try {
+    const session_id = req.session.id;
+    const result = await sessionService.getPaymentBankDetails(session_id);
+    return successResponse(res, 200, 'Lay thong tin tai khoan ngan hang thanh cong', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function requestBankTransfer(req, res, next) {
+  try {
+    const session_id = req.session.id;
+    const result = await sessionService.requestBankTransfer(session_id);
+    return successResponse(res, 200, 'Yeu cau xac nhan chuyen khoan da duoc gui den nhan vien', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   scan,
   getSession,
@@ -85,4 +105,6 @@ module.exports = {
   createOrder,
   getOrders,
   createPayment,
+  getPaymentBankDetails,
+  requestBankTransfer,
 };

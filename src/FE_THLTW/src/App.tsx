@@ -28,6 +28,7 @@ import AdminTablesPage from './pages/admin/AdminTablesPage'
 import AdminMenuPage from './pages/admin/AdminMenuPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminQRPage from './pages/admin/AdminQRPage'
+import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -97,6 +98,11 @@ const AppRoutes = () => {
         <Route path="admin/qr" element={
           <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
             <AdminQRPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/settings" element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminSettingsPage />
           </ProtectedRoute>
         } />
         <Route index element={<Navigate to="/tables" replace />} />

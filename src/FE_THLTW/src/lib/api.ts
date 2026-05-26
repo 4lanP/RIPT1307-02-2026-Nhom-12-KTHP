@@ -72,6 +72,8 @@ export const customerApi = {
   getOrders: () => api.get('/customer/orders'),
   createRequest: (request_type) => api.post('/customer/requests', { request_type }),
   createVNPayPayment: () => api.post('/customer/payment/vnpay'),
+  getPaymentBankDetails: () => api.get('/customer/payment/bank-details'),
+  requestBankTransfer: () => api.post('/customer/payment/bank-transfer'),
 }
 
 // KDS APIs
@@ -85,6 +87,7 @@ export const staffApi = {
   getTables: () => api.get('/staff/tables'),
   getTableSession: (id) => api.get(`/staff/tables/${id}/session`),
   checkout: (sessionId, amount) => api.post(`/staff/sessions/${sessionId}/checkout`, { amount }),
+  confirmBankTransfer: (sessionId) => api.post(`/staff/sessions/${sessionId}/confirm-bank-transfer`),
   getRequests: () => api.get('/staff/requests'),
   resolveRequest: (id) => api.patch(`/staff/requests/${id}/resolve`),
   cancelItem: (id) => api.patch(`/staff/orders/items/${id}/cancel`),
@@ -135,4 +138,7 @@ export const adminApi = {
   createOption: (itemId, data) => api.post(`/admin/menu/items/${itemId}/options`, data),
   updateOption: (id, data) => api.put(`/admin/menu/options/${id}`, data),
   deleteOption: (id) => api.delete(`/admin/menu/options/${id}`),
+
+  getBankConfig: () => api.get('/admin/settings/bank'),
+  saveBankConfig: (data) => api.post('/admin/settings/bank', data),
 }

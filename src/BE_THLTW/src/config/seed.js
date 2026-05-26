@@ -76,9 +76,17 @@ async function seed() {
       TRUNCATE TABLE order_item_options, order_items, order_status_logs,
                      orders, customer_requests, payments, sessions,
                      refresh_tokens, qr_codes, menu_item_options,
-                     menu_items, menu_categories, tables, users
+                     menu_items, menu_categories, tables, users, restaurant_settings
       RESTART IDENTITY CASCADE
     `);
+
+    // --- SETTINGS ---
+    console.log('Seeding settings...');
+    await client.query(
+      `INSERT INTO RESTAURANT_SETTINGS (key, value) VALUES ($1, $2)`,
+      ['bank_config', JSON.stringify({ bank_id: '', account_number: '', account_owner: '' })]
+    );
+
 
     // --- USERS ---
     console.log('Seeding users...');

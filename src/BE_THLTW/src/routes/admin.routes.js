@@ -23,6 +23,7 @@ const {
   emptySchema,
   revenueReportSchema,
   exportReportSchema,
+  saveBankSettingsSchema,
 } = require('../validators/admin.validator');
 
 const ADMIN_ROLES = ['ADMIN'];
@@ -266,6 +267,9 @@ router.get('/menu/items/:id/options', validate(menuItemIdParamSchema), adminCont
 router.post('/menu/items/:id/options', validate(createOptionSchema), adminController.createOption);
 router.put('/menu/options/:id', validate(updateOptionSchema), adminController.updateOption);
 router.delete('/menu/options/:id', validate(idParamSchema), adminController.deleteOption);
+
+router.get('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getBankSettings);
+router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBankSettingsSchema), adminController.saveBankSettings);
 
 // ==========================================
 // ADMIN CRUD ENDPOINTS (For Swagger Documentation)

@@ -350,5 +350,12 @@ router.post(
   staffController.forceCloseSession
 );
 
+router.post(
+  '/sessions/:id/confirm-bank-transfer',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(idParamSchema),
+  staffController.confirmBankTransfer
+);
+
 module.exports = router;
 
