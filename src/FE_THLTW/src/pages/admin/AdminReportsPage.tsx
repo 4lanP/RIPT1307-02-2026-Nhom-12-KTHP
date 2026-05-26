@@ -60,6 +60,24 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null
 }
 
+const MenuShareTooltip = ({ active, payload }) => {
+  if (active && payload?.length) {
+    const item = payload[0]
+    const percent = item.payload?.percent_of_total ?? 0
+
+    return (
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-gray-800">
+        <p className="text-xs font-black mb-1">{item.name}</p>
+        <div className="flex items-center gap-3 text-[11px] font-bold text-gray-300">
+          <span>{item.value} lượt</span>
+          <span className="text-emerald-300">{percent.toFixed(1)}%</span>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
 const AdminReportsPage = () => {
   const [revenue, setRevenue] = useState([])
   const [menuReport, setMenuReport] = useState([])
@@ -122,6 +140,11 @@ const AdminReportsPage = () => {
   const totalRevenue = revenue.reduce((sum, r) => sum + (r.total || 0), 0)
   const totalOrders = revenue.reduce((sum, r) => sum + (r.order_count || 0), 0)
   const menuShareRows = getPositiveMenuShareRows(menuReport)
+  const totalMenuQuantity = menuShareRows.reduce((sum, item) => sum + item.total_quantity, 0)
+  const menuChartRows = menuShareRows.map(item => ({
+    ...item,
+    percent_of_total: totalMenuQuantity > 0 ? (item.total_quantity / totalMenuQuantity) * 100 : 0,
+  }))
 
   return (
     <div className="space-y-10 animate-fade-in pb-20">
@@ -235,28 +258,53 @@ const AdminReportsPage = () => {
                 <PieIcon className="w-8 h-8 text-blue-500 opacity-20" />
              </div>
              
-             <div className="h-[300px]">
-               {menuShareRows.length === 0 ? (
+             <div className="relative h-[320px]">
+               {menuChartRows.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs tracking-widest bg-[#F9FBF9] rounded-[32px] border border-dashed border-gray-200">Chưa có dữ liệu</div>
                ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={menuShareRows} dataKey="total_quantity" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={5}>
-                      {menuShareRows.map((_, index) => (
-                        <Cell key={index} fill={COLORS[index % COLORS.length]} cornerRadius={8} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <p className="text-3xl font-black text-gray-900 leading-none">{totalMenuQuantity}</p>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-400">lượt bán</p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+                      <Pie
+                        data={menuChartRows}
+                        dataKey="total_quantity"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={78}
+                        outerRadius={118}
+                        paddingAngle={1}
+                        startAngle={90}
+                        endAngle={-270}
+                        isAnimationActive={false}
+                      >
+                        {menuChartRows.map((_, index) => (
+                          <Cell
+                            key={index}
+                            fill={COLORS[index % COLORS.length]}
+                            stroke="#ffffff"
+                            strokeWidth={4}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<MenuShareTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </>
                )}
              </div>
              
-             <div className="grid grid-cols-2 gap-4 mt-6">
-               {menuShareRows.slice(0, 4).map((item, i) => (
-                 <div key={i} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter truncate">{item.name}</span>
+             <div className="grid grid-cols-2 gap-x-6 gap-y-3 mt-6">
+               {menuChartRows.slice(0, 8).map((item, i) => (
+                 <div key={i} className="min-w-0 flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                    <span className="truncate text-[11px] font-black text-gray-500 uppercase">{item.name}</span>
                  </div>
                ))}
              </div>
@@ -272,8 +320,8 @@ const AdminReportsPage = () => {
             </div>
             
             <div className="space-y-6">
-              {menuShareRows.map((item, idx) => {
-                const pct = getRelativeQuantityPercent(item, menuShareRows)
+              {menuChartRows.map((item, idx) => {
+                const pct = getRelativeQuantityPercent(item, menuChartRows)
                 return (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-center mb-2">
