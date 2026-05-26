@@ -20,7 +20,7 @@ async function getRevenueReport(from, to, groupBy) {
 
 async function getMenuReport() {
   const query = `
-    SELECT mi.name, SUM(oi.quantity) as total_quantity
+    SELECT mi.name, COALESCE(SUM(oi.quantity), 0)::int as total_quantity
     FROM ORDER_ITEMS oi 
     JOIN MENU_ITEMS mi ON mi.id = oi.menu_item_id
     WHERE oi.status = 'SERVED'
@@ -29,7 +29,10 @@ async function getMenuReport() {
     LIMIT 20
   `;
   const { rows } = await pool.query(query);
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    total_quantity: Number.isFinite(Number(row.total_quantity)) ? Number(row.total_quantity) : 0,
+  }));
 }
 
 async function getKdsReport() {

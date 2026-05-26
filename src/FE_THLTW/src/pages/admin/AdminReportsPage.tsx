@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
+import { getPositiveMenuShareRows, getRelativeQuantityPercent, normalizeMenuReportRows } from '../../lib/reportData'
 import { BarChart3, Download, Calendar, TrendingUp, UtensilsCrossed, Clock, PieChart as PieIcon, ArrowUpRight, DollarSign, ShoppingBag } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -98,7 +99,7 @@ const AdminReportsPage = () => {
         return acc
       }, [])
       setRevenue(aggregatedRevenue)
-      setMenuReport((menuRes.data || []).slice(0, 8))
+      setMenuReport(normalizeMenuReportRows(menuRes.data || []).slice(0, 8))
     } catch { toast.error('Lỗi tải báo cáo') }
     finally { setLoading(false) }
   }
@@ -120,6 +121,7 @@ const AdminReportsPage = () => {
 
   const totalRevenue = revenue.reduce((sum, r) => sum + (r.total || 0), 0)
   const totalOrders = revenue.reduce((sum, r) => sum + (r.order_count || 0), 0)
+  const menuShareRows = getPositiveMenuShareRows(menuReport)
 
   return (
     <div className="space-y-10 animate-fade-in pb-20">
@@ -234,13 +236,13 @@ const AdminReportsPage = () => {
              </div>
              
              <div className="h-[300px]">
-               {menuReport.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">Chưa có dữ liệu</div>
+               {menuShareRows.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs tracking-widest bg-[#F9FBF9] rounded-[32px] border border-dashed border-gray-200">Chưa có dữ liệu</div>
                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={menuReport} dataKey="total_quantity" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={5}>
-                      {menuReport.map((_, index) => (
+                    <Pie data={menuShareRows} dataKey="total_quantity" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={5}>
+                      {menuShareRows.map((_, index) => (
                         <Cell key={index} fill={COLORS[index % COLORS.length]} cornerRadius={8} />
                       ))}
                     </Pie>
@@ -251,7 +253,7 @@ const AdminReportsPage = () => {
              </div>
              
              <div className="grid grid-cols-2 gap-4 mt-6">
-               {menuReport.slice(0, 4).map((item, i) => (
+               {menuShareRows.slice(0, 4).map((item, i) => (
                  <div key={i} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-tighter truncate">{item.name}</span>
@@ -270,9 +272,8 @@ const AdminReportsPage = () => {
             </div>
             
             <div className="space-y-6">
-              {menuReport.map((item, idx) => {
-                const maxQty = menuReport[0]?.total_quantity || 1
-                const pct = ((item.total_quantity || 0) / maxQty) * 100
+              {menuShareRows.map((item, idx) => {
+                const pct = getRelativeQuantityPercent(item, menuShareRows)
                 return (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-center mb-2">

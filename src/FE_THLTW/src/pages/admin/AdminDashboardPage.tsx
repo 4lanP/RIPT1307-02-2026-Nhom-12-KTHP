@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi, staffApi } from '../../lib/api'
+import { getPositiveMenuShareRows, getRelativeQuantityPercent } from '../../lib/reportData'
 import { formatCurrency } from '../../lib/utils'
 import {
   LayoutGrid, TrendingUp, Users, Table2, UtensilsCrossed,
@@ -122,7 +123,7 @@ const AdminDashboardPage = () => {
         return acc
       }, [])
       setRevenue(aggregatedRevenue)
-      setMenuReport((menuRes.data || []).slice(0, 5))
+      setMenuReport(getPositiveMenuShareRows(menuRes.data || []).slice(0, 5))
       setTables(tableRes.data || [])
     } catch { toast.error('Lỗi tải dữ liệu') }
     finally { setLoading(false) }
@@ -271,7 +272,7 @@ const AdminDashboardPage = () => {
                   <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full transition-all duration-1000 group-hover:bg-emerald-600"
-                      style={{ width: `${(item.total_quantity / (menuReport[0]?.total_quantity || 1)) * 100}%` }}
+                      style={{ width: `${getRelativeQuantityPercent(item, menuReport)}%` }}
                     />
                   </div>
                 </div>

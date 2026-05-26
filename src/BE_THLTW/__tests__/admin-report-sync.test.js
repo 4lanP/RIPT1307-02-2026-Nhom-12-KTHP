@@ -82,14 +82,34 @@ describe('Admin report data sync', () => {
 
       const result = await reportService.getMenuReport();
 
-      expect(result).toEqual(rows);
+      expect(result).toEqual([
+        { name: 'Ca phe sua da', total_quantity: 32 },
+        { name: 'Banh mi', total_quantity: 18 },
+      ]);
       expect(result[0]).toEqual(
         expect.objectContaining({
           name: 'Ca phe sua da',
-          total_quantity: '32',
+          total_quantity: 32,
         })
       );
+      expect(typeof result[0].total_quantity).toBe('number');
       expect(result[0]).not.toHaveProperty('total_sold');
+    });
+
+    it('normalizes non-numeric menu quantities to zero for chart consumers', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [
+          { name: 'Broken quantity', total_quantity: 'abc' },
+          { name: 'Missing quantity' },
+        ],
+      });
+
+      const result = await reportService.getMenuReport();
+
+      expect(result).toEqual([
+        { name: 'Broken quantity', total_quantity: 0 },
+        { name: 'Missing quantity', total_quantity: 0 },
+      ]);
     });
 
     it('queries served order item quantities ordered by top-20 quantity ranking', async () => {
@@ -99,7 +119,7 @@ describe('Admin report data sync', () => {
 
       const { query, params } = lastQuery();
       expect(params).toBeUndefined();
-      expect(query).toMatch(/SELECT\s+mi\.name,\s*SUM\(oi\.quantity\)\s+as\s+total_quantity/i);
+      expect(query).toMatch(/SELECT\s+mi\.name,\s*COALESCE\(SUM\(oi\.quantity\),\s*0\)::int\s+as\s+total_quantity/i);
       expect(query).toMatch(/FROM\s+ORDER_ITEMS\s+oi/i);
       expect(query).toMatch(/JOIN\s+MENU_ITEMS\s+mi\s+ON\s+mi\.id\s*=\s*oi\.menu_item_id/i);
       expect(query).toMatch(/oi\.status\s*=\s*'SERVED'/i);
