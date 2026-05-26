@@ -7,7 +7,7 @@ import { formatCurrency, formatDateShort, getStatusLabel, getStatusClass } from 
 import ModalPortal from '../../components/ModalPortal'
 import {
   ArrowLeft, CreditCard, X, AlertTriangle, DollarSign,
-  Clock, CheckCircle, UtensilsCrossed, RefreshCw, Table2, Landmark
+  Clock, CheckCircle, UtensilsCrossed, RefreshCw, Table2, Landmark, Printer
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -22,6 +22,7 @@ const StaffTableDetailPage = () => {
   const [amount, setAmount] = useState('')
   const [processing, setProcessing] = useState(false)
   const [forceClosing, setForceClosing] = useState(false)
+  const [invoices, setInvoices] = useState<any[]>([])
 
   const canCheckout = isAdmin || isManager || user?.role === 'CASHIER'
 
@@ -50,6 +51,15 @@ const StaffTableDetailPage = () => {
       const res = await staffApi.getTableSession(id)
       setSession(res.data)
       setAmount('')
+      
+      if (res.data?.id && (isAdmin || isManager || user?.role === 'ADMIN' || user?.role === 'MANAGER')) {
+        try {
+          const invoicesRes = await staffApi.listSessionInvoices(res.data.id)
+          setInvoices(invoicesRes.data || [])
+        } catch {
+          // ignore
+        }
+      }
     } catch {
       toast.error('Không có phiên hoạt động')
       navigate('/tables')
@@ -105,6 +115,23 @@ const StaffTableDetailPage = () => {
       navigate('/tables')
     } catch (err) {
       toast.error('Duyệt giao dịch thất bại')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleCreateInvoice = async () => {
+    setProcessing(true)
+    try {
+      const res = await staffApi.createInvoice(session.id)
+      if (res.data?.invoice?.id) {
+        toast.success('Đã tạo hóa đơn thành công!')
+        navigate(`/invoices/${res.data.invoice.id}`)
+      } else {
+        toast.error('Không tìm thấy thông tin hóa đơn')
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể tạo hóa đơn')
     } finally {
       setProcessing(false)
     }
@@ -328,6 +355,18 @@ const StaffTableDetailPage = () => {
                     </div>
                   )}
 
+                  {allItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleCreateInvoice}
+                      disabled={processing}
+                      className="w-full bg-white hover:bg-gray-50 text-emerald-600 border-2 border-emerald-500 font-black py-4.5 rounded-[24px] shadow-sm flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
+                    >
+                      <Printer className="w-5 h-5" />
+                      <span className="text-base">Xuất & In hóa đơn</span>
+                    </button>
+                  )}
+
                   {allItems.length === 0 ? (
                     <button
                       onClick={() => {
@@ -353,6 +392,34 @@ const StaffTableDetailPage = () => {
               )}
             </div>
           </div>
+
+          {(isAdmin || isManager || user?.role === 'ADMIN' || user?.role === 'MANAGER') && invoices.length > 0 && (
+            <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm space-y-4">
+              <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-400" />
+                Lịch sử hóa đơn
+              </h3>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                {invoices.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F9FBF9] border border-gray-100 text-xs font-semibold hover:shadow-sm transition-all">
+                    <div className="space-y-1">
+                      <p className="font-bold text-gray-800">{inv.invoice_number}</p>
+                      <p className="text-[10px] text-gray-400 font-bold">{new Date(inv.created_at).toLocaleString('vi-VN')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-emerald-600">{formatCurrency(inv.final_amount)}</p>
+                      <button
+                        onClick={() => navigate(`/invoices/${inv.id}?reprint=true`)}
+                        className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 mt-1 inline-block uppercase tracking-wider"
+                      >
+                        In lại ➔
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

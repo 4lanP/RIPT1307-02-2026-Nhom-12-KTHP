@@ -50,6 +50,10 @@ jest.mock('../src/controllers/staff.controller', () => ({
   resolveRequest: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   cancelItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   forceCloseSession: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  createInvoice: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
+  getInvoice: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  listSessionInvoices: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
+  recordInvoicePrintEvent: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
 }));
 
 jest.mock('../src/controllers/kds.controller', () => ({

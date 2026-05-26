@@ -26,9 +26,17 @@ const cancelItemSchema = z.object({
   }),
 });
 
+const printEventSchema = z.object({
+  params: z.object({ id }),
+  body: z.object({
+    print_type: z.enum(['PRINT', 'REPRINT']),
+  }),
+});
+
 module.exports = {
   idParamSchema,
   emptySchema,
   checkoutCashSchema,
   cancelItemSchema,
+  printEventSchema,
 };

@@ -20,6 +20,7 @@ import KDSPage from './pages/kds/KDSPage'
 import StaffTablesPage from './pages/staff/StaffTablesPage'
 import StaffTableDetailPage from './pages/staff/StaffTableDetailPage'
 import StaffRequestsPage from './pages/staff/StaffRequestsPage'
+import StaffInvoicePage from './pages/staff/StaffInvoicePage'
 
 // Admin
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
@@ -107,6 +108,12 @@ const AppRoutes = () => {
         } />
         <Route index element={<Navigate to="/tables" replace />} />
       </Route>
+
+      <Route path="/invoices/:id" element={
+        <ProtectedRoute roles={['ADMIN', 'MANAGER', 'CASHIER', 'WAITER']}>
+          <StaffInvoicePage />
+        </ProtectedRoute>
+      } />
 
       <Route path="*" element={<Navigate to={user ? getDefaultRoute(user.role) : '/scan'} replace />} />
     </Routes>

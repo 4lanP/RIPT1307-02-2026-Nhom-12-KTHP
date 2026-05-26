@@ -1,4 +1,5 @@
 const sessionService = require('../services/session.service');
+const invoiceService = require('../services/invoice.service');
 const { successResponse } = require('../utils/response.util');
 
 async function getTables(req, res, next) {
@@ -81,6 +82,47 @@ async function confirmBankTransfer(req, res, next) {
   }
 }
 
+async function createInvoice(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await invoiceService.createInvoice(id, req.user);
+    return successResponse(res, 201, 'Invoice ready', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getInvoice(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await invoiceService.getInvoice(id);
+    return successResponse(res, 200, 'Invoice loaded', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listSessionInvoices(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await invoiceService.listSessionInvoices(id);
+    return successResponse(res, 200, 'Invoices loaded', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function recordInvoicePrintEvent(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { print_type } = req.body;
+    const result = await invoiceService.recordPrintEvent(id, req.user, print_type);
+    return successResponse(res, 201, 'Print event recorded', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getTables,
   getTableSession,
@@ -90,4 +132,8 @@ module.exports = {
   resolveRequest,
   forceCloseSession,
   confirmBankTransfer,
+  createInvoice,
+  getInvoice,
+  listSessionInvoices,
+  recordInvoicePrintEvent,
 };

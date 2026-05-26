@@ -3,7 +3,7 @@ const router = express.Router();
 const staffController = require('../controllers/staff.controller');
 const { authenticateStaff, authorizeStaffRoles } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validate.middleware');
-const { idParamSchema, checkoutCashSchema, cancelItemSchema, emptySchema } = require('../validators/staff.validator');
+const { idParamSchema, checkoutCashSchema, cancelItemSchema, emptySchema, printEventSchema } = require('../validators/staff.validator');
 
 const STAFF_ACCESS_ROLES = ['CASHIER', 'MANAGER', 'ADMIN', 'WAITER'];
 const CASHIER_ACCESS_ROLES = ['CASHIER', 'MANAGER', 'ADMIN'];
@@ -111,6 +111,34 @@ router.get('/tables', validate(emptySchema), staffController.getTables);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/tables/:id/session', validate(idParamSchema), staffController.getTableSession);
+
+router.post(
+  '/sessions/:id/invoice',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(idParamSchema),
+  staffController.createInvoice
+);
+
+router.get(
+  '/sessions/:id/invoices',
+  authorizeStaffRoles(MANAGER_ACCESS_ROLES),
+  validate(idParamSchema),
+  staffController.listSessionInvoices
+);
+
+router.get(
+  '/invoices/:id',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(idParamSchema),
+  staffController.getInvoice
+);
+
+router.post(
+  '/invoices/:id/print-events',
+  authorizeStaffRoles(CASHIER_ACCESS_ROLES),
+  validate(printEventSchema),
+  staffController.recordInvoicePrintEvent
+);
 
 /**
  * @swagger

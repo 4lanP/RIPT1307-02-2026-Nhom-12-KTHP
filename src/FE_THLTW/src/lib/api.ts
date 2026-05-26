@@ -92,6 +92,10 @@ export const staffApi = {
   resolveRequest: (id) => api.patch(`/staff/requests/${id}/resolve`),
   cancelItem: (id) => api.patch(`/staff/orders/items/${id}/cancel`),
   forceClose: (sessionId) => api.post(`/staff/sessions/${sessionId}/force-close`),
+  createInvoice: (sessionId) => api.post(`/staff/sessions/${sessionId}/invoice`),
+  getInvoice: (invoiceId) => api.get(`/staff/invoices/${invoiceId}`),
+  listSessionInvoices: (sessionId) => api.get(`/staff/sessions/${sessionId}/invoices`),
+  recordInvoicePrintEvent: (invoiceId, printType) => api.post(`/staff/invoices/${invoiceId}/print-events`, { print_type: printType }),
 }
 
 // Admin APIs

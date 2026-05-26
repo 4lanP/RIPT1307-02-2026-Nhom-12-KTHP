@@ -9,6 +9,9 @@ CREATE TYPE payment_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 CREATE TYPE request_type AS ENUM ('CALL_STAFF', 'REQUEST_BILL', 'OTHER');
 CREATE TYPE request_status AS ENUM ('OPEN', 'RESOLVED');
 CREATE TYPE kds_station AS ENUM ('GRILL', 'BAR', 'COLD');
+CREATE TYPE invoice_status AS ENUM ('ISSUED', 'SUPERSEDED', 'CANCELLED');
+CREATE TYPE invoice_payment_status AS ENUM ('UNPAID', 'PENDING', 'PAID');
+CREATE TYPE invoice_print_type AS ENUM ('PRINT', 'REPRINT');
 
 -- Tables
 CREATE TABLE USERS (
@@ -128,6 +131,49 @@ CREATE TABLE PAYMENTS (
     transaction_id VARCHAR(100) UNIQUE,
     webhook_data JSONB,
     paid_at TIMESTAMP
+);
+
+CREATE TABLE INVOICES (
+    id SERIAL PRIMARY KEY,
+    invoice_number VARCHAR(40) UNIQUE NOT NULL,
+    session_id INT NOT NULL REFERENCES SESSIONS(id),
+    table_id INT NOT NULL REFERENCES TABLES(id),
+    table_name VARCHAR(100) NOT NULL,
+    created_by INT NOT NULL REFERENCES USERS(id),
+    created_by_name VARCHAR(255),
+    status invoice_status DEFAULT 'ISSUED' NOT NULL,
+    payment_status invoice_payment_status DEFAULT 'UNPAID' NOT NULL,
+    payment_method payment_method,
+    bill_fingerprint VARCHAR(64) NOT NULL,
+    subtotal DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    discount_amount DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    tax_amount DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    rounding_amount DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    final_amount DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    superseded_at TIMESTAMP
+);
+
+CREATE TABLE INVOICE_LINE_ITEMS (
+    id SERIAL PRIMARY KEY,
+    invoice_id INT NOT NULL REFERENCES INVOICES(id) ON DELETE CASCADE,
+    order_item_id INT REFERENCES ORDER_ITEMS(id),
+    item_name VARCHAR(255) NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    options_total DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    line_total DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    note TEXT,
+    sort_order INT DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE INVOICE_PRINT_EVENTS (
+    id SERIAL PRIMARY KEY,
+    invoice_id INT NOT NULL REFERENCES INVOICES(id) ON DELETE CASCADE,
+    printed_by INT NOT NULL REFERENCES USERS(id),
+    printed_by_name VARCHAR(255),
+    print_type invoice_print_type NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE RESTAURANT_SETTINGS (
