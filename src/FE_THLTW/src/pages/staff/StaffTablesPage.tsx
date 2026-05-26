@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { staffApi } from '../../lib/api'
 import { getStaffSocket } from '../../lib/socket'
+import { filterTables, getTableCounts, getTableEmptyState, normalizeTableRows } from '../../lib/tableData'
 import { formatCurrency, getStatusLabel, getStatusClass } from '../../lib/utils'
 import { Table2, Users, RefreshCw, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -34,6 +35,12 @@ const TableCard = ({ table }) => {
           <span>{table.capacity} chỗ</span>
         </div>
       )}
+      {isOccupied && table.active_session_id != null && (
+        <div className="mt-4 pt-4 border-t border-gray-50">
+          <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Phiên đang mở</p>
+          <p className="text-emerald-600 font-bold text-sm">#{table.active_session_id}</p>
+        </div>
+      )}
       {isOccupied && table.subtotal != null && (
         <div className="mt-4 pt-4 border-t border-gray-50">
           <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Tổng tiền</p>
@@ -47,6 +54,7 @@ const TableCard = ({ table }) => {
 const StaffTablesPage = () => {
   const [tables, setTables] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('ALL')
 
@@ -66,19 +74,21 @@ const StaffTablesPage = () => {
   }, [])
 
   const loadTables = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const res = await staffApi.getTables()
-      setTables(res.data || [])
-    } catch { toast.error('Không tải được danh sách bàn') }
+      setTables(normalizeTableRows(res.data || []))
+    } catch (err) {
+      setError(err)
+      toast.error('Không tải được danh sách bàn')
+    }
     finally { setLoading(false) }
   }
 
-  const filtered = tables
-    .filter(t => filter === 'ALL' || t.status === filter)
-    .filter(t => t.name?.toLowerCase().includes(search.toLowerCase()))
-
-  const occupiedCount = tables.filter(t => t.status === 'OCCUPIED').length
-  const availableCount = tables.filter(t => t.status === 'AVAILABLE').length
+  const filtered = filterTables(tables, { search, status: filter })
+  const tableCounts = getTableCounts(tables)
+  const emptyState = getTableEmptyState({ loading, error, tables, visibleTables: filtered, search, status: filter })
 
   return (
     <div className="pb-8">
@@ -87,8 +97,8 @@ const StaffTablesPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Sơ đồ bàn</h1>
           <p className="text-gray-500 text-sm mt-1.5 font-medium">
-            <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{occupiedCount}</span> bàn đang phục vụ ·{' '}
-            <span className="text-gray-600 font-bold bg-gray-100 px-2 py-0.5 rounded-md">{availableCount}</span> bàn trống
+            <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{tableCounts.occupied}</span> bàn đang phục vụ ·{' '}
+            <span className="text-gray-600 font-bold bg-gray-100 px-2 py-0.5 rounded-md">{tableCounts.available}</span> bàn trống
           </p>
         </div>
         <button
@@ -130,7 +140,7 @@ const StaffTablesPage = () => {
       </div>
 
       {/* Tables grid */}
-      {loading ? (
+      {emptyState === 'loading' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="bg-white border border-gray-100 rounded-[24px] p-5 animate-pulse">
@@ -140,7 +150,24 @@ const StaffTablesPage = () => {
             </div>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : emptyState === 'error' ? (
+        <div className="text-center py-20 bg-white border border-gray-100 rounded-[32px]">
+          <Table2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-700 font-bold mb-4">Không tải được danh sách bàn</p>
+          <button
+            onClick={loadTables}
+            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Thử lại
+          </button>
+        </div>
+      ) : emptyState === 'no-tables' ? (
+        <div className="text-center py-20 bg-white border border-gray-100 rounded-[32px]">
+          <Table2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 font-medium">Chưa có bàn nào được cấu hình</p>
+        </div>
+      ) : emptyState === 'no-match' ? (
         <div className="text-center py-20 bg-white border border-gray-100 rounded-[32px]">
           <Table2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500 font-medium">Không tìm thấy bàn phù hợp</p>

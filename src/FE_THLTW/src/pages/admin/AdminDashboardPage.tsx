@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { adminApi, staffApi } from '../../lib/api'
 import { getPositiveMenuShareRows, getRelativeQuantityPercent } from '../../lib/reportData'
+import { normalizeTableRows } from '../../lib/tableData'
 import { formatCurrency } from '../../lib/utils'
 import {
   LayoutGrid, TrendingUp, Users, Table2, UtensilsCrossed,
@@ -124,7 +125,7 @@ const AdminDashboardPage = () => {
       }, [])
       setRevenue(aggregatedRevenue)
       setMenuReport(getPositiveMenuShareRows(menuRes.data || []).slice(0, 5))
-      setTables(tableRes.data || [])
+      setTables(normalizeTableRows(tableRes.data || []))
     } catch { toast.error('Lỗi tải dữ liệu') }
     finally { setLoading(false) }
   }

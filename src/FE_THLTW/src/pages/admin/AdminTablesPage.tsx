@@ -86,8 +86,8 @@ const AdminTablesPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Sơ Đồ Bàn Ăn</h1>
-          <p className="text-gray-400 font-medium mt-1 text-base">Quản lý không gian và sức chứa chỗ ngồi của 3POS.</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Cấu Hình Bàn</h1>
+          <p className="text-gray-400 font-medium mt-1 text-base">Thiết lập bàn, khu vực và sức chứa chỗ ngồi của 3POS.</p>
         </div>
         <div className="flex gap-3">
            <button onClick={loadTables} className="w-14 h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all shadow-sm">

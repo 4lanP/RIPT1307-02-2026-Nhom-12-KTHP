@@ -31,8 +31,10 @@ router.use(authenticateStaff(STAFF_ACCESS_ROLES));
  *                   items:
  *                     type: object
  *                     properties:
- *                       table_id:          { type: integer }
- *                       table_name:        { type: string, example: "Bàn 01" }
+ *                       id:                { type: integer }
+ *                       name:              { type: string, example: "Bàn 01" }
+ *                       table_id:          { type: integer, description: "Legacy alias for id" }
+ *                       table_name:        { type: string, example: "Bàn 01", description: "Legacy alias for name" }
  *                       zone:              { type: string, example: "Tầng 1" }
  *                       capacity:          { type: integer }
  *                       status:            { type: string, enum: [AVAILABLE, OCCUPIED] }
@@ -358,4 +360,3 @@ router.post(
 );
 
 module.exports = router;
-

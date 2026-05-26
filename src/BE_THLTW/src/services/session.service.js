@@ -150,13 +150,35 @@ async function calculateSessionBill(session_id, client) {
 
 async function getTables() {
   const query = `
-    SELECT t.id as table_id, t.name as table_name, t.status, t.zone, t.capacity, s.id as active_session_id
+    SELECT
+      t.id as id,
+      t.name as name,
+      t.id as table_id,
+      t.name as table_name,
+      t.status,
+      t.zone,
+      t.capacity,
+      s.id as active_session_id
     FROM TABLES t
     LEFT JOIN SESSIONS s ON s.table_id = t.id AND s.status = 'ACTIVE'
     ORDER BY t.zone, t.name
   `;
   const { rows } = await pool.query(query);
-  return rows;
+  return rows.map((row) => {
+    const id = row.id ?? row.table_id;
+    const name = row.name ?? row.table_name ?? (id != null ? `Bàn ${id}` : '');
+    const capacity = row.capacity == null ? null : Number(row.capacity);
+
+    return {
+      ...row,
+      id,
+      name,
+      table_id: row.table_id ?? id,
+      table_name: row.table_name ?? name,
+      capacity: Number.isFinite(capacity) ? capacity : null,
+      active_session_id: row.active_session_id ?? null,
+    };
+  });
 }
 
 async function getTableActiveSession(table_id) {

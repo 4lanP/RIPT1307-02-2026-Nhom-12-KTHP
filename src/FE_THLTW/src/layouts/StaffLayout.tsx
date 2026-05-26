@@ -15,13 +15,13 @@ import toast from 'react-hot-toast'
 // Admin operational HTTP: ADMIN, MANAGER -> dashboard/reports/menu/tables/QR
 // Admin user management: chỉ ADMIN -> /admin/users
 const navItems = [
-  { to: '/tables', icon: Table2, label: 'Quản lý bàn', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
+  { to: '/tables', icon: Table2, label: 'Sơ đồ bàn', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
   { to: '/requests', icon: Bell, label: 'Yêu cầu', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
   { to: '/admin/dashboard', icon: LayoutGrid, label: 'Dashboard', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/reports', icon: BarChart3, label: 'Báo cáo', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/menu', icon: UtensilsCrossed, label: 'Menu', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/users', icon: Users, label: 'Nhân viên', roles: ['ADMIN'] },
-  { to: '/admin/tables', icon: Table2, label: 'Quản lý bàn (Admin)', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/tables', icon: Table2, label: 'Cấu hình bàn', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/qr', icon: QrCode, label: 'Mã QR', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/settings', icon: Landmark, label: 'Cài đặt ngân hàng', roles: ['ADMIN'] },
 ]
