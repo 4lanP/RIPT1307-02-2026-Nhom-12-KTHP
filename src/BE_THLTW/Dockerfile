@@ -23,4 +23,4 @@ USER appuser
 EXPOSE 5000
 ENV NODE_ENV=production
 
-CMD ["sh", "-c", "npm run migrate:bank-settings && node src/server.js"]
+CMD ["sh", "-c", "npm run migrate:invoices && npm run migrate:bank-settings && node src/server.js"]
