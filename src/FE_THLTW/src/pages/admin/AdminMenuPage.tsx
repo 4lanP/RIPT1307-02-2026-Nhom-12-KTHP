@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import ModalPortal from '../../components/ModalPortal'
-import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search } from 'lucide-react'
+import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search, Image as ImageIcon, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const STATIONS = ['GRILL', 'BAR', 'COLD']
@@ -14,7 +14,7 @@ const STATION_COLORS = {
   COLD: 'bg-emerald-50 text-emerald-600 border-emerald-100' 
 }
 
-const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '' }
+const defaultItem = { name: '', description: '', price: '', station: 'GRILL', category_id: '', daily_quota: '', daily_quota_default: '', image_url: '' }
 
 const parseNumberInput = (value) => Number(String(value).replace(',', '.'))
 
@@ -60,6 +60,7 @@ const AdminMenuPage = () => {
       category_id: item.category_id,
       daily_quota: item.daily_quota ?? '',
       daily_quota_default: item.daily_quota_default ?? '',
+      image_url: item.image_url || '',
     })
     setModalOpen(true)
   }
@@ -97,6 +98,7 @@ const AdminMenuPage = () => {
         price,
         daily_quota: dailyQuota,
         daily_quota_default: dailyQuotaDefault,
+        image_url: form.image_url.trim(),
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
@@ -204,23 +206,23 @@ const AdminMenuPage = () => {
 
       {/* Menu Table */}
       <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left min-w-[850px]">
             <thead>
               <tr className="border-b border-gray-50">
-                <th className="pl-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Món ăn</th>
-                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Phân loại</th>
-                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Giá bán</th>
-                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Quota</th>
-                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</th>
-                <th className="pr-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Thao tác</th>
+                <th className="pl-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Món ăn</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Phân loại</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Giá bán</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center whitespace-nowrap">Quota</th>
+                <th className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Trạng thái</th>
+                <th className="pr-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                 <tr><td colSpan="6" className="py-20 text-center"><div className="w-10 h-10 border-4 border-emerald-50 border-t-emerald-500 rounded-full animate-spin mx-auto" /></td></tr>
+                 <tr><td colSpan={6} className="py-20 text-center"><div className="w-10 h-10 border-4 border-emerald-50 border-t-emerald-500 rounded-full animate-spin mx-auto" /></td></tr>
               ) : filteredItems.length === 0 ? (
-                 <tr><td colSpan="6" className="py-20 text-center text-gray-400 font-bold">Không tìm thấy món ăn nào</td></tr>
+                 <tr><td colSpan={6} className="py-20 text-center text-gray-400 font-bold">Không tìm thấy món ăn nào</td></tr>
               ) : filteredItems.map(item => {
                 const StationIcon = STATION_ICONS[item.station] || UtensilsCrossed
                 const colorClass = STATION_COLORS[item.station] || 'bg-gray-50 text-gray-500'
@@ -228,8 +230,12 @@ const AdminMenuPage = () => {
                   <tr key={item.id} className="group hover:bg-[#F9FBF9] transition-colors">
                     <td className="pl-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform">
-                          <UtensilsCrossed className="w-6 h-6" />
+                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-emerald-500 border border-gray-100 group-hover:scale-105 transition-transform overflow-hidden relative">
+                          {item.image_url ? (
+                            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <UtensilsCrossed className="w-6 h-6" />
+                          )}
                         </div>
                         <div>
                           <p className="text-gray-900 font-black text-base leading-tight">{item.name}</p>
@@ -237,16 +243,16 @@ const AdminMenuPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6">
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${colorClass} text-[10px] font-black uppercase tracking-widest shadow-sm`}>
+                    <td className="px-6 whitespace-nowrap">
+                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${colorClass} text-[10px] font-black uppercase tracking-widest shadow-sm whitespace-nowrap`}>
                         <StationIcon className="w-3 h-3" />
                         {STATION_LABELS[item.station]}
                       </div>
                     </td>
-                    <td className="px-6">
-                      <span className="text-gray-900 font-black text-base">{formatCurrency(item.price)}</span>
+                    <td className="px-6 whitespace-nowrap">
+                      <span className="text-gray-900 font-black text-base whitespace-nowrap">{formatCurrency(item.price)}</span>
                     </td>
-                    <td className="px-6 text-center">
+                    <td className="px-6 text-center whitespace-nowrap">
                        <div className="flex flex-col items-center">
                           <span className="text-gray-900 font-black text-sm">{item.daily_quota ?? '∞'}</span>
                           <div className="w-12 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
@@ -255,13 +261,13 @@ const AdminMenuPage = () => {
                           <span className="text-[8px] font-black text-gray-400 uppercase mt-1">/ {item.daily_quota_default ?? '∞'}</span>
                        </div>
                     </td>
-                    <td className="px-6">
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                    <td className="px-6 whitespace-nowrap">
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter whitespace-nowrap ${item.is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                         {item.is_available ? 'Sẵn sàng' : 'Tạm hết'}
                       </span>
                     </td>
-                    <td className="pr-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                    <td className="pr-8 py-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-3 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all">
                         <button onClick={() => openEdit(item)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 hover:border-emerald-100 transition-all shadow-sm">
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -309,6 +315,61 @@ const AdminMenuPage = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Mô tả chi tiết</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all h-24 resize-none" placeholder="Nguyên liệu, cách chế biến..." />
+              </div>
+
+              {/* Image Upload Area */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Hình ảnh món ăn</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Upload/Preview container */}
+                  <div className="h-32 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-emerald-500 transition-colors bg-[#F9FBF9]">
+                    {form.image_url ? (
+                      <>
+                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, image_url: '' }))}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-650 text-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <X className="w-3.5 h-3.5" strokeWidth={3} />
+                        </button>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer flex flex-col items-center justify-center p-4 w-full h-full text-center">
+                        <Upload className="w-6 h-6 text-gray-400 group-hover:text-emerald-500 mb-2 transition-colors" />
+                        <span className="text-[10px] font-black text-gray-400 group-hover:text-emerald-600 uppercase tracking-wider transition-colors">Tải ảnh lên</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onloadend = () => {
+                                setForm(f => ({ ...f, image_url: reader.result as string }))
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }} 
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {/* URL input */}
+                  <div className="md:col-span-2 flex flex-col justify-center space-y-2">
+                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
+                      Tải ảnh trực tiếp từ máy của bạn hoặc dán đường dẫn (URL) ảnh từ internet vào ô bên dưới:
+                    </p>
+                    <input 
+                      type="text" 
+                      value={form.image_url} 
+                      onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} 
+                      className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-5 py-3 text-xs font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" 
+                      placeholder="https://example.com/image.jpg hoặc dữ liệu Base64" 
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -360,3 +421,4 @@ const AdminMenuPage = () => {
 }
 
 export default AdminMenuPage
+

@@ -337,9 +337,13 @@ const CustomerMenuPage = () => {
                     >
                       {/* Image */}
                       <div className="w-28 h-28 rounded-[24px] bg-[#F3F7F3] border border-emerald-50 flex items-center justify-center flex-shrink-0 relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                        <span className="text-4xl filter drop-shadow-md">
-                          {item.station === 'GRILL' ? '🍖' : item.station === 'BAR' ? '🍹' : '🥗'}
-                        </span>
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-4xl filter drop-shadow-md">
+                            {item.station === 'GRILL' ? '🍖' : item.station === 'BAR' ? '🍹' : '🥗'}
+                          </span>
+                        )}
                         {!isAvailable && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Hết món</span>
