@@ -132,6 +132,7 @@ export const adminApi = {
 
   // Menu Items
   getMenuItems: () => api.get('/admin/menu/items'),
+  uploadBase64MenuImage: (data) => api.post('/admin/menu/images/base64', data),
   createMenuItem: (data) => api.post('/admin/menu/items', data),
   updateMenuItem: (id, data) => api.put(`/admin/menu/items/${id}`, data),
   deleteMenuItem: (id) => api.delete(`/admin/menu/items/${id}`),

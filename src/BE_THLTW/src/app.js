@@ -9,6 +9,8 @@ const logger = require('./utils/logger');
 const { dishImageStorage } = require('./config/storage');
 
 const app = express();
+const jsonBodyLimitBytes = Math.ceil((dishImageStorage.maxBytes * 4) / 3) + 1024 * 1024;
+const jsonBodyLimit = `${jsonBodyLimitBytes}b`;
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
@@ -43,8 +45,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: jsonBodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: jsonBodyLimit }));
 app.use(dishImageStorage.publicPath, express.static(path.resolve(dishImageStorage.directory)));
 
 const swaggerUi = require('swagger-ui-express');

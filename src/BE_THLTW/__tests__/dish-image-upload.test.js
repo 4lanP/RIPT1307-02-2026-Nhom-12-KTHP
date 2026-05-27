@@ -75,6 +75,13 @@ function imageForm(buffer = validPngBuffer(), filename = 'dish.png', type = 'ima
   return form;
 }
 
+function imageJson(buffer = validPngBuffer(), filename = 'dish.png') {
+  return {
+    image_base64: `data:image/png;base64,${buffer.toString('base64')}`,
+    filename,
+  };
+}
+
 describe('Dish image upload', () => {
   let app;
 
@@ -104,6 +111,40 @@ describe('Dish image upload', () => {
 
     const storedFile = `${process.env.DISH_IMAGE_STORAGE_DIR}/${response.body.data.object_key}`;
     await expect(fs.access(storedFile)).resolves.toBeUndefined();
+  });
+
+  it.each(['ADMIN', 'MANAGER'])('uploads a valid base64 data URL for %s and returns a URL plus object key', async (role) => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', role, {
+      json: imageJson(),
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual(expect.objectContaining({ success: true }));
+    expect(response.body.data).toEqual(expect.objectContaining({
+      url: expect.stringMatching(/^http:\/\/localhost:5000\/uploads\/dish-images\/menu-items\/\d{4}\/\d{2}\/.+\.png$/),
+      object_key: expect.stringMatching(/^menu-items\/\d{4}\/\d{2}\/.+\.png$/),
+      mime_type: 'image/png',
+      size_bytes: 16,
+    }));
+
+    const storedFile = `${process.env.DISH_IMAGE_STORAGE_DIR}/${response.body.data.object_key}`;
+    await expect(fs.access(storedFile)).resolves.toBeUndefined();
+  });
+
+  it('uploads a valid raw base64 image and returns a URL plus object key', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: {
+        image_base64: validPngBuffer().toString('base64'),
+        filename: 'dish.png',
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data).toEqual(expect.objectContaining({
+      url: expect.stringMatching(/^http:\/\/localhost:5000\/uploads\/dish-images\/menu-items\/\d{4}\/\d{2}\/.+\.png$/),
+      mime_type: 'image/png',
+      size_bytes: 16,
+    }));
   });
 
   it('allows a returned upload URL to be saved as menu item image_url on create', async () => {
@@ -143,6 +184,55 @@ describe('Dish image upload', () => {
     expect(Array.isArray(response.body.errors)).toBe(true);
   });
 
+  it('rejects missing base64 image data', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: {},
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.errors[0].field).toBe('body.image_base64');
+  });
+
+  it('rejects malformed base64 image data', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: { image_base64: 'data:image/png;base64,not@@base64' },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0]).toEqual(expect.objectContaining({
+      field: 'body.image_base64',
+      message: expect.stringMatching(/valid Base64/),
+    }));
+  });
+
+  it('rejects unsupported base64 image content', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: {
+        image_base64: Buffer.from('not an image').toString('base64'),
+        filename: 'note.txt',
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0]).toEqual(expect.objectContaining({
+      field: 'body.image_base64',
+      message: expect.stringMatching(/JPEG, PNG, and WebP/),
+    }));
+  });
+
+  it('rejects oversized base64 image data before returning an image reference', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: imageJson(validPngBuffer(80)),
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0]).toEqual(expect.objectContaining({
+      field: 'body.image_base64',
+      message: expect.stringMatching(/64 bytes/),
+    }));
+  });
+
   it('rejects unsupported file types', async () => {
     const response = await request(app, 'POST', '/admin/menu/images', 'MANAGER', {
       form: imageForm(Buffer.from('not an image'), 'note.txt', 'text/plain'),
@@ -179,9 +269,27 @@ describe('Dish image upload', () => {
     expect(response.body).toEqual(expect.objectContaining({ success: false }));
   });
 
+  it.each(['CASHIER', 'WAITER', 'KITCHEN'])('rejects %s base64 uploads with authorization failure', async (role) => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', role, {
+      json: imageJson(),
+    });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual(expect.objectContaining({ success: false }));
+  });
+
   it('rejects unauthenticated uploads', async () => {
     const response = await request(app, 'POST', '/admin/menu/images', null, {
       form: imageForm(),
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual(expect.objectContaining({ success: false }));
+  });
+
+  it('rejects unauthenticated base64 uploads', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', null, {
+      json: imageJson(),
     });
 
     expect(response.status).toBe(401);

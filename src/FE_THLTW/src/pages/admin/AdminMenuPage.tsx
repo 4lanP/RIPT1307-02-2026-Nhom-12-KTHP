@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import ModalPortal from '../../components/ModalPortal'
+import { buildImagePreviewSrc, getImageInputValidationMessage, resolveMenuImageUrl } from './adminMenuImage'
 import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search, Image as ImageIcon, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -29,6 +30,7 @@ const AdminMenuPage = () => {
   const [stationFilter, setStationFilter] = useState('')
   const [resetting, setResetting] = useState(false)
   const [search, setSearch] = useState('')
+  const [imageError, setImageError] = useState('')
 
   useEffect(() => { loadAll() }, [])
 
@@ -47,6 +49,7 @@ const AdminMenuPage = () => {
   const openCreate = () => {
     setEditItem(null)
     setForm({ ...defaultItem, category_id: categories[0]?.id || '' })
+    setImageError('')
     setModalOpen(true)
   }
 
@@ -62,6 +65,7 @@ const AdminMenuPage = () => {
       daily_quota_default: item.daily_quota_default ?? '',
       image_url: item.image_url || '',
     })
+    setImageError('')
     setModalOpen(true)
   }
 
@@ -87,9 +91,16 @@ const AdminMenuPage = () => {
       toast.error('Quota phải là số nguyên không âm')
       return
     }
+    const imageValidationMessage = getImageInputValidationMessage(form.image_url)
+    if (imageValidationMessage) {
+      setImageError(imageValidationMessage)
+      toast.error(imageValidationMessage)
+      return
+    }
 
     setSaving(true)
     try {
+      const imageUrl = await resolveMenuImageUrl(form.image_url, adminApi.uploadBase64MenuImage)
       const data = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -98,7 +109,7 @@ const AdminMenuPage = () => {
         price,
         daily_quota: dailyQuota,
         daily_quota_default: dailyQuotaDefault,
-        image_url: form.image_url.trim(),
+        image_url: imageUrl,
       }
       if (editItem) {
         await adminApi.updateMenuItem(editItem.id, data)
@@ -108,8 +119,13 @@ const AdminMenuPage = () => {
         toast.success('Đã thêm món mới')
       }
       setModalOpen(false)
+      setImageError('')
       loadAll()
-    } catch { toast.error('Lỗi lưu dữ liệu') }
+    } catch (error) {
+      const message = error?.errors?.[0]?.message || error?.message || 'Lỗi lưu dữ liệu'
+      setImageError(message)
+      toast.error(message)
+    }
     finally { setSaving(false) }
   }
 
@@ -137,6 +153,7 @@ const AdminMenuPage = () => {
     const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase())
     return matchStation && matchSearch
   })
+  const imagePreviewSrc = buildImagePreviewSrc(form.image_url)
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">
@@ -323,17 +340,25 @@ const AdminMenuPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Upload/Preview container */}
                   <div className="h-32 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-emerald-500 transition-colors bg-[#F9FBF9]">
-                    {form.image_url ? (
+                    {imagePreviewSrc ? (
                       <>
-                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={imagePreviewSrc} alt="Preview" className="w-full h-full object-cover" />
                         <button 
                           type="button"
-                          onClick={() => setForm(f => ({ ...f, image_url: '' }))}
+                          onClick={() => {
+                            setForm(f => ({ ...f, image_url: '' }))
+                            setImageError('')
+                          }}
                           className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-650 text-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-all opacity-0 group-hover:opacity-100"
                         >
                           <X className="w-3.5 h-3.5" strokeWidth={3} />
                         </button>
                       </>
+                    ) : form.image_url.trim() ? (
+                      <div className="flex flex-col items-center justify-center p-4 text-center">
+                        <ImageIcon className="w-7 h-7 text-red-400 mb-2" />
+                        <span className="text-[10px] font-black text-red-500 uppercase tracking-wider">Ảnh chưa hợp lệ</span>
+                      </div>
                     ) : (
                       <label className="cursor-pointer flex flex-col items-center justify-center p-4 w-full h-full text-center">
                         <Upload className="w-6 h-6 text-gray-400 group-hover:text-emerald-500 mb-2 transition-colors" />
@@ -348,6 +373,7 @@ const AdminMenuPage = () => {
                               const reader = new FileReader()
                               reader.onloadend = () => {
                                 setForm(f => ({ ...f, image_url: reader.result as string }))
+                                setImageError('')
                               }
                               reader.readAsDataURL(file)
                             }
@@ -359,15 +385,20 @@ const AdminMenuPage = () => {
                   {/* URL input */}
                   <div className="md:col-span-2 flex flex-col justify-center space-y-2">
                     <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
-                      Tải ảnh trực tiếp từ máy của bạn hoặc dán đường dẫn (URL) ảnh từ internet vào ô bên dưới:
+                      Tải ảnh trực tiếp từ máy của bạn, dán URL ảnh, hoặc dán dữ liệu Base64 ảnh vào ô bên dưới:
                     </p>
                     <input 
                       type="text" 
                       value={form.image_url} 
-                      onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} 
-                      className="w-full bg-[#F9FBF9] border border-gray-100 rounded-2xl px-5 py-3 text-xs font-bold text-gray-900 focus:ring-4 focus:ring-emerald-500/5 transition-all" 
+                      onChange={e => {
+                        const value = e.target.value
+                        setForm(f => ({ ...f, image_url: value }))
+                        setImageError(getImageInputValidationMessage(value))
+                      }} 
+                      className={`w-full bg-[#F9FBF9] border rounded-2xl px-5 py-3 text-xs font-bold text-gray-900 focus:ring-4 transition-all ${imageError ? 'border-red-200 focus:ring-red-500/10' : 'border-gray-100 focus:ring-emerald-500/5'}`} 
                       placeholder="https://example.com/image.jpg hoặc dữ liệu Base64" 
                     />
+                    {imageError && <p className="text-[10px] text-red-500 font-black uppercase tracking-wide">{imageError}</p>}
                   </div>
                 </div>
               </div>
