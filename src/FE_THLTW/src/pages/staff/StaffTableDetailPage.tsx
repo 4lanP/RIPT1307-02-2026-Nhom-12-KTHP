@@ -121,6 +121,12 @@ const StaffTableDetailPage = () => {
   }
 
   const handleCreateInvoice = async () => {
+    const servedItems = allItems.filter(item => item.status === 'SERVED')
+    if (servedItems.length === 0) {
+      toast.error('Chỉ có thể in hóa đơn sau khi có món đã phục vụ')
+      return
+    }
+
     setProcessing(true)
     try {
       const res = await staffApi.createInvoice(session.id)
@@ -131,7 +137,10 @@ const StaffTableDetailPage = () => {
         toast.error('Không tìm thấy thông tin hóa đơn')
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Không thể tạo hóa đơn')
+      const message = err?.message === 'Session has no served items to invoice'
+        ? 'Chỉ có thể in hóa đơn sau khi có món đã phục vụ'
+        : err?.message || 'Không thể tạo hóa đơn'
+      toast.error(message)
     } finally {
       setProcessing(false)
     }
@@ -150,6 +159,8 @@ const StaffTableDetailPage = () => {
   const finalAmount = session.final_amount || session.subtotal || 0
   const change = amount ? Math.max(0, parseInt(amount) - finalAmount) : 0
   const allItems = session.orders?.flatMap(o => (o.items || []).map(i => ({ ...i, orderId: o.id }))) || []
+  const servedItems = allItems.filter(item => item.status === 'SERVED')
+  const canCreateInvoice = servedItems.length > 0
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20">
@@ -356,15 +367,22 @@ const StaffTableDetailPage = () => {
                   )}
 
                   {allItems.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleCreateInvoice}
-                      disabled={processing}
-                      className="w-full bg-white hover:bg-gray-50 text-emerald-600 border-2 border-emerald-500 font-black py-4.5 rounded-[24px] shadow-sm flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
-                    >
-                      <Printer className="w-5 h-5" />
-                      <span className="text-base">Xuất & In hóa đơn</span>
-                    </button>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleCreateInvoice}
+                        disabled={processing || !canCreateInvoice}
+                        className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none disabled:hover:translate-y-0 text-emerald-600 border-2 border-emerald-500 font-black py-4.5 rounded-[24px] shadow-sm flex items-center justify-center gap-3 transition-all hover:-translate-y-1 active:scale-95 mt-4"
+                      >
+                        <Printer className="w-5 h-5" />
+                        <span className="text-base">Xuất & In hóa đơn</span>
+                      </button>
+                      {!canCreateInvoice && (
+                        <p className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 leading-relaxed">
+                          Cần có ít nhất một món ở trạng thái Đã phục vụ trước khi in hóa đơn.
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   {allItems.length === 0 ? (

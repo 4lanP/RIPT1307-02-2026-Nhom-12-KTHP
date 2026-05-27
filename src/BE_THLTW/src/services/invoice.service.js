@@ -137,7 +137,7 @@ async function createInvoice(sessionId, user) {
     );
     const items = itemsRes.rows.map(normalizeItem);
     if (items.length === 0) {
-      throw new ValidationError('Session has no served items to invoice');
+      throw new ValidationError('Chưa có món đã phục vụ để tạo hóa đơn');
     }
 
     const paymentsRes = await client.query(
