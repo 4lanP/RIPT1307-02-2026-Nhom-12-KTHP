@@ -17,6 +17,7 @@ const {
   listItemsSchema,
   createItemSchema,
   updateItemSchema,
+  uploadBase64MenuImageSchema,
   menuItemIdParamSchema,
   createOptionSchema,
   updateOptionSchema,
@@ -260,6 +261,7 @@ router.delete('/menu/categories/:id', validate(idParamSchema), adminController.d
 
 router.get('/menu/items', validate(listItemsSchema), adminController.listItems);
 router.post('/menu/images', createDishImageUpload(), adminController.uploadMenuImage);
+router.post('/menu/images/base64', validate(uploadBase64MenuImageSchema), adminController.uploadBase64MenuImage);
 router.post('/menu/items', validate(createItemSchema), adminController.createItem);
 router.put('/menu/items/:id', validate(updateItemSchema), adminController.updateItem);
 router.delete('/menu/items/:id', validate(idParamSchema), adminController.deleteItem);

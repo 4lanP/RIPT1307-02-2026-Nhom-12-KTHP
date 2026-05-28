@@ -135,6 +135,13 @@ const updateItemSchema = z.object({
   }),
 });
 
+const uploadBase64MenuImageSchema = z.object({
+  body: z.object({
+    image_base64: z.string().trim().min(1, 'Dish image data is required'),
+    filename: z.string().trim().min(1).max(255).optional(),
+  }).strict(),
+});
+
 const menuItemIdParamSchema = z.object({
   params: z.object({ id }),
 });
@@ -180,6 +187,7 @@ module.exports = {
   listItemsSchema,
   createItemSchema,
   updateItemSchema,
+  uploadBase64MenuImageSchema,
   menuItemIdParamSchema,
   createOptionSchema,
   updateOptionSchema,

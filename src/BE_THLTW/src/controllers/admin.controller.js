@@ -63,6 +63,19 @@ async function uploadMenuImage(req, res, next) {
   }
 }
 
+async function uploadBase64MenuImage(req, res, next) {
+  try {
+    const result = await dishImageStorageService.storeBase64DishImage(req.body, {
+      requestId: req.id,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
+    return send(res, 201, 'Upload dish image successfully', result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 function handler(serviceMethod, status, message, getArgs) {
   return async (req, res, next) => {
     try {
@@ -81,6 +94,7 @@ module.exports = {
   exportReport,
   resetMenuQuota,
   uploadMenuImage,
+  uploadBase64MenuImage,
 
   listUsers: handler(adminService.listUsers, 200, 'Users loaded', () => []),
   createUser: handler(adminService.createUser, 201, 'User created', (req) => [req.body]),

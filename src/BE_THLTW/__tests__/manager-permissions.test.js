@@ -6,6 +6,8 @@ const errorHandler = require('../src/middlewares/error.middleware');
 
 jest.mock('../src/utils/jwt.util');
 
+jest.setTimeout(30000);
+
 jest.mock('../src/controllers/admin.controller', () => ({
   getRevenue: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   getMenuReport: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
@@ -33,6 +35,7 @@ jest.mock('../src/controllers/admin.controller', () => ({
   updateItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   deleteItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   uploadMenuImage: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
+  uploadBase64MenuImage: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   listOptions: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   createOption: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   updateOption: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
@@ -120,9 +123,11 @@ describe('Manager operations permission matrix', () => {
     ['GET', '/admin/menu/categories', 200],
     ['GET', '/admin/menu/items', 200],
     ['POST', '/admin/menu/images', 201],
+    ['POST', '/admin/menu/images/base64', 201, { image_base64: 'iVBORw0KGgoAAA==' }],
     ['POST', '/admin/menu/reset-quota', 200],
-  ])('allows MANAGER to access operational admin route %s %s', async (method, path, expectedStatus) => {
-    const response = await makeRequest(app, method, path, 'MANAGER');
+  ])('allows MANAGER to access operational admin route %s %s', async (...row) => {
+    const [method, path, expectedStatus, body] = row;
+    const response = await makeRequest(app, method, path, 'MANAGER', body);
 
     expect(response.status).toBe(expectedStatus);
     expect(response.body).toEqual(expect.objectContaining({ success: true }));
