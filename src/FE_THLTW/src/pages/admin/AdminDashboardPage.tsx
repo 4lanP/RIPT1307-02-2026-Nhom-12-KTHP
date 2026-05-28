@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { adminApi, staffApi } from '../../lib/api'
 import { getPositiveMenuShareRows, getRelativeQuantityPercent } from '../../lib/reportData'
 import { normalizeTableRows } from '../../lib/tableData'
@@ -78,6 +79,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 const AdminDashboardPage = () => {
+  const navigate = useNavigate()
   const [revenue, setRevenue] = useState([])
   const [menuReport, setMenuReport] = useState([])
   const [tables, setTables] = useState([])
@@ -281,7 +283,10 @@ const AdminDashboardPage = () => {
             )}
           </div>
           
-          <button className="w-full mt-8 py-4 bg-[#F9FBF9] text-emerald-600 font-black text-xs uppercase tracking-widest rounded-2xl border border-emerald-50 hover:bg-emerald-50 transition-colors">
+          <button 
+            onClick={() => navigate('/admin/reports')}
+            className="w-full mt-8 py-4 bg-[#F9FBF9] text-emerald-600 font-black text-xs uppercase tracking-widest rounded-2xl border border-emerald-50 hover:bg-emerald-50 transition-colors"
+          >
             Xem tất cả báo cáo
           </button>
         </div>
