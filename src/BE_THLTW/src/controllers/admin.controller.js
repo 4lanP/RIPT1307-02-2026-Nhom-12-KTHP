@@ -1,6 +1,7 @@
 const reportService = require('../services/report.service');
 const adminService = require('../services/admin.service');
 const dishImageStorageService = require('../services/dishImageStorage.service');
+const keepaliveService = require('../services/keepalive.service');
 const { successResponse } = require('../utils/response.util');
 
 const send = (res, status, message, data) => successResponse(res, status, message, data);
@@ -76,6 +77,14 @@ async function uploadBase64MenuImage(req, res, next) {
   }
 }
 
+async function getKeepaliveStatus(req, res, next) {
+  try {
+    return send(res, 200, 'Keepalive status loaded', keepaliveService.getStatus());
+  } catch (err) {
+    next(err);
+  }
+}
+
 function handler(serviceMethod, status, message, getArgs) {
   return async (req, res, next) => {
     try {
@@ -95,6 +104,7 @@ module.exports = {
   resetMenuQuota,
   uploadMenuImage,
   uploadBase64MenuImage,
+  getKeepaliveStatus,
 
   listUsers: handler(adminService.listUsers, 200, 'Users loaded', () => []),
   createUser: handler(adminService.createUser, 201, 'User created', (req) => [req.body]),

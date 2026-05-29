@@ -102,6 +102,39 @@ nếu database cũ vẫn còn `VARCHAR(500)`, có thể chạy thủ công:
 npm run migrate:menu-images
 ```
 
+### Keepalive bot cho Render Free
+
+Backend có bot keepalive nội bộ để gọi định kỳ public health endpoint khi deploy
+demo trên Render Free. Mặc định bot tắt để tránh traffic local/test ngoài ý
+muốn:
+
+```env
+KEEPALIVE_ENABLED=false
+KEEPALIVE_TARGETS=
+KEEPALIVE_INTERVAL_SECONDS=600
+KEEPALIVE_TIMEOUT_MS=5000
+KEEPALIVE_RETRY_LIMIT=1
+KEEPALIVE_HISTORY_LIMIT=20
+```
+
+Khi cần bật trên Render, trỏ target tới health endpoint public của backend:
+
+```env
+KEEPALIVE_ENABLED=true
+KEEPALIVE_TARGETS=https://your-service.onrender.com/api/health
+KEEPALIVE_INTERVAL_SECONDS=600
+KEEPALIVE_TIMEOUT_MS=5000
+KEEPALIVE_RETRY_LIMIT=1
+KEEPALIVE_HISTORY_LIMIT=20
+```
+
+Quy tắc an toàn:
+
+- Interval tối thiểu là `300` giây; mặc định `600` giây.
+- Target phải là URL public `http` hoặc `https` tới endpoint health, ví dụ `/api/health`.
+- Không dùng URL localhost, private IP, query token, credential trong URL, hoặc endpoint admin/auth/payment/order/session.
+- Nếu cấu hình sai, scheduler không chạy và admin có thể xem lỗi tại `GET /api/admin/keepalive/status`.
+
 Tạo DB và schema:
 
 ```powershell

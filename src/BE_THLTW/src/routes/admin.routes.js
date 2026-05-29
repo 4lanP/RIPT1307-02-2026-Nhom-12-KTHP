@@ -270,6 +270,8 @@ router.post('/menu/items/:id/options', validate(createOptionSchema), adminContro
 router.put('/menu/options/:id', validate(updateOptionSchema), adminController.updateOption);
 router.delete('/menu/options/:id', validate(idParamSchema), adminController.deleteOption);
 
+router.get('/keepalive/status', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getKeepaliveStatus);
+
 router.get('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getBankSettings);
 router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBankSettingsSchema), adminController.saveBankSettings);
 

@@ -10,6 +10,7 @@ const setupSockets = require('./sockets');
 const cron = require('node-cron');
 const db = require('./config/db');
 const { ensureMenuImageColumnSupportsBase64 } = require('./config/migrateMenuImageColumn');
+const keepaliveService = require('./services/keepalive.service');
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
@@ -49,6 +50,7 @@ async function startServer() {
       nodeEnv: process.env.NODE_ENV,
       pid: process.pid,
     });
+    keepaliveService.start({ runImmediately: true });
   });
 }
 

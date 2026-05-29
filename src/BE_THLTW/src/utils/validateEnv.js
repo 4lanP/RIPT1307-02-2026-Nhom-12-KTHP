@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const keepaliveService = require('../services/keepalive.service');
 
 const requiredEnvVars = [
   'DATABASE_URL',
@@ -19,6 +20,12 @@ const optionalEnvVars = [
   'DISH_IMAGE_STORAGE_DIR',
   'DISH_IMAGE_PUBLIC_BASE_URL',
   'DISH_IMAGE_MAX_BYTES',
+  'KEEPALIVE_ENABLED',
+  'KEEPALIVE_TARGETS',
+  'KEEPALIVE_INTERVAL_SECONDS',
+  'KEEPALIVE_TIMEOUT_MS',
+  'KEEPALIVE_RETRY_LIMIT',
+  'KEEPALIVE_HISTORY_LIMIT',
 ];
 
 function validateEnv() {
@@ -77,11 +84,19 @@ function validateEnv() {
     }
   }
 
+  const keepaliveConfig = keepaliveService.buildConfig(process.env);
+  if (keepaliveConfig.status === 'configuration-error') {
+    logger.warn('Keepalive configuration invalid; scheduler will not start', {
+      error: keepaliveConfig.startupError,
+    });
+  }
+
   logger.info('Environment validation passed', {
     nodeEnv: process.env.NODE_ENV,
     port: process.env.PORT || 5000,
     hasRedis: !!process.env.REDIS_URL,
     hasDishImageStorage: !!process.env.DISH_IMAGE_STORAGE_DIR,
+    keepaliveStatus: keepaliveConfig.status,
   });
 }
 

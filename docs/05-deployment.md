@@ -64,6 +64,12 @@ VNPAY_URL=https://pay.vnpay.vn/vpcpay.html
 VNPAY_RETURN_URL=https://your-domain/payment-result
 FRONTEND_URL=https://your-frontend-domain
 LOG_LEVEL=info
+KEEPALIVE_ENABLED=false
+KEEPALIVE_TARGETS=
+KEEPALIVE_INTERVAL_SECONDS=600
+KEEPALIVE_TIMEOUT_MS=5000
+KEEPALIVE_RETRY_LIMIT=1
+KEEPALIVE_HISTORY_LIMIT=20
 ```
 
 Lưu ý:
@@ -71,6 +77,7 @@ Lưu ý:
 - `FRONTEND_URL` không được là `*` trong production.
 - JWT secrets phải ít nhất 32 ký tự trong production.
 - Swagger UI bị tắt khi `NODE_ENV=production`; vẫn có `/api/docs.json`.
+- Keepalive bot mặc định tắt. Chỉ bật khi deploy demo trên Render Free và đã hiểu quota/traffic tradeoff.
 
 ## Database
 
@@ -169,6 +176,12 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `DISH_IMAGE_STORAGE_DIR` | `./uploads/dish-images` cho flow upload file legacy |
 | `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/uploads/dish-images` cho ảnh file legacy |
 | `DISH_IMAGE_MAX_BYTES` | `5242880`; áp dụng cho cả Base64 JPG/PNG lưu DB và upload file legacy |
+| `KEEPALIVE_ENABLED` | `false` mặc định; đặt `true` để bật bot keepalive cho Render Free |
+| `KEEPALIVE_TARGETS` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health` khi bật keepalive |
+| `KEEPALIVE_INTERVAL_SECONDS` | `600`; tối thiểu `300` giây để tránh traffic quá dày |
+| `KEEPALIVE_TIMEOUT_MS` | `5000` |
+| `KEEPALIVE_RETRY_LIMIT` | `1`; retry có giới hạn để tránh retry storm |
+| `KEEPALIVE_HISTORY_LIMIT` | `20`; số kết quả gần nhất giữ trong memory |
 | `VNPAY_TMNCODE` | *Mã Merchant VNPay Sandbox của bạn* |
 | `VNPAY_HASHSECRET` | *Chuỗi Hash Secret VNPay Sandbox của bạn* |
 | `VNPAY_URL` | `https://sandbox.vnpay.vn/paymentv2/vpcpay.html` |
@@ -179,6 +192,32 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 
 > [!IMPORTANT]
 > Nếu service đang chạy code cũ với Start Command `node src/server.js`, hãy redeploy bản mới. Backend hiện tự đảm bảo `MENU_ITEMS.image_url` là `TEXT` khi khởi động; nếu cần chạy thủ công, dùng `npm run migrate:menu-images` trong `src/BE_THLTW` với `DATABASE_URL` trỏ tới database Render.
+
+#### Keepalive bot trên Render Free
+
+Render Free Web Service có thể spin down sau một khoảng thời gian không có
+inbound traffic; request tiếp theo phải chờ service khởi động lại. Với môi
+trường demo, có thể bật keepalive bot để gọi `GET /api/health` định kỳ:
+
+```env
+KEEPALIVE_ENABLED=true
+KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health
+KEEPALIVE_INTERVAL_SECONDS=600
+KEEPALIVE_TIMEOUT_MS=5000
+KEEPALIVE_RETRY_LIMIT=1
+KEEPALIVE_HISTORY_LIMIT=20
+```
+
+Giới hạn vận hành:
+
+- Bot chỉ gửi request `GET` không credential tới public health endpoint.
+- Không cấu hình endpoint admin, auth, payment, order, session hoặc URL có query token/credential.
+- Interval dưới `300` giây bị từ chối để tránh traffic quá dày.
+- Trạng thái mới nhất xem qua `GET /api/admin/keepalive/status` bằng tài khoản `ADMIN`.
+- Tắt hoặc rollback bằng cách đặt `KEEPALIVE_ENABLED=false` rồi redeploy/restart backend; không có migration DB cần rollback.
+
+Tính năng này chỉ phù hợp demo/hobby. Production cần uptime ổn định nên dùng
+plan luôn bật hoặc dịch vụ monitoring chuyên dụng thay vì phụ thuộc free tier.
 
 ---
 

@@ -36,6 +36,7 @@ jest.mock('../src/controllers/admin.controller', () => ({
   deleteItem: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   uploadMenuImage: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   uploadBase64MenuImage: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
+  getKeepaliveStatus: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   listOptions: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
   createOption: jest.fn((_req, res) => res.status(201).json({ success: true, data: {} })),
   updateOption: jest.fn((_req, res) => res.status(200).json({ success: true, data: {} })),
