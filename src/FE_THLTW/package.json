@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node src/lib/api.test.mjs && node src/layouts/StaffLayout.test.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

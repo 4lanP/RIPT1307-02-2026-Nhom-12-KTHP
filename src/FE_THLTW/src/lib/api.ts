@@ -9,6 +9,52 @@ const api = axios.create({
   },
 })
 
+let refreshPromise: Promise<string> | null = null
+let sessionRefreshFailed = false
+
+const clearAuthStorage = () => {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('user')
+}
+
+const redirectToLogin = () => {
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+}
+
+const requestFreshAccessToken = async () => {
+  if (sessionRefreshFailed) {
+    throw new Error('Refresh token is invalid or expired')
+  }
+
+  if (!refreshPromise) {
+    const refreshToken = localStorage.getItem('refreshToken')
+    if (!refreshToken) {
+      throw new Error('Missing refresh token')
+    }
+
+    refreshPromise = axios.post(`${BASE_URL}/auth/refresh`, {
+      refresh_token: refreshToken,
+    }).then((res) => {
+      const { accessToken, refreshToken: newRefresh } = res.data.data
+      localStorage.setItem('accessToken', accessToken)
+      localStorage.setItem('refreshToken', newRefresh)
+      sessionRefreshFailed = false
+      return accessToken
+    }).catch((error) => {
+      sessionRefreshFailed = true
+      clearAuthStorage()
+      throw error
+    }).finally(() => {
+      refreshPromise = null
+    })
+  }
+
+  return refreshPromise
+}
+
 // Request interceptor — attach token
 api.interceptors.request.use(
   (config) => {
@@ -31,23 +77,16 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config
     const isCustomerUrl = original?.url?.startsWith('/customer')
-    if (error.response?.status === 401 && !original._retry && !isCustomerUrl) {
+    const isAuthUrl = original?.url?.startsWith('/auth/')
+    if (error.response?.status === 401 && original && !original._retry && !isCustomerUrl && !isAuthUrl) {
       original._retry = true
-      const refreshToken = localStorage.getItem('refreshToken')
-      if (refreshToken) {
-        try {
-          const res = await axios.post(`${BASE_URL}/auth/refresh`, {
-            refresh_token: refreshToken,
-          })
-          const { accessToken, refreshToken: newRefresh } = res.data.data
-          localStorage.setItem('accessToken', accessToken)
-          localStorage.setItem('refreshToken', newRefresh)
-          original.headers.Authorization = `Bearer ${accessToken}`
-          return api(original)
-        } catch {
-          localStorage.clear()
-          window.location.href = '/login'
-        }
+      try {
+        const accessToken = await requestFreshAccessToken()
+        original.headers = original.headers || {}
+        original.headers.Authorization = `Bearer ${accessToken}`
+        return api(original)
+      } catch {
+        redirectToLogin()
       }
     }
     return Promise.reject(error.response?.data || error)
@@ -58,7 +97,10 @@ export default api
 
 // Auth APIs
 export const authApi = {
-  login: (data) => api.post('/auth/login', data),
+  login: async (data) => {
+    sessionRefreshFailed = false
+    return api.post('/auth/login', data)
+  },
   refresh: (refresh_token) => api.post('/auth/refresh', { refresh_token }),
   logout: () => api.post('/auth/logout'),
 }
