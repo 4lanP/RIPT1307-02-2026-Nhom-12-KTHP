@@ -2,6 +2,9 @@
 
 Hướng dẫn chạy backend `src/BE_THLTW`.
 
+> [!NOTE]
+> Nếu bạn muốn triển khai dự án lên các dịch vụ Cloud thực tế (Render & Netlify), vui lòng tham khảo **[Hướng dẫn Deploy lên Render & Netlify (Production)](05-deployment.md#deploy-thuc-te-len-render-va-netlify)**.
+
 ## Yêu cầu
 
 | Môi trường | Yêu cầu |

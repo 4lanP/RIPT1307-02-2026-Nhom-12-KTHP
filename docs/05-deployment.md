@@ -122,6 +122,109 @@ Response:
 curl https://your-api-domain/api/health
 ```
 
+## Deploy thực tế lên Render và Netlify
+
+Dự án đã được cấu hình và kiểm thử thành công khi deploy **Backend + PostgreSQL + Redis lên Render** và **Frontend (React + Vite) lên Netlify**. Dưới đây là hướng dẫn cấu hình chi tiết cho từng dịch vụ:
+
+### 1. Cấu hình Cơ sở dữ liệu & Caching trên Render
+
+Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấy thông tin kết nối cung cấp cho Backend.
+
+#### a. PostgreSQL Database
+1. Truy cập Render Dashboard, chọn **New** -> **PostgreSQL**.
+2. Thiết lập thông tin cơ bản:
+   - **Name**: `restaurant-db` (hoặc tên tùy chọn)
+   - **Region**: Chọn khu vực gần người dùng nhất (ví dụ: `Singapore` để có latency tốt nhất về Việt Nam)
+3. Sau khi khởi tạo thành công, sao chép:
+   - **Internal Database URL**: Dùng để cấu hình cho Web Service của Backend chạy cùng trên Render (kết nối nội bộ nhanh và bảo mật).
+   - **External Database URL**: Dùng để kết nối từ local phục vụ việc khởi tạo database (schema, seed, index).
+
+#### b. Redis Cache (Webhook Lock)
+1. Chọn **New** -> **Redis**.
+2. Thiết lập tên (ví dụ: `restaurant-redis`) và chọn Region giống PostgreSQL.
+3. Sau khi khởi tạo thành công, sao chép **Internal Redis Connection String** (ví dụ: `redis://red-...:6379`).
+
+---
+
+### 2. Cấu hình Backend (Web Service) trên Render
+
+1. Chọn **New** -> **Web Service**, liên kết với repository của dự án.
+2. Thiết lập các thông số chính:
+   - **Name**: `ript1307-02-2026-nhom-12-kthp` (trùng với tên miền backend của bạn)
+   - **Region**: Chọn khu vực giống Database & Redis.
+   - **Root Directory**: `src/BE_THLTW`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node src/server.js` (hoặc `npm start`)
+3. Vào tab **Environment** để cấu hình các biến môi trường bắt buộc:
+
+| Tên biến | Giá trị mẫu/Mô tả |
+| :--- | :--- |
+| `NODE_ENV` | `production` |
+| `PORT` | `10000` (Render mặc định hoặc tự động binding) |
+| `DATABASE_URL` | *Dán **Internal Database URL** từ bước 1.a* |
+| `REDIS_URL` | *Dán **Internal Redis Connection String** từ bước 1.b* |
+| `JWT_ACCESS_SECRET` | *Chuỗi mã khóa ngẫu nhiên bảo mật cao (tối thiểu 32 ký tự)* |
+| `JWT_REFRESH_SECRET` | *Chuỗi mã khóa ngẫu nhiên bảo mật cao (tối thiểu 32 ký tự)* |
+| `FRONTEND_URL` | `https://[your-app-name].netlify.app` (URL Frontend Netlify của bạn) |
+| `DISH_IMAGE_STORAGE_DIR` | `./uploads/dish-images` |
+| `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/uploads/dish-images` |
+| `DISH_IMAGE_MAX_BYTES` | `5242880` |
+| `VNPAY_TMNCODE` | *Mã Merchant VNPay Sandbox của bạn* |
+| `VNPAY_HASHSECRET` | *Chuỗi Hash Secret VNPay Sandbox của bạn* |
+| `VNPAY_URL` | `https://sandbox.vnpay.vn/paymentv2/vpcpay.html` |
+| `VNPAY_RETURN_URL` | `https://[your-app-name].netlify.app/payment-result` |
+
+> [!NOTE]
+> Vì Render Web Service dạng Free sẽ bị xóa các file upload cục bộ khi container restart hoặc redeploy, ảnh món ăn (`dish-images`) tải lên dạng file thông thường sẽ bị mất. Hệ thống đã hỗ trợ upload và lưu trữ ảnh món ăn dưới dạng Base64 trực tiếp vào database giúp dữ liệu ảnh luôn được bảo toàn ổn định trên cloud.
+
+---
+
+### 3. Khởi tạo Cơ sở dữ liệu (Database Schema, Seeds & Indexes)
+
+Do Render PostgreSQL khi mới tạo là DB trống, ta cần nạp cấu trúc bảng và dữ liệu mẫu từ local. Thực hiện các bước sau từ máy cá nhân của bạn:
+
+1. Lấy **External Database URL** của Render PostgreSQL (URL này cho phép kết nối từ bên ngoài).
+2. Mở Terminal tại thư mục `src/BE_THLTW` của dự án và chạy các lệnh sau:
+
+**Trên Windows (PowerShell):**
+```powershell
+$env:DATABASE_URL="[Dán External Database URL ở đây]"
+psql $env:DATABASE_URL -f src/config/schema.sql
+node src/config/seed.js
+node src/config/applyIndexes.js
+```
+
+**Trên macOS/Linux (Bash):**
+```bash
+export DATABASE_URL="[Dán External Database URL ở đây]"
+psql $DATABASE_URL -f src/config/schema.sql
+node src/config/seed.js
+node src/config/applyIndexes.js
+```
+
+---
+
+### 4. Cấu hình Frontend (Static Site) trên Netlify
+
+1. Đăng nhập Netlify, chọn **Add new site** -> **Import an existing project** và liên kết với repo GitHub của dự án.
+2. Cấu hình các thông số build:
+   - **Base directory**: `src/FE_THLTW`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `src/FE_THLTW/dist`
+3. Cấu hình biến môi trường tại **Site settings** -> **Environment variables**:
+   - `VITE_API_URL`: `https://ript1307-02-2026-nhom-12-kthp.onrender.com/api` (hoặc để trống/mặc định `/api` nhờ cơ chế proxy)
+   - `VITE_SOCKET_URL`: `https://ript1307-02-2026-nhom-12-kthp.onrender.com`
+
+#### Cơ chế Single Page Application (SPA) Routing & Proxy trên Netlify
+Trong thư mục `src/FE_THLTW/public/_redirects` đã có sẵn cấu hình giúp Netlify chuyển tiếp request API và tránh lỗi reload trang 404 của React Router:
+```text
+/api/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/:splat  200
+/socket.io/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/socket.io/:splat  200
+/* /index.html 200
+```
+> [!TIP]
+> Việc cấu hình proxy này giúp frontend gọi trực tiếp tới `/api` hoặc `/socket.io` của chính tên miền Netlify. Netlify sẽ tự động chuyển tiếp request sang backend Render dưới nền, tránh hoàn toàn lỗi CORS và tối ưu bảo mật.
+
 ## Rủi ro còn lại trước production
 
 - VNPay webhook da check amount; truoc production can test voi sandbox merchant config that.
