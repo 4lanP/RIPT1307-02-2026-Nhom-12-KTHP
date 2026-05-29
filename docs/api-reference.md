@@ -315,6 +315,41 @@ Frontend lưu `data.url` vào `image_url` khi tạo hoặc cập nhật món. Ba
 reject file thiếu, quá dung lượng, không đúng loại, hoặc nội dung ảnh không
 hợp lệ bằng response lỗi chuẩn.
 
+Upload ảnh Base64 lưu trực tiếp trong dữ liệu món:
+
+```text
+POST /api/admin/menu/images/base64
+Content-Type: application/json
+Authorization: Bearer <accessToken>
+```
+
+Body:
+
+```json
+{
+  "image_base64": "data:image/png;base64,iVBORw0KGgo...",
+  "filename": "dish.png"
+}
+```
+
+Response thành công:
+
+```json
+{
+  "success": true,
+  "message": "Upload dish image successfully",
+  "data": {
+    "image_url": "data:image/png;base64,iVBORw0KGgo...",
+    "mime_type": "image/png",
+    "size_bytes": 245120
+  }
+}
+```
+
+Frontend lưu `data.image_url` vào `image_url` khi tạo hoặc cập nhật món.
+Endpoint này chỉ nhận JPEG/PNG, validate nội dung sau khi giải mã Base64,
+không tạo file ảnh mới, và không ghi full payload Base64 vào log.
+
 Manager được phép dùng các endpoint vận hành phía trên nhưng luôn nhận `403`
 ở user-management (`/admin/users`) và không được truy cập dữ liệu tài khoản,
 role, security config, hoặc secret.

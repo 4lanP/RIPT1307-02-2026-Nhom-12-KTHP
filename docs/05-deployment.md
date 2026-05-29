@@ -166,9 +166,9 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `JWT_ACCESS_SECRET` | *Chuỗi mã khóa ngẫu nhiên bảo mật cao (tối thiểu 32 ký tự)* |
 | `JWT_REFRESH_SECRET` | *Chuỗi mã khóa ngẫu nhiên bảo mật cao (tối thiểu 32 ký tự)* |
 | `FRONTEND_URL` | `https://[your-app-name].netlify.app` (URL Frontend Netlify của bạn) |
-| `DISH_IMAGE_STORAGE_DIR` | `./uploads/dish-images` |
-| `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/uploads/dish-images` |
-| `DISH_IMAGE_MAX_BYTES` | `5242880` |
+| `DISH_IMAGE_STORAGE_DIR` | `./uploads/dish-images` cho flow upload file legacy |
+| `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/uploads/dish-images` cho ảnh file legacy |
+| `DISH_IMAGE_MAX_BYTES` | `5242880`; áp dụng cho cả Base64 JPG/PNG lưu DB và upload file legacy |
 | `VNPAY_TMNCODE` | *Mã Merchant VNPay Sandbox của bạn* |
 | `VNPAY_HASHSECRET` | *Chuỗi Hash Secret VNPay Sandbox của bạn* |
 | `VNPAY_URL` | `https://sandbox.vnpay.vn/paymentv2/vpcpay.html` |

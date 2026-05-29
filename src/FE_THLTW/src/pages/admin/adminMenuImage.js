@@ -1,4 +1,4 @@
-const DATA_URL_PATTERN = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/i;
+const DATA_URL_PATTERN = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/i;
 const EXTERNAL_IMAGE_URL_PATTERN = /^https?:\/\/\S+$/i;
 
 function normalizeBase64Payload(value) {
@@ -29,7 +29,6 @@ function getRawBase64MimeType(value) {
   const normalized = normalizeBase64Payload(value).replace(/=+$/, '');
   if (normalized.startsWith('/9j/')) return 'image/jpeg';
   if (normalized.startsWith('iVBORw0KGgo')) return 'image/png';
-  if (normalized.startsWith('UklGR')) return 'image/webp';
   return '';
 }
 
@@ -75,14 +74,18 @@ export function getImageInputValidationMessage(value) {
   if (!trimmed || buildImagePreviewSrc(trimmed)) return '';
 
   if (trimmed.toLowerCase().startsWith('data:image/')) {
+    const dataUrlParts = trimmed.match(/^data:image\/([^;,]+);base64,(.*)$/is);
+    if (dataUrlParts && isValidBase64Payload(dataUrlParts[2])) {
+      return 'Dữ liệu Base64 phải là ảnh JPEG hoặc PNG';
+    }
     return 'Dữ liệu Base64 ảnh chưa hợp lệ';
   }
 
   if (isValidBase64Payload(trimmed)) {
-    return 'Dữ liệu Base64 phải là ảnh JPEG, PNG hoặc WebP';
+    return 'Dữ liệu Base64 phải là ảnh JPEG hoặc PNG';
   }
 
-  return 'Vui lòng nhập URL ảnh hợp lệ hoặc dữ liệu Base64 ảnh';
+  return 'Vui lòng nhập URL ảnh hợp lệ hoặc dữ liệu Base64 ảnh JPEG/PNG';
 }
 
 export async function resolveMenuImageUrl(value, uploadBase64MenuImage) {
@@ -100,9 +103,9 @@ export async function resolveMenuImageUrl(value, uploadBase64MenuImage) {
   }
 
   const response = await uploadBase64MenuImage({ image_base64: trimmed });
-  const url = response?.data?.url || response?.url;
+  const url = response?.data?.image_url || response?.image_url;
   if (!url) {
-    throw new Error('Không nhận được URL ảnh sau khi tải lên');
+    throw new Error('Không nhận được dữ liệu ảnh sau khi tải lên');
   }
   return url;
 }
