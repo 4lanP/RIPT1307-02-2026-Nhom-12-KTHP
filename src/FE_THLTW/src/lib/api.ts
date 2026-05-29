@@ -95,7 +95,7 @@ export const staffApi = {
   createInvoice: (sessionId) => api.post(`/staff/sessions/${sessionId}/invoice`),
   getInvoice: (invoiceId) => api.get(`/staff/invoices/${invoiceId}`),
   listSessionInvoices: (sessionId) => api.get(`/staff/sessions/${sessionId}/invoices`),
-  recordInvoicePrintEvent: (invoiceId, printType) => api.post(`/staff/invoices/${invoiceId}/print-events`, { print_type: printType }),
+  recordInvoicePrintEvent: (invoiceId, printType) => api.post(`/staff/invoices/${invoiceId}/print-events`, { action: 'PRINT_INVOICE', print_type: printType }),
 }
 
 // Admin APIs
