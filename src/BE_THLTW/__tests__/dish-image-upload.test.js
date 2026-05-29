@@ -28,6 +28,22 @@ function validPngBuffer(extraBytes = 8) {
   ]);
 }
 
+function validJpegBuffer(extraBytes = 8) {
+  return Buffer.concat([
+    Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]),
+    Buffer.alloc(extraBytes, 0),
+  ]);
+}
+
+function validWebpBuffer(extraBytes = 8) {
+  return Buffer.concat([
+    Buffer.from('RIFF', 'ascii'),
+    Buffer.alloc(4, 0),
+    Buffer.from('WEBP', 'ascii'),
+    Buffer.alloc(extraBytes, 0),
+  ]);
+}
+
 async function request(app, method, path, role, options = {}) {
   if (role) {
     jwtUtil.verifyAccessToken.mockReturnValue({ id: 1 });
@@ -114,6 +130,7 @@ describe('Dish image upload', () => {
   });
 
   it.each(['ADMIN', 'MANAGER'])('uploads a valid base64 data URL for %s and returns a URL plus object key', async (role) => {
+    const expectedImageUrl = imageJson().image_base64;
     const response = await request(app, 'POST', '/admin/menu/images/base64', role, {
       json: imageJson(),
     });
@@ -121,34 +138,33 @@ describe('Dish image upload', () => {
     expect(response.status).toBe(201);
     expect(response.body).toEqual(expect.objectContaining({ success: true }));
     expect(response.body.data).toEqual(expect.objectContaining({
-      url: expect.stringMatching(/^http:\/\/localhost:5000\/uploads\/dish-images\/menu-items\/\d{4}\/\d{2}\/.+\.png$/),
-      object_key: expect.stringMatching(/^menu-items\/\d{4}\/\d{2}\/.+\.png$/),
+      image_url: expectedImageUrl,
       mime_type: 'image/png',
       size_bytes: 16,
     }));
-
-    const storedFile = `${process.env.DISH_IMAGE_STORAGE_DIR}/${response.body.data.object_key}`;
-    await expect(fs.access(storedFile)).resolves.toBeUndefined();
+    expect(response.body.data).not.toHaveProperty('url');
+    expect(response.body.data).not.toHaveProperty('object_key');
   });
 
-  it('uploads a valid raw base64 image and returns a URL plus object key', async () => {
+  it('normalizes a valid raw base64 image to a data URL', async () => {
+    const rawBase64 = validPngBuffer().toString('base64');
     const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
       json: {
-        image_base64: validPngBuffer().toString('base64'),
+        image_base64: rawBase64,
         filename: 'dish.png',
       },
     });
 
     expect(response.status).toBe(201);
     expect(response.body.data).toEqual(expect.objectContaining({
-      url: expect.stringMatching(/^http:\/\/localhost:5000\/uploads\/dish-images\/menu-items\/\d{4}\/\d{2}\/.+\.png$/),
+      image_url: `data:image/png;base64,${rawBase64}`,
       mime_type: 'image/png',
       size_bytes: 16,
     }));
   });
 
   it('allows a returned upload URL to be saved as menu item image_url on create', async () => {
-    const imageUrl = 'http://localhost:5000/uploads/dish-images/menu-items/2026/05/test.png';
+    const imageUrl = imageJson().image_base64;
     const response = await request(app, 'POST', '/admin/menu/items', 'MANAGER', {
       json: {
         category_id: 1,
@@ -164,7 +180,7 @@ describe('Dish image upload', () => {
   });
 
   it('preserves image_url validation when updating a menu item', async () => {
-    const imageUrl = 'http://localhost:5000/uploads/dish-images/menu-items/2026/05/updated.png';
+    const imageUrl = `data:image/jpeg;base64,${validJpegBuffer().toString('base64')}`;
     const response = await request(app, 'PUT', '/admin/menu/items/10', 'ADMIN', {
       json: { image_url: imageUrl },
       dbResponses: [{ rows: [{ id: 10, image_url: imageUrl }] }],
@@ -172,6 +188,22 @@ describe('Dish image upload', () => {
 
     expect(response.status).toBe(200);
     expect(mockPool.query.mock.calls[1][1]).toContain(imageUrl);
+  });
+
+  it('keeps legacy external image URLs valid on menu item create', async () => {
+    const imageUrl = 'https://example.com/dish.png';
+    const response = await request(app, 'POST', '/admin/menu/items', 'MANAGER', {
+      json: {
+        category_id: 1,
+        name: 'Pho Bo',
+        price: 75000,
+        image_url: imageUrl,
+      },
+      dbResponses: [{ rows: [{ id: 10, image_url: imageUrl }] }],
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockPool.query.mock.calls[1][1][3]).toBe(imageUrl);
   });
 
   it('rejects missing image files', async () => {
@@ -217,7 +249,37 @@ describe('Dish image upload', () => {
     expect(response.status).toBe(400);
     expect(response.body.errors[0]).toEqual(expect.objectContaining({
       field: 'body.image_base64',
-      message: expect.stringMatching(/JPEG, PNG, and WebP/),
+      message: expect.stringMatching(/JPEG and PNG/),
+    }));
+  });
+
+  it('rejects WebP base64 image content for database-backed images', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: {
+        image_base64: `data:image/webp;base64,${validWebpBuffer().toString('base64')}`,
+        filename: 'dish.webp',
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0]).toEqual(expect.objectContaining({
+      field: 'body.image_base64',
+      message: expect.stringMatching(/JPEG and PNG/),
+    }));
+  });
+
+  it('rejects mismatched base64 data URL MIME type', async () => {
+    const response = await request(app, 'POST', '/admin/menu/images/base64', 'MANAGER', {
+      json: {
+        image_base64: `data:image/jpeg;base64,${validPngBuffer().toString('base64')}`,
+        filename: 'dish.jpg',
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0]).toEqual(expect.objectContaining({
+      field: 'body.image_base64',
+      message: expect.stringMatching(/JPEG and PNG/),
     }));
   });
 

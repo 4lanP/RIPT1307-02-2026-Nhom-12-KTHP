@@ -54,9 +54,9 @@ Các biến local tối thiểu:
 - JWT dev secrets
 - VNPay placeholder
 - `FRONTEND_URL=http://localhost:3000`
-- `DISH_IMAGE_STORAGE_DIR=./uploads/dish-images`
-- `DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5001/uploads/dish-images` khi chạy Docker Compose
-- `DISH_IMAGE_MAX_BYTES=5242880`
+- `DISH_IMAGE_STORAGE_DIR=./uploads/dish-images` cho flow upload file legacy
+- `DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5001/uploads/dish-images` khi chạy Docker Compose và dùng flow upload file legacy
+- `DISH_IMAGE_MAX_BYTES=5242880` áp dụng cho cả file upload legacy và Base64 JPG/PNG lưu trực tiếp trong DB
 
 ### Reset DB Docker
 
@@ -93,6 +93,10 @@ DISH_IMAGE_STORAGE_DIR=./uploads/dish-images
 DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5000/uploads/dish-images
 DISH_IMAGE_MAX_BYTES=5242880
 ```
+
+Flow ảnh Base64 mới lưu trực tiếp chuỗi `data:image/...;base64,...` vào
+`MENU_ITEMS.image_url`; các biến `DISH_IMAGE_STORAGE_DIR` và
+`DISH_IMAGE_PUBLIC_BASE_URL` vẫn cần cho upload file legacy và static file cũ.
 
 Tạo DB và schema:
 
@@ -157,4 +161,5 @@ Invoke-RestMethod -Method Post http://localhost:5000/api/auth/login `
 | Seeder/indexer không chạy lại | Chạy `docker compose down -v` để xóa volume DB |
 | Swagger không mở | Đảm bảo backend `NODE_ENV=development` trong compose |
 | Frontend CORS lỗi | Thêm origin vào `FRONTEND_URL` |
-| Upload ảnh món lỗi đường dẫn public | Kiểm tra `DISH_IMAGE_STORAGE_DIR` tồn tại được ghi và `DISH_IMAGE_PUBLIC_BASE_URL` là URL tuyệt đối |
+| Upload ảnh món legacy lỗi đường dẫn public | Kiểm tra `DISH_IMAGE_STORAGE_DIR` tồn tại được ghi và `DISH_IMAGE_PUBLIC_BASE_URL` là URL tuyệt đối |
+| Lưu ảnh Base64 bị lỗi hoặc không hiển thị | Kiểm tra ảnh là JPEG/PNG, dưới `DISH_IMAGE_MAX_BYTES`, và DB đã dùng schema `MENU_ITEMS.image_url TEXT` |

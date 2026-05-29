@@ -887,8 +887,8 @@ router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBan
  * /admin/menu/images/base64:
  *   post:
  *     tags: [Admin]
- *     summary: Tải lên hình ảnh món ăn bằng Base64 JSON
- *     description: "🔐 Yêu cầu role: ADMIN hoặc MANAGER"
+ *     summary: Validate hình ảnh món ăn Base64 để lưu trực tiếp vào dữ liệu món
+ *     description: "🔐 Yêu cầu role: ADMIN hoặc MANAGER. Trả về data URL JPG/PNG đã chuẩn hóa để lưu vào image_url."
  *     security:
  *       - StaffAuth: []
  *     requestBody:
@@ -901,10 +901,10 @@ router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBan
  *             properties:
  *               image_base64:
  *                 type: string
- *                 description: Chuỗi ảnh Base64 đầy đủ (kèm data:image/*;base64,) hoặc chỉ phần mã hóa
+ *                 description: Chuỗi ảnh JPEG/PNG Base64 đầy đủ (kèm data:image/...;base64,) hoặc chỉ phần mã hóa
  *     responses:
- *       200:
- *         description: Tải lên thành công
+ *       201:
+ *         description: Validate thành công
  *         content:
  *           application/json:
  *             schema:
@@ -915,8 +915,7 @@ router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBan
  *                 data:
  *                   type: object
  *                   properties:
- *                     url: { type: string }
- *                     object_key: { type: string }
+ *                     image_url: { type: string, example: "data:image/png;base64,iVBORw0KGgo..." }
  *                     mime_type: { type: string }
  *                     size_bytes: { type: integer }
  * 

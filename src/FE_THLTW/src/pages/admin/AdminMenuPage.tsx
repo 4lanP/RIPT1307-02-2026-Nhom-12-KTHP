@@ -365,7 +365,7 @@ const AdminMenuPage = () => {
                         <span className="text-[10px] font-black text-gray-400 group-hover:text-emerald-600 uppercase tracking-wider transition-colors">Tải ảnh lên</span>
                         <input 
                           type="file" 
-                          accept="image/*" 
+                          accept="image/jpeg,image/png" 
                           className="hidden" 
                           onChange={(e) => {
                             const file = e.target.files?.[0]
@@ -385,7 +385,7 @@ const AdminMenuPage = () => {
                   {/* URL input */}
                   <div className="md:col-span-2 flex flex-col justify-center space-y-2">
                     <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
-                      Tải ảnh trực tiếp từ máy của bạn, dán URL ảnh, hoặc dán dữ liệu Base64 ảnh vào ô bên dưới:
+                      Tải ảnh JPG/PNG trực tiếp từ máy của bạn, dán URL ảnh, hoặc dán dữ liệu Base64 JPG/PNG vào ô bên dưới:
                     </p>
                     <input 
                       type="text" 
@@ -396,7 +396,7 @@ const AdminMenuPage = () => {
                         setImageError(getImageInputValidationMessage(value))
                       }} 
                       className={`w-full bg-[#F9FBF9] border rounded-2xl px-5 py-3 text-xs font-bold text-gray-900 focus:ring-4 transition-all ${imageError ? 'border-red-200 focus:ring-red-500/10' : 'border-gray-100 focus:ring-emerald-500/5'}`} 
-                      placeholder="https://example.com/image.jpg hoặc dữ liệu Base64" 
+                      placeholder="https://example.com/image.jpg hoặc dữ liệu Base64 JPG/PNG" 
                     />
                     {imageError && <p className="text-[10px] text-red-500 font-black uppercase tracking-wide">{imageError}</p>}
                   </div>

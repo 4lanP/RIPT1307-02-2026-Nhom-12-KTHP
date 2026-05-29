@@ -29,7 +29,7 @@ Không còn test `.skip`.
 | `__tests__/vnpay.test.js` | Tạo payment URL, verify webhook signature, idempotency |
 | `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, enum validation, parsed data write-back to `req` |
 | `__tests__/manager-permissions.test.js` | Role matrix for manager operational admin access, admin-only users, staff operations, and KDS HTTP denial |
-| `__tests__/dish-image-upload.test.js` | Upload ảnh món, validate file, lưu storage, `image_url`, và role ADMIN/MANAGER |
+| `__tests__/dish-image-upload.test.js` | Upload ảnh món, validate file/Base64, lưu `image_url`, và role ADMIN/MANAGER |
 | `__tests__/admin-report-sync.test.js` | Regression contract cho báo cáo admin: revenue `date`/`total`/`order_count`, menu `name`/`total_quantity`, empty result và SQL intent |
 
 ## Test Helpers
@@ -114,9 +114,9 @@ npm test -- manager-permissions.test.js
 Manual checks:
 
 1. Login as `ADMIN` or `MANAGER`.
-2. Open admin menu, create or edit a dish, upload JPEG/PNG/WebP under 5 MB.
-3. Confirm the preview appears, save the dish, and verify `image_url` renders in the menu.
-4. Try missing file, text file, oversized file, malformed image bytes, `CASHIER`, `WAITER`, `KITCHEN`, and no token; all must fail without changing the dish image.
+2. Open admin menu, create or edit a dish, upload JPEG/PNG under 5 MB.
+3. Confirm the preview appears, save the dish, refresh, and verify the Base64 `image_url` renders in admin and customer menu views.
+4. Try missing Base64 data, text file/content, WebP, oversized file, mismatched MIME type, malformed image bytes, `CASHIER`, `WAITER`, `KITCHEN`, and no token; all must fail without changing the dish image.
 
 ## Admin Report Sync Verification
 

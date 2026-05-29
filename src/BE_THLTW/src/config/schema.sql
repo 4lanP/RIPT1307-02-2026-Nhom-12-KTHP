@@ -76,7 +76,7 @@ CREATE TABLE MENU_ITEMS (
     category_id INT REFERENCES MENU_CATEGORIES(id),
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) NOT NULL,
-    image_url VARCHAR(500),
+    image_url TEXT,
     daily_quota INT DEFAULT 0,
     daily_quota_default INT DEFAULT 0,
     sort_order INT DEFAULT 0,
