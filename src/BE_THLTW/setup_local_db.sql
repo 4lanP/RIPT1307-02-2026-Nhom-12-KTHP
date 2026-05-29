@@ -15,5 +15,9 @@ CREATE DATABASE restaurant_dbs;
 -- 4. Import schema
 \i src/config/schema.sql
 
+-- MENU_ITEMS.image_url is TEXT so JPG/PNG Base64 data URLs can be stored
+-- directly. Rolling back to VARCHAR(500) is only safe after converting or
+-- removing values longer than 500 characters.
+
 -- 5. Verify
 \dt

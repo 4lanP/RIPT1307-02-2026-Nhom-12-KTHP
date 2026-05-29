@@ -2,6 +2,9 @@
 
 Hướng dẫn chạy backend `src/BE_THLTW`.
 
+> [!NOTE]
+> Nếu bạn muốn triển khai dự án lên các dịch vụ Cloud thực tế (Render & Netlify), vui lòng tham khảo **[Hướng dẫn Deploy lên Render & Netlify (Production)](05-deployment.md#deploy-thuc-te-len-render-va-netlify)**.
+
 ## Yêu cầu
 
 | Môi trường | Yêu cầu |
@@ -51,9 +54,9 @@ Các biến local tối thiểu:
 - JWT dev secrets
 - VNPay placeholder
 - `FRONTEND_URL=http://localhost:3000`
-- `DISH_IMAGE_STORAGE_DIR=./uploads/dish-images`
-- `DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5001/uploads/dish-images` khi chạy Docker Compose
-- `DISH_IMAGE_MAX_BYTES=5242880`
+- `DISH_IMAGE_STORAGE_DIR=./uploads/dish-images` cho flow upload file legacy
+- `DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5001/uploads/dish-images` khi chạy Docker Compose và dùng flow upload file legacy
+- `DISH_IMAGE_MAX_BYTES=5242880` áp dụng cho cả file upload legacy và Base64 JPG/PNG lưu trực tiếp trong DB
 
 ### Reset DB Docker
 
@@ -89,6 +92,14 @@ REDIS_URL=redis://localhost:6379
 DISH_IMAGE_STORAGE_DIR=./uploads/dish-images
 DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5000/uploads/dish-images
 DISH_IMAGE_MAX_BYTES=5242880
+```
+
+Flow ảnh Base64 lưu trực tiếp chuỗi `data:image/...;base64,...` vào
+`MENU_ITEMS.image_url`. Backend tự đảm bảo cột này là `TEXT` khi khởi động;
+nếu database cũ vẫn còn `VARCHAR(500)`, có thể chạy thủ công:
+
+```powershell
+npm run migrate:menu-images
 ```
 
 Tạo DB và schema:
@@ -154,4 +165,5 @@ Invoke-RestMethod -Method Post http://localhost:5000/api/auth/login `
 | Seeder/indexer không chạy lại | Chạy `docker compose down -v` để xóa volume DB |
 | Swagger không mở | Đảm bảo backend `NODE_ENV=development` trong compose |
 | Frontend CORS lỗi | Thêm origin vào `FRONTEND_URL` |
-| Upload ảnh món lỗi đường dẫn public | Kiểm tra `DISH_IMAGE_STORAGE_DIR` tồn tại được ghi và `DISH_IMAGE_PUBLIC_BASE_URL` là URL tuyệt đối |
+| Upload ảnh món legacy lỗi đường dẫn public | Kiểm tra `DISH_IMAGE_STORAGE_DIR` tồn tại được ghi và `DISH_IMAGE_PUBLIC_BASE_URL` là URL tuyệt đối |
+| Lưu ảnh Base64 bị lỗi hoặc không hiển thị | Kiểm tra ảnh là JPEG/PNG, dưới `DISH_IMAGE_MAX_BYTES`, và DB đã dùng schema `MENU_ITEMS.image_url TEXT` |

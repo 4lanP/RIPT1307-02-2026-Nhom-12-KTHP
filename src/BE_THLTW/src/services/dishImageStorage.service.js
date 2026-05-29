@@ -11,6 +11,11 @@ const TYPE_CONFIG = {
   'image/webp': { ext: 'webp', extensions: ['.webp'] },
 };
 
+const BASE64_TYPE_CONFIG = {
+  'image/jpeg': TYPE_CONFIG['image/jpeg'],
+  'image/png': TYPE_CONFIG['image/png'],
+};
+
 function createValidationError(message, field = 'body.image') {
   return new ValidationError('Du lieu khong hop le', [
     { field, message },
@@ -117,16 +122,16 @@ function parseBase64ImageInput(input = {}) {
   }
 
   const reportedMime = dataUrlMatch ? dataUrlMatch[1].toLowerCase() : null;
-  if (reportedMime && !TYPE_CONFIG[reportedMime]) {
-    throw createValidationError('Only JPEG, PNG, and WebP dish images are allowed', 'body.image_base64');
+  if (reportedMime && !BASE64_TYPE_CONFIG[reportedMime]) {
+    throw createValidationError('Only JPEG and PNG dish images are allowed', 'body.image_base64');
   }
 
-  const { buffer } = decodeBase64Payload(dataUrlMatch ? dataUrlMatch[2] : rawValue);
+  const { buffer, normalized } = decodeBase64Payload(dataUrlMatch ? dataUrlMatch[2] : rawValue);
   const detectedMime = detectImageMime(buffer);
-  const type = TYPE_CONFIG[detectedMime];
+  const type = BASE64_TYPE_CONFIG[detectedMime];
 
   if (!type || (reportedMime && reportedMime !== detectedMime)) {
-    throw createValidationError('Only JPEG, PNG, and WebP dish images are allowed', 'body.image_base64');
+    throw createValidationError('Only JPEG and PNG dish images are allowed', 'body.image_base64');
   }
 
   return {
@@ -135,6 +140,7 @@ function parseBase64ImageInput(input = {}) {
     mimetype: detectedMime,
     size: buffer.length,
     buffer,
+    base64: normalized,
     validationField: 'body.image_base64',
   };
 }
@@ -184,7 +190,26 @@ async function storeDishImage(file, context = {}) {
 
 async function storeBase64DishImage(input, context = {}) {
   const file = parseBase64ImageInput(input);
-  return storeDishImage(file, context);
+
+  if (file.size > dishImageStorage.maxBytes) {
+    throw createValidationError(`Dish image must be ${formatMaxSize(dishImageStorage.maxBytes)} or smaller`, file.validationField);
+  }
+
+  const imageUrl = `data:${file.mimetype};base64,${file.base64}`;
+
+  logger.info('Base64 dish image validated', {
+    requestId: context.requestId,
+    userId: context.userId,
+    role: context.role,
+    sizeBytes: file.size,
+    mimeType: file.mimetype,
+  });
+
+  return {
+    image_url: imageUrl,
+    mime_type: file.mimetype,
+    size_bytes: file.size,
+  };
 }
 
 module.exports = {

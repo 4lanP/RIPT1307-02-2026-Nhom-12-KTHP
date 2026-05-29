@@ -363,5 +363,42 @@ router.post('/payment/vnpay', authenticateSession, validate(createPaymentSchema)
 router.get('/payment/bank-details', authenticateSession, validate(emptySchema), customerController.getPaymentBankDetails);
 router.post('/payment/bank-transfer', authenticateSession, validate(emptySchema), customerController.requestBankTransfer);
 
+/**
+ * @swagger
+ * /customer/payment/bank-details:
+ *   get:
+ *     tags: [Customer]
+ *     summary: Lấy chi tiết tài khoản ngân hàng để chuyển khoản (kèm VietQR payload)
+ *     security:
+ *       - SessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bin: { type: string, example: "970415" }
+ *                     account_number: { type: string, example: "12345678" }
+ *                     account_name: { type: string, example: "NHA HANG DE MO" }
+ *                     amount: { type: number, example: 250000 }
+ *                     qr_url: { type: string, example: "https://img.vietqr.io/image/..." }
+ * 
+ * /customer/payment/bank-transfer:
+ *   post:
+ *     tags: [Customer]
+ *     summary: Gửi yêu cầu xác nhận đã chuyển khoản ngân hàng
+ *     security:
+ *       - SessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Yêu cầu thành công, đang chờ thu ngân xác nhận
+ */
+
 module.exports = router;
 

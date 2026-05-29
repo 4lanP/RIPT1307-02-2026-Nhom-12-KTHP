@@ -387,4 +387,101 @@ router.post(
   staffController.confirmBankTransfer
 );
 
+/**
+ * @swagger
+ * /staff/sessions/{id}/invoice:
+ *   post:
+ *     tags: [Staff]
+ *     summary: Tạo hóa đơn (invoice) thanh toán tiền mặt cho session
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER, ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: ID của session cần tạo hóa đơn
+ *     responses:
+ *       200:
+ *         description: Tạo hóa đơn thành công
+ * 
+ * /staff/sessions/{id}/invoices:
+ *   get:
+ *     tags: [Staff]
+ *     summary: Lấy danh sách các hóa đơn của một session
+ *     description: "🔐 Yêu cầu role: MANAGER, ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: ID của session
+ *     responses:
+ *       200:
+ *         description: Danh sách hóa đơn
+ * 
+ * /staff/invoices/{id}:
+ *   get:
+ *     tags: [Staff]
+ *     summary: Xem thông tin chi tiết của một hóa đơn cụ thể
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER, ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: ID của hóa đơn
+ *     responses:
+ *       200:
+ *         description: Thông tin hóa đơn
+ * 
+ * /staff/invoices/{id}/print-events:
+ *   post:
+ *     tags: [Staff]
+ *     summary: Ghi nhận sự kiện in hóa đơn (để theo dõi số lần in)
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER, ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: ID của hóa đơn
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [action]
+ *             properties:
+ *               action: { type: string, example: "PRINT_INVOICE", description: "Hành động in" }
+ *     responses:
+ *       200:
+ *         description: Ghi nhận thành công
+ * 
+ * /staff/sessions/{id}/confirm-bank-transfer:
+ *   post:
+ *     tags: [Staff]
+ *     summary: Xác nhận đã nhận được chuyển khoản ngân hàng (tất toán session)
+ *     description: "🔐 Yêu cầu role: CASHIER, MANAGER, ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: ID của session
+ *     responses:
+ *       200:
+ *         description: Xác nhận và đóng session thành công
+ */
+
 module.exports = router;

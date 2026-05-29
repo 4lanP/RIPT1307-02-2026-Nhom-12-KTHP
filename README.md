@@ -192,6 +192,16 @@ docker compose down -v
 docker compose up -d --build
 ```
 
+### ☁️ Deploy lên Cloud (Render & Netlify)
+
+Hệ thống đã được cấu hình và kiểm thử thành công khi deploy lên các dịch vụ Cloud:
+- **Backend (Express) + PostgreSQL + Redis**: Deploy lên **Render**.
+- **Frontend (React + Vite)**: Deploy lên **Netlify**.
+
+Chi tiết các bước cài đặt, cấu hình biến môi trường, proxy chuyển đổi request `/api/*` và `/socket.io/*` xem tại:
+👉 **[Tài liệu hướng dẫn Deploy thực tế (Render & Netlify)](docs/05-deployment.md#deploy-thuc-te-len-render-va-netlify)**
+
+
 ## 📚 API Documentation
 
 ### Base URL

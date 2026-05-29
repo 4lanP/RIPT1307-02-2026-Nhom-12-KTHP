@@ -843,4 +843,112 @@ router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBan
  *         content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
  */
 
+/**
+ * @swagger
+ * /admin/menu/images:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Tải lên hình ảnh món ăn bằng Multipart-form
+ *     description: "🔐 Yêu cầu role: ADMIN hoặc MANAGER"
+ *     security:
+ *       - StaffAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: File ảnh định dạng JPEG, PNG, hoặc WebP (tối đa 5 MB)
+ *     responses:
+ *       200:
+ *         description: Tải lên thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Upload dish image successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     url: { type: string }
+ *                     object_key: { type: string }
+ *                     mime_type: { type: string }
+ *                     size_bytes: { type: integer }
+ *       400:
+ *         description: File không hợp lệ hoặc quá kích thước
+ * 
+ * /admin/menu/images/base64:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Validate hình ảnh món ăn Base64 để lưu trực tiếp vào dữ liệu món
+ *     description: "🔐 Yêu cầu role: ADMIN hoặc MANAGER. Trả về data URL JPG/PNG đã chuẩn hóa để lưu vào image_url."
+ *     security:
+ *       - StaffAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [image_base64]
+ *             properties:
+ *               image_base64:
+ *                 type: string
+ *                 description: Chuỗi ảnh JPEG/PNG Base64 đầy đủ (kèm data:image/...;base64,) hoặc chỉ phần mã hóa
+ *     responses:
+ *       201:
+ *         description: Validate thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     image_url: { type: string, example: "data:image/png;base64,iVBORw0KGgo..." }
+ *                     mime_type: { type: string }
+ *                     size_bytes: { type: integer }
+ * 
+ * /admin/settings/bank:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Lấy cấu hình tài khoản ngân hàng của nhà hàng
+ *     description: "🔐 Yêu cầu role: ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *   post:
+ *     tags: [Admin]
+ *     summary: Lưu cấu hình tài khoản ngân hàng của nhà hàng
+ *     description: "🔐 Yêu cầu role: ADMIN"
+ *     security:
+ *       - StaffAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bin, account_number, account_name]
+ *             properties:
+ *               bin: { type: string, description: "Mã BIN ngân hàng VietQR" }
+ *               account_number: { type: string, description: "Số tài khoản nhận tiền" }
+ *               account_name: { type: string, description: "Tên chủ tài khoản" }
+ *     responses:
+ *       200:
+ *         description: Cấu hình lưu thành công
+ */
+
 module.exports = router;

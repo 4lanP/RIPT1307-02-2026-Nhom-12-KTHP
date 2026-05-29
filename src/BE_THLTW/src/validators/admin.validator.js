@@ -4,7 +4,13 @@ const id = z.coerce.number().int().positive('ID is invalid');
 const role = z.enum(['ADMIN', 'MANAGER', 'CASHIER', 'KITCHEN', 'WAITER']);
 const tableStatus = z.enum(['AVAILABLE', 'OCCUPIED']);
 const station = z.enum(['GRILL', 'BAR', 'COLD']);
-const optionalUrl = z.string().url().max(500).optional().nullable();
+const imageDataUrl = z.string()
+  .regex(/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/i, 'Image must be an HTTP(S) URL or a JPEG/PNG Base64 data URL');
+const imageValue = z.union([
+  z.string().url().max(2048),
+  imageDataUrl,
+]);
+const optionalImageValue = imageValue.optional().nullable();
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD');
 const emptySchema = z.object({
   body: z.object({}).strict().optional(),
@@ -113,7 +119,7 @@ const createItemSchema = z.object({
     category_id: id,
     name: z.string().min(2).max(255),
     price: z.coerce.number().positive(),
-    image_url: optionalUrl,
+    image_url: optionalImageValue,
     daily_quota: z.coerce.number().int().nonnegative().optional(),
     daily_quota_default: z.coerce.number().int().nonnegative().optional(),
     sort_order: z.coerce.number().int().nonnegative().optional(),
@@ -127,7 +133,7 @@ const updateItemSchema = z.object({
     category_id: id.optional(),
     name: z.string().min(2).max(255).optional(),
     price: z.coerce.number().positive().optional(),
-    image_url: optionalUrl,
+    image_url: optionalImageValue,
     daily_quota: z.coerce.number().int().nonnegative().optional(),
     daily_quota_default: z.coerce.number().int().nonnegative().optional(),
     sort_order: z.coerce.number().int().nonnegative().optional(),
