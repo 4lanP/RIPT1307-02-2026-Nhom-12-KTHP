@@ -71,10 +71,18 @@ const StaffRequestsPage = () => {
   }
 
   const handleNavigateToTable = async (req) => {
+    if (req.table_id) {
+      navigate(`/tables/${req.table_id}`)
+      return
+    }
+
     try {
       const tablesRes = await staffApi.getTables()
       const tables = tablesRes.data || []
-      const matchingTable = tables.find(t => String(t.active_session_id) === String(req.session_id))
+      const matchingTable = tables.find(t =>
+        String(t.active_session_id) === String(req.session_id) ||
+        String(t.table_id || t.id) === String(req.table_id)
+      )
       
       if (matchingTable) {
         navigate(`/tables/${matchingTable.table_id || matchingTable.id}`)

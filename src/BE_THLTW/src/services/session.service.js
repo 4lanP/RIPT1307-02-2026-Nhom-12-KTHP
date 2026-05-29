@@ -322,7 +322,7 @@ async function cancelOrderItem(order_item_id, cancel_reason) {
 
 async function getRequests() {
   const { rows } = await pool.query(
-    `SELECT cr.*, t.name as table_name 
+    `SELECT cr.*, t.id as table_id, t.name as table_name 
      FROM CUSTOMER_REQUESTS cr
      JOIN SESSIONS s ON s.id = cr.session_id
      JOIN TABLES t ON t.id = s.table_id
