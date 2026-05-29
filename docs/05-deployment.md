@@ -154,7 +154,7 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
    - **Region**: Chọn khu vực giống Database & Redis.
    - **Root Directory**: `src/BE_THLTW`
    - **Build Command**: `npm install`
-   - **Start Command**: `node src/server.js` (hoặc `npm start`)
+   - **Start Command**: `npm start`
 3. Vào tab **Environment** để cấu hình các biến môi trường bắt buộc:
 
 | Tên biến | Giá trị mẫu/Mô tả |
@@ -176,6 +176,9 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 
 > [!NOTE]
 > Vì Render Web Service dạng Free sẽ bị xóa các file upload cục bộ khi container restart hoặc redeploy, ảnh món ăn (`dish-images`) tải lên dạng file thông thường sẽ bị mất. Hệ thống đã hỗ trợ upload và lưu trữ ảnh món ăn dưới dạng Base64 trực tiếp vào database giúp dữ liệu ảnh luôn được bảo toàn ổn định trên cloud.
+
+> [!IMPORTANT]
+> Nếu service đang chạy code cũ với Start Command `node src/server.js`, hãy redeploy bản mới. Backend hiện tự đảm bảo `MENU_ITEMS.image_url` là `TEXT` khi khởi động; nếu cần chạy thủ công, dùng `npm run migrate:menu-images` trong `src/BE_THLTW` với `DATABASE_URL` trỏ tới database Render.
 
 ---
 

@@ -10,6 +10,7 @@
     "seed": "node src/config/seed.js",
     "migrate:bank-settings": "node src/config/migrateBankSettings.js",
     "migrate:invoices": "node src/config/migrateInvoices.js",
+    "migrate:menu-images": "node src/config/migrateMenuImageColumn.js",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down -v && docker compose up --build",

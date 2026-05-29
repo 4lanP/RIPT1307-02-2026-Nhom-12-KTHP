@@ -31,10 +31,14 @@ describe('Migration history', () => {
 
   it('keeps menu item image_url wide enough for Base64 data URLs', () => {
     const migration = read('src/BE_THLTW/migrations/1720000000006_menu_item_image_url_text.js');
+    const startupMigration = read('src/BE_THLTW/src/config/migrateMenuImageColumn.js');
+    const server = read('src/BE_THLTW/src/server.js');
     const schema = read('src/BE_THLTW/src/config/schema.sql');
 
     expect(migration).toContain("pgm.alterColumn('MENU_ITEMS', 'image_url', { type: 'text' })");
     expect(migration).toContain('Cannot rollback MENU_ITEMS.image_url to varchar(500)');
+    expect(startupMigration).toContain('ALTER TABLE MENU_ITEMS ALTER COLUMN image_url TYPE TEXT');
+    expect(server).toContain('ensureMenuImageColumnSupportsBase64(db.pool)');
     expect(schema).toContain('image_url TEXT');
     expect(schema).not.toContain('image_url VARCHAR(500)');
   });

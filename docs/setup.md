@@ -94,9 +94,13 @@ DISH_IMAGE_PUBLIC_BASE_URL=http://localhost:5000/uploads/dish-images
 DISH_IMAGE_MAX_BYTES=5242880
 ```
 
-Flow ảnh Base64 mới lưu trực tiếp chuỗi `data:image/...;base64,...` vào
-`MENU_ITEMS.image_url`; các biến `DISH_IMAGE_STORAGE_DIR` và
-`DISH_IMAGE_PUBLIC_BASE_URL` vẫn cần cho upload file legacy và static file cũ.
+Flow ảnh Base64 lưu trực tiếp chuỗi `data:image/...;base64,...` vào
+`MENU_ITEMS.image_url`. Backend tự đảm bảo cột này là `TEXT` khi khởi động;
+nếu database cũ vẫn còn `VARCHAR(500)`, có thể chạy thủ công:
+
+```powershell
+npm run migrate:menu-images
+```
 
 Tạo DB và schema:
 

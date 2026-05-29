@@ -9,6 +9,7 @@ const app = require('./app');
 const setupSockets = require('./sockets');
 const cron = require('node-cron');
 const db = require('./config/db');
+const { ensureMenuImageColumnSupportsBase64 } = require('./config/migrateMenuImageColumn');
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
@@ -31,10 +32,24 @@ cron.schedule('0 0 * * *', async () => {
   timezone: 'Asia/Ho_Chi_Minh',
 });
 
-server.listen(PORT, () => {
-  logger.info(`Server started`, {
-    port: PORT,
-    nodeEnv: process.env.NODE_ENV,
-    pid: process.pid,
+async function startServer() {
+  try {
+    await ensureMenuImageColumnSupportsBase64(db.pool);
+  } catch (error) {
+    logger.error('Startup database migration failed', {
+      error: error.message,
+      code: error.code,
+    });
+    process.exit(1);
+  }
+
+  server.listen(PORT, () => {
+    logger.info(`Server started`, {
+      port: PORT,
+      nodeEnv: process.env.NODE_ENV,
+      pid: process.pid,
+    });
   });
-});
+}
+
+startServer();

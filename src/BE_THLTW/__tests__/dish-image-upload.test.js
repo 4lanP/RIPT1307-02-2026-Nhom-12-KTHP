@@ -129,7 +129,7 @@ describe('Dish image upload', () => {
     await expect(fs.access(storedFile)).resolves.toBeUndefined();
   });
 
-  it.each(['ADMIN', 'MANAGER'])('uploads a valid base64 data URL for %s and returns a URL plus object key', async (role) => {
+  it.each(['ADMIN', 'MANAGER'])('validates a base64 data URL for %s and returns database-ready image data', async (role) => {
     const expectedImageUrl = imageJson().image_base64;
     const response = await request(app, 'POST', '/admin/menu/images/base64', role, {
       json: imageJson(),
