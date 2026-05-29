@@ -311,8 +311,8 @@ const StaffTableDetailPage = () => {
         </div>
 
         {/* Checkout Sidebar */}
-        <div className="space-y-8">
-          <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm sticky top-24">
+        <div className="space-y-8 lg:sticky lg:top-24 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto pr-1 pb-4 no-scrollbar">
+          <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm">
             <h2 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-3">
               <CreditCard className="w-6 h-6 text-emerald-500" />
               Thanh toán
