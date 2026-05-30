@@ -182,6 +182,17 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `KEEPALIVE_TIMEOUT_MS` | `5000` |
 | `KEEPALIVE_RETRY_LIMIT` | `1`; retry có giới hạn để tránh retry storm |
 | `KEEPALIVE_HISTORY_LIMIT` | `20`; số kết quả gần nhất giữ trong memory |
+| `REPORT_EMAIL_ENABLED` | `false` trước khi xác minh SMTP; bật `true` khi muốn gửi báo cáo doanh thu hằng ngày |
+| `REPORT_EMAIL_RECIPIENTS` | Danh sách email nhận báo cáo, phân tách bằng dấu phẩy |
+| `REPORT_EMAIL_CRON` | `5 0 * * *`; gửi sau nửa đêm theo timezone cấu hình |
+| `REPORT_EMAIL_TIMEZONE` | `Asia/Ho_Chi_Minh` |
+| `REPORT_EMAIL_HISTORY_LIMIT` | `20`; số attempt gần nhất giữ trong memory |
+| `SMTP_HOST` | SMTP host của Mailtrap/Gmail/provider |
+| `SMTP_PORT` | `587` cho STARTTLS phổ biến |
+| `SMTP_SECURE` | `false` với port `587`, `true` với port `465` |
+| `SMTP_USER` | Tài khoản SMTP, để trống nếu provider không yêu cầu |
+| `SMTP_PASS` | Mật khẩu/app password SMTP; không commit hoặc chụp màn hình |
+| `SMTP_FROM` | Sender hiển thị, ví dụ `"QR Restaurant <no-reply@example.com>"` |
 | `VNPAY_TMNCODE` | *Mã Merchant VNPay Sandbox của bạn* |
 | `VNPAY_HASHSECRET` | *Chuỗi Hash Secret VNPay Sandbox của bạn* |
 | `VNPAY_URL` | `https://sandbox.vnpay.vn/paymentv2/vpcpay.html` |
@@ -218,6 +229,38 @@ Giới hạn vận hành:
 
 Tính năng này chỉ phù hợp demo/hobby. Production cần uptime ổn định nên dùng
 plan luôn bật hoặc dịch vụ monitoring chuyên dụng thay vì phụ thuộc free tier.
+
+#### Email báo cáo doanh thu hằng ngày
+
+Daily revenue email gửi tổng hợp doanh thu của ngày trước đó tới danh sách maintainer đã cấu hình. Để tránh gửi nhầm email trong lúc deploy, giữ mặc định:
+
+```env
+REPORT_EMAIL_ENABLED=false
+```
+
+Khi đã xác minh SMTP sandbox hoặc provider thật, cấu hình:
+
+```env
+REPORT_EMAIL_ENABLED=true
+REPORT_EMAIL_RECIPIENTS=admin@restaurant.com,manager@restaurant.com
+REPORT_EMAIL_CRON=5 0 * * *
+REPORT_EMAIL_TIMEZONE=Asia/Ho_Chi_Minh
+REPORT_EMAIL_HISTORY_LIMIT=20
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<smtp-user>
+SMTP_PASS=<smtp-password>
+SMTP_FROM="QR Restaurant <no-reply@example.com>"
+```
+
+Quy tắc vận hành:
+
+- Email chỉ gồm tổng doanh thu, số giao dịch thành công, và doanh thu theo phương thức thanh toán.
+- Không đưa token, SMTP secret, thông tin cá nhân khách hàng, hoặc metadata thanh toán thô vào email/log/status.
+- Gửi thử bằng `POST /api/admin/reports/daily-email/send` với tài khoản `ADMIN`.
+- Xem trạng thái bằng `GET /api/admin/reports/daily-email/status`.
+- Rollback bằng `REPORT_EMAIL_ENABLED=false` rồi redeploy/restart backend; không có migration DB cần rollback.
 
 ---
 

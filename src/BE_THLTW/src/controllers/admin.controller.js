@@ -2,6 +2,8 @@ const reportService = require('../services/report.service');
 const adminService = require('../services/admin.service');
 const dishImageStorageService = require('../services/dishImageStorage.service');
 const keepaliveService = require('../services/keepalive.service');
+const dailyRevenueEmailService = require('../services/dailyRevenueEmail.service');
+const { ExternalServiceError, ValidationError } = require('../utils/errors');
 const { successResponse } = require('../utils/response.util');
 
 const send = (res, status, message, data) => successResponse(res, status, message, data);
@@ -85,6 +87,33 @@ async function getKeepaliveStatus(req, res, next) {
   }
 }
 
+async function sendDailyRevenueEmail(req, res, next) {
+  try {
+    const result = await dailyRevenueEmailService.sendManualReport(req.body.report_date, {
+      requestedByUserId: req.user?.id,
+    });
+
+    if (result.status === 'configuration-error') {
+      return next(new ValidationError(result.startup_error || 'Daily revenue email configuration is invalid'));
+    }
+
+    return send(res, 200, 'Daily revenue email sent', result);
+  } catch (err) {
+    if (err.failureCategory) {
+      return next(new ExternalServiceError('Daily revenue email', err.failureCategory, err));
+    }
+    return next(err);
+  }
+}
+
+async function getDailyRevenueEmailStatus(req, res, next) {
+  try {
+    return send(res, 200, 'Daily revenue email status loaded', dailyRevenueEmailService.getStatus());
+  } catch (err) {
+    next(err);
+  }
+}
+
 function handler(serviceMethod, status, message, getArgs) {
   return async (req, res, next) => {
     try {
@@ -105,6 +134,8 @@ module.exports = {
   uploadMenuImage,
   uploadBase64MenuImage,
   getKeepaliveStatus,
+  sendDailyRevenueEmail,
+  getDailyRevenueEmailStatus,
 
   listUsers: handler(adminService.listUsers, 200, 'Users loaded', () => []),
   createUser: handler(adminService.createUser, 201, 'User created', (req) => [req.body]),

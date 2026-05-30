@@ -24,6 +24,7 @@ const {
   emptySchema,
   revenueReportSchema,
   exportReportSchema,
+  sendDailyRevenueEmailSchema,
   saveBankSettingsSchema,
 } = require('../validators/admin.validator');
 
@@ -271,6 +272,8 @@ router.put('/menu/options/:id', validate(updateOptionSchema), adminController.up
 router.delete('/menu/options/:id', validate(idParamSchema), adminController.deleteOption);
 
 router.get('/keepalive/status', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getKeepaliveStatus);
+router.post('/reports/daily-email/send', authorizeStaffRoles(ADMIN_ROLES), validate(sendDailyRevenueEmailSchema), adminController.sendDailyRevenueEmail);
+router.get('/reports/daily-email/status', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getDailyRevenueEmailStatus);
 
 router.get('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(emptySchema), adminController.getBankSettings);
 router.post('/settings/bank', authorizeStaffRoles(ADMIN_ROLES), validate(saveBankSettingsSchema), adminController.saveBankSettings);

@@ -232,6 +232,10 @@ async function checkoutCash(session_id, amount) {
     // 2. Cập nhật SESSION và TABLE
     await client.query(`UPDATE SESSIONS SET status = 'CLOSED', ended_at = NOW() WHERE id = $1`, [session_id]);
     await client.query(`UPDATE TABLES SET status = 'AVAILABLE' WHERE id = $1`, [table_id]);
+    await client.query(
+      `UPDATE CUSTOMER_REQUESTS SET status = 'RESOLVED', resolved_at = NOW() WHERE session_id = $1 AND status = 'OPEN'`,
+      [session_id]
+    );
 
     await client.query('COMMIT');
 
@@ -260,6 +264,10 @@ async function forceCloseSession(session_id) {
 
     await client.query(`UPDATE SESSIONS SET status = 'CLOSED', ended_at = NOW() WHERE id = $1`, [session_id]);
     await client.query(`UPDATE TABLES SET status = 'AVAILABLE' WHERE id = $1`, [table_id]);
+    await client.query(
+      `UPDATE CUSTOMER_REQUESTS SET status = 'RESOLVED', resolved_at = NOW() WHERE session_id = $1 AND status = 'OPEN'`,
+      [session_id]
+    );
 
     await client.query('COMMIT');
 
@@ -441,6 +449,10 @@ async function confirmBankTransfer(session_id) {
     // 2. Cập nhật SESSION và TABLE
     await client.query(`UPDATE SESSIONS SET status = 'CLOSED', ended_at = NOW() WHERE id = $1`, [session_id]);
     await client.query(`UPDATE TABLES SET status = 'AVAILABLE' WHERE id = $1`, [table_id]);
+    await client.query(
+      `UPDATE CUSTOMER_REQUESTS SET status = 'RESOLVED', resolved_at = NOW() WHERE session_id = $1 AND status = 'OPEN'`,
+      [session_id]
+    );
 
     await client.query('COMMIT');
 
