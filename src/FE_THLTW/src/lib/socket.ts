@@ -13,7 +13,11 @@ export const getCustomerSocket = (sessionId) => {
     })
     customerSocket.on('connect', () => {
       if (sessionId) {
-        customerSocket.emit('join_session', { session_id: sessionId })
+        const sessionToken = sessionStorage.getItem('session_token')
+        customerSocket.emit('join_session', {
+          session_id: sessionId,
+          session_token: sessionToken
+        })
       }
     })
   }

@@ -37,11 +37,11 @@ const StaffTableDetailPage = () => {
     }
 
     socket.on('bank_transfer_requested', handleUpdate)
-    socket.on('table:status_update', handleUpdate)
+    socket.on('table_status_changed', handleUpdate)
 
     return () => {
       socket.off('bank_transfer_requested', handleUpdate)
-      socket.off('table:status_update', handleUpdate)
+      socket.off('table_status_changed', handleUpdate)
     }
   }, [id])
 

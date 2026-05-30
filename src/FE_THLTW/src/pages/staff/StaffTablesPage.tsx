@@ -63,12 +63,15 @@ const StaffTablesPage = () => {
     const accessToken = localStorage.getItem('accessToken')
     if (!accessToken) return
     const socket = getStaffSocket(accessToken)
-    socket.on('table:status_update', () => loadTables())
-    socket.on('new_request', () => toast('🔔 Yêu cầu mới từ khách!', { icon: '📢' }))
+    socket.on('table_status_changed', () => loadTables())
+    socket.on('new_customer_request', (data: any) => {
+      toast(`🔔 Yêu cầu mới từ khách tại ${data?.table_name || 'bàn khách'}!`, { icon: '📢' })
+      loadTables()
+    })
     socket.on('bank_transfer_requested', () => loadTables())
     return () => {
-      socket.off('table:status_update')
-      socket.off('new_request')
+      socket.off('table_status_changed')
+      socket.off('new_customer_request')
       socket.off('bank_transfer_requested')
     }
   }, [])

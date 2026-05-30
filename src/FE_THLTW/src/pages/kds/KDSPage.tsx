@@ -133,7 +133,7 @@ const KDSPage = () => {
     const socket = getKitchenSocket(accessToken)
     socket.on('connect', () => {
       setConnected(true)
-      socket.emit('join_station', station)
+      socket.emit('join_station', { station })
     })
     socket.on('disconnect', () => setConnected(false))
     socket.on('new_order', () => {
