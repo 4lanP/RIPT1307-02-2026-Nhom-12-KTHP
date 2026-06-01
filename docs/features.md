@@ -48,7 +48,12 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [x] CRUD tables, QR codes (MANAGER/ADMIN)
 - [x] CRUD menu categories, items, options (MANAGER/ADMIN)
 - [x] Reset daily quota (MANAGER/ADMIN)
-- [x] Frontend: Admin dashboard, reports, users, tables, QR, menu pages
+- [x] Cấu hình thông tin ngân hàng phục vụ sinh QR Payment động (ADMIN only)
+- [x] Nhận email báo cáo doanh thu tự động hằng ngày gửi qua SMTP/Mailtrap (cron job lúc 00:05)
+- [x] Yêu cầu gửi báo cáo doanh thu ngày tùy chọn thủ công qua email
+- [x] Kiểm tra cấu hình và xem lịch sử trạng thái gửi email
+- [x] Gửi nhanh báo cáo doanh thu ngày tới một email nhập tay tùy chọn bất kỳ
+- [x] Frontend: Admin dashboard, reports, users, tables, QR, menu, email-send, bank-settings pages
 
 ## Payment — VNPay
 
@@ -89,11 +94,13 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [x] Customer: QR scan, menu browsing, ordering
 - [x] Staff: Table management, session detail, request handling
 - [x] KDS: Kitchen display with realtime updates
-- [x] Admin: Dashboard, reports, users, tables, QR, menu management
+- [x] Admin: Dashboard, reports, users, tables, QR, menu management, email-send, bank-settings
 - [x] Auth: Login, token refresh, protected routes
 - [x] Socket.IO integration cho realtime updates
 - [x] Tailwind CSS styling
 - [x] React Router v6
+- [x] **TypeScript Migration**: Di trú toàn bộ 21 file React sang TypeScript (TS/TSX) đảm bảo an toàn kiểu dữ liệu.
+- [x] **Ant Design Integration**: Tích hợp thư viện cao cấp Ant Design v5 (Modal, Form, Input, Select, Button) vào Admin Users page.
 
 ## Chưa implement / Cần cải thiện
 
@@ -102,6 +109,5 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [ ] Frontend: API/socket contract alignment với backend
 - [ ] CI/CD pipeline
 - [ ] Reverse proxy (Nginx)
-- [ ] Email notifications
 - [ ] Push notifications
 - [ ] Multi-language support

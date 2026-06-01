@@ -17,7 +17,7 @@ Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 - **💳 Thanh toán VNPay**: Tích hợp cổng thanh toán VNPay với webhook idempotency
 - **📊 Báo cáo & Thống kê**: Dashboard admin/manager với export Excel
 - **⚡ Real-time Updates**: Socket.IO cho cập nhật trạng thái đơn hàng, bàn, và món ăn
-- **🎨 Frontend**: React + Vite với Tailwind CSS
+- **🎨 Frontend**: React + Vite + TypeScript + Tailwind CSS + Ant Design
 
 ## 🏗️ Kiến trúc
 
@@ -54,7 +54,7 @@ Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 | Layer | Công nghệ |
 | ----- | --------- |
 | **Backend** | Node.js 20 + Express 5 |
-| **Frontend** | React 18 + Vite 5 + Tailwind CSS |
+| **Frontend** | React 18 + Vite 5 + TypeScript + Tailwind CSS + Ant Design |
 | **Database** | PostgreSQL 16 |
 | **Cache/Session** | Redis (ioredis) |
 | **Real-time** | Socket.IO 4.8 |
@@ -73,9 +73,10 @@ KTHP-LTW/
 ├── docs/                    # Tài liệu dự án
 │   ├── 01-system-design.md
 │   ├── 02-backend.md
+│   ├── 03-frontend.md
 │   ├── 04-testing.md
 │   ├── 05-deployment.md
-│   ├── 07-bug-after-test(FE).md
+│   ├── 06-bug-after-test(FE).md
 │   ├── setup.md
 │   ├── features.md
 │   ├── improvements.md
@@ -123,6 +124,7 @@ Xem chi tiết tại [docs/features.md](docs/features.md)
 - ✅ **Testing**: 27 Jest tests covering auth, orders, sessions, KDS, payments, permissions
 - ✅ **Security**: Token rotation, session tokens, webhook idempotency, role-based access
 - ✅ **DevOps**: Docker Compose, health checks, structured logging, seed data
+- ✅ **Frontend Migration**: Di trú toàn bộ React Frontend sang **TypeScript** và tích hợp thư viện **Ant Design** ở các trang Admin.
 
 ## 🚀 Khởi động nhanh
 
@@ -192,14 +194,14 @@ docker compose down -v
 docker compose up -d --build
 ```
 
-### ☁️ Deploy lên Cloud (Render & Netlify)
+### ☁️ Deploy lên Cloud (Render & Vercel)
 
 Hệ thống đã được cấu hình và kiểm thử thành công khi deploy lên các dịch vụ Cloud:
 - **Backend (Express) + PostgreSQL + Redis**: Deploy lên **Render**.
-- **Frontend (React + Vite)**: Deploy lên **Netlify**.
+- **Frontend (React + Vite)**: Deploy lên **Vercel**.
 
 Chi tiết các bước cài đặt, cấu hình biến môi trường, proxy chuyển đổi request `/api/*` và `/socket.io/*` xem tại:
-👉 **[Tài liệu hướng dẫn Deploy thực tế (Render & Netlify)](docs/05-deployment.md#deploy-thuc-te-len-render-va-netlify)**
+👉 **[Tài liệu hướng dẫn Deploy thực tế (Render & Vercel)](docs/05-deployment.md#deploy-thuc-te-len-render-va-vercel)**
 
 
 ## 📚 API Documentation
@@ -283,6 +285,10 @@ Các bảng chính:
 | `order_items` | Chi tiết món trong đơn |
 | `payments` | Giao dịch thanh toán, trạng thái VNPay |
 | `sessions` | Phiên làm việc của khách tại bàn |
+| `invoices` | Hóa đơn đối soát thanh toán và in ấn (PRINT/REPRINT) |
+| `invoice_line_items` | Chi tiết món ăn trong hóa đơn |
+| `invoice_print_events` | Nhật ký in ấn hóa đơn của nhân viên |
+| `restaurant_settings` | Cấu hình toàn hệ thống (ví dụ: thông tin ngân hàng) |
 
 ## 🔌 Socket.IO Events
 

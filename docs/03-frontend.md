@@ -11,6 +11,7 @@ Frontend được xây dựng với mục tiêu tải nhanh, giao diện sống 
 | Thành phần | Công nghệ / Thư viện |
 | :--- | :--- |
 | **Core Framework** | React 18 + Vite 5 + TypeScript |
+| **UI Library** | Ant Design (antd) v5 & Ant Design Icons |
 | **Styling (CSS)** | Tailwind CSS v3 |
 | **Routing** | React Router Dom v6 |
 | **API Client** | Axios |
@@ -27,8 +28,8 @@ Thư mục frontend được tổ chức tách biệt tại `src/FE_THLTW/`:
 
 ```text
 src/FE_THLTW/
-├── public/                 # Tài sản tĩnh & Cấu hình Netlify redirects
-│   ├── _redirects          # Cấu hình Single Page Application & API Proxy trên Netlify
+├── public/                 # Tài sản tĩnh & Cấu hình Vercel rewrites
+│   ├── vercel.json          # Cấu hình Single Page Application & API Proxy trên Vercel
 │   └── favicon.svg
 ├── src/
 │   ├── components/         # Các Component giao diện dùng chung (Button, Input, Modal, v.v.)
@@ -74,6 +75,30 @@ Trong `App.tsx`, các Route được bọc bởi các Guard component:
 * `/staff/*` -> Chỉ cho phép roles: `WAITER`, `CASHIER`, `MANAGER`, `ADMIN`.
 * `/kds` -> Chỉ cho phép roles: `KITCHEN`, `ADMIN`.
 * `/admin/*` -> Chỉ cho phép roles: `MANAGER`, `ADMIN` (riêng chức năng quản lý tài khoản nhân viên `/admin/users` chỉ dành riêng cho `ADMIN`).
+
+---
+
+## 📘 Di trú TypeScript & Tích hợp Ant Design
+
+### 1. Di trú sang TypeScript (Type Safety)
+Toàn bộ mã nguồn Frontend đã được di trú thành công sang **TypeScript (TS/TSX)** để nâng cao độ tin cậy và hạn chế tối đa các lỗi runtime. Các interface khai báo kiểu dữ liệu cho toàn bộ nghiệp vụ (User, Session, Table, Category, MenuItem, Order, OrderItem, StaffRequest) được quản lý tập trung tại `src/types/index.ts`.
+*(Chi tiết về quá trình di trú và các interface, vui lòng xem tại hướng dẫn chuyên sâu [src/FE_THLTW/TS_MIGRATION.md](../src/FE_THLTW/TS_MIGRATION.md))*
+
+### 2. Tích hợp thư viện UI Ant Design (antd)
+Hệ thống đã tích hợp nâng cấp thư viện **Ant Design v5** cho các chức năng quản trị, vừa đảm bảo tính thẩm mỹ, hiện đại vừa tuân thủ tuyệt đối các yêu cầu công nghệ của dự án. 
+Thực tế triển khai tại trang quản lý nhân viên **`src/pages/admin/AdminUsersPage.tsx`**:
+- **`<Modal>`**: Hộp thoại popup chất lượng cao dùng để Thêm mới/Chỉnh sửa thông tin nhân viên, hỗ trợ hiệu ứng blur nền cực kỳ mượt mà.
+- **`<Form>` & `<Form.Item>`**: Điều khiển quản lý và xác thực form tự động (Validation) các trường dữ liệu ở client trước khi gửi lên API.
+- **`<Input>` & `<Input.Password>`**: Các ô nhập Họ tên, Email, Mật khẩu có hỗ trợ nút show/hide mật khẩu tinh tế.
+- **`<Select>`**: Lựa chọn Chức vụ (ADMIN, MANAGER, WAITER, KITCHEN, CASHIER) chuẩn hóa đầu vào.
+- **`<Button>`**: Nút bấm tự động hiển thị trạng thái xoay loading (`loading={saving}`) khi gọi API gửi dữ liệu để nâng cao trải nghiệm người dùng.
+
+### 3. Trang Gửi Email Báo cáo Doanh thu Admin (`AdminEmailSendPage.tsx`)
+Bổ sung trang **`src/pages/admin/AdminEmailSendPage.tsx`** độc lập dành riêng cho vai trò `ADMIN` để:
+- Xem trạng thái SMTP, cấu hình danh sách người nhận email.
+- Nhập nhanh địa chỉ email để kiểm tra/gửi báo cáo tức thì (`POST /api/admin/reports/daily-email/send-now`).
+- Chọn ngày doanh thu muốn báo cáo theo lịch.
+- Có đầy đủ loader trạng thái và nút Submit bị vô hiệu hóa khi đang gửi để tránh nhấn trùng lặp (Duplicate-Submit).
 
 ---
 
@@ -147,11 +172,11 @@ server: {
 }
 ```
 
-### 2. Production Deployment (Netlify Rewrite Proxy)
-Netlify hỗ trợ xử lý Single Page Application bằng cách chuyển hướng toàn bộ route ảo về `index.html`. Dự án đã được đóng gói cấu hình chuyển tiếp request trong file `src/FE_THLTW/public/_redirects`:
+### 2. Production Deployment (Vercel Rewrite Proxy)
+Vercel hỗ trợ xử lý Single Page Application bằng cách chuyển hướng toàn bộ route ảo về `index.html`. Dự án đã được đóng gói cấu hình chuyển tiếp request trong file `src/FE_THLTW/public/vercel.json`:
 ```text
-/api/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/:splat  200
-/socket.io/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/socket.io/:splat  200
+/api/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/api/:splat  200
+/socket.io/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/socket.io/:splat  200
 /* /index.html 200
 ```
-* **Lợi ích**: Frontend chỉ cần gọi API thông qua URL tương đối (ví dụ `/api/customer/menu` hoặc `/socket.io`). Hệ thống định tuyến Netlify sẽ tự động proxy ngầm tới Render Backend mà không cần cấu hình CORS mở rộng ở Backend, đảm bảo an toàn tuyệt đối cho ứng dụng.
+* **Lợi ích**: Frontend chỉ cần gọi API thông qua URL tương đối (ví dụ `/api/customer/menu` hoặc `/socket.io`). Hệ thống định tuyến Vercel sẽ tự động proxy ngầm tới Render Backend mà không cần cấu hình CORS mở rộng ở Backend, đảm bảo an toàn tuyệt đối cho ứng dụng.

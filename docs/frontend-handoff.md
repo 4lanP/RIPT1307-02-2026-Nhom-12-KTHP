@@ -18,8 +18,8 @@ http://localhost:5000/api/docs.json
 Đã kiểm tra trên Docker Compose:
 
 - `backend`, `postgres`, `redis`: healthy.
-- `npm test -- --detectOpenHandles`: 6 test suites passed, 27 tests passed.
-- Luồng smoke test đã pass: đăng nhập admin/kitchen, quét QR, lấy session/menu, tạo order, KDS cập nhật item sang `PREPARING` -> `READY` -> `SERVED`, nhân viên thanh toán tiền mặt, admin reset quota.
+- `npm test`: Đầy đủ 22 test suites chạy thành công kiểm thử toàn bộ các khía cạnh (Bảo mật, Hóa đơn, Gửi email báo cáo, Vai trò người dùng, Socket.IO realtime, Optimistic locking, v.v.).
+- Luồng smoke test đã pass: đăng nhập admin/kitchen, quét QR, lấy session/menu, tạo order, KDS cập nhật item sang `PREPARING` -> `READY` -> `SERVED`, nhân viên in hóa đơn và thanh toán chuyển khoản (`BANK_TRANSFER`), admin kiểm tra và gửi báo cáo email doanh thu hằng ngày.
 
 Quy ước quan trọng:
 
@@ -153,4 +153,4 @@ backend/postgres/redis healthy
 - Do not send local env values to the frontend. Frontend config should use public frontend variables only.
 - When opening a customer socket, pass both `session_id` and `session_token` in `join_session`; do not join arbitrary rooms by ID.
 - Treat validation errors as the standard `{ success, message, errors }` response. VNPay webhook responses are the exception because they are provider-facing.
-- Payment redirects use a unique backend-generated transaction reference. The frontend should treat it as opaque.
+- Payment rewrites use a unique backend-generated transaction reference. The frontend should treat it as opaque.

@@ -3,7 +3,7 @@
 Hướng dẫn chạy backend `src/BE_THLTW`.
 
 > [!NOTE]
-> Nếu bạn muốn triển khai dự án lên các dịch vụ Cloud thực tế (Render & Netlify), vui lòng tham khảo **[Hướng dẫn Deploy lên Render & Netlify (Production)](05-deployment.md#deploy-thuc-te-len-render-va-netlify)**.
+> Nếu bạn muốn triển khai dự án lên các dịch vụ Cloud thực tế (Render & Vercel), vui lòng tham khảo **[Hướng dẫn Deploy lên Render & Vercel (Production)](05-deployment.md#deploy-thuc-te-len-render-va-vercel)**.
 
 ## Yêu cầu
 
@@ -121,7 +121,7 @@ Khi cần bật trên Render, trỏ target tới health endpoint public của ba
 
 ```env
 KEEPALIVE_ENABLED=true
-KEEPALIVE_TARGETS=https://your-service.onrender.com/api/health
+KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kth.onrender.com/api/health
 KEEPALIVE_INTERVAL_SECONDS=600
 KEEPALIVE_TIMEOUT_MS=5000
 KEEPALIVE_RETRY_LIMIT=1
@@ -171,11 +171,13 @@ Gợi ý demo an toàn:
 - Xem trạng thái gần nhất qua `GET /api/admin/reports/daily-email/status`.
 - Rollback nhanh bằng `REPORT_EMAIL_ENABLED=false` rồi restart backend.
 
-Tạo DB và schema:
+Tạo DB, schema và áp dụng migrations mới nhất (Hóa đơn & cấu hình ngân hàng):
 
 ```powershell
 psql -U postgres -f setup_local_db.sql
 psql -U restaurant_user -d restaurant_dbs -f src/config/schema.sql
+node src/config/migrateInvoices.js
+node src/config/migrateBankSettings.js
 node src/config/seed.js
 node src/config/applyIndexes.js
 ```

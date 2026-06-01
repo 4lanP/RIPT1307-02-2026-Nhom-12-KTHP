@@ -20,17 +20,30 @@ Không còn test `.skip`.
 
 ## Test Files
 
-| File | Phạm vi |
+| File | Phạm vi kiểm thử |
 |---|---|
-| `__tests__/auth.test.js` | Login, refresh token rotation, logout, lỗi auth |
-| `__tests__/order.test.js` | Tạo order, quota check, item unavailable, option validation, transaction rollback, bill calculation |
-| `__tests__/session.test.js` | QR scan (customer), table lock, checkout tiền mặt (staff), force close session |
-| `__tests__/kds.test.js` | Cập nhật item status, order status transitions |
-| `__tests__/vnpay.test.js` | Tạo payment URL, verify webhook signature, idempotency |
-| `__tests__/validation.test.js` | Zod v4 validation, integer ID validators, enum validation, parsed data write-back to `req` |
-| `__tests__/manager-permissions.test.js` | Role matrix for manager operational admin access, admin-only users, staff operations, and KDS HTTP denial |
-| `__tests__/dish-image-upload.test.js` | Upload ảnh món, validate file/Base64, lưu `image_url`, và role ADMIN/MANAGER |
-| `__tests__/admin-report-sync.test.js` | Regression contract cho báo cáo admin: revenue `date`/`total`/`order_count`, menu `name`/`total_quantity`, empty result và SQL intent |
+| `__tests__/auth.test.js` | Quy trình đăng nhập, xoay vòng (rotation) refresh token và đăng xuất của nhân viên. |
+| `__tests__/order.test.js` | Luồng đặt món, transaction rollback, trừ daily quota món ăn đồng thời chống race conditions bằng optimistic locking. |
+| `__tests__/session.test.js` | Kiểm tra quản lý phiên (session) quét mã QR khách hàng và mở/khóa bàn. |
+| `__tests__/kds.test.js` | Kiểm tra luồng trạng thái món ăn trong bếp KDS (PENDING -> PREPARING -> READY -> SERVED). |
+| `__tests__/vnpay.test.js` | Tích hợp VNPay, chữ ký HMAC bảo mật và chống trùng lặp webhook xử lý giao dịch. |
+| `__tests__/validation.test.js` | Đảm bảo Zod validators chặn đứng các dữ liệu đầu vào không hợp lệ tại ranh giới của API. |
+| `__tests__/manager-permissions.test.js` | Ma trận phân quyền kiểm soát vai trò của MANAGER, ADMIN, CASHIER, WAITER, và KITCHEN. |
+| `__tests__/dish-image-upload.test.js` | Kiểm thử tải lên ảnh món ăn (dạng multipart file hoặc Base64), kiểm tra kích thước tối đa và phân quyền vai trò. |
+| `__tests__/admin-report-sync.test.js` | Đảm bảo định dạng dữ liệu trả về của báo cáo doanh thu (`date`, `total`, `order_count`) và báo cáo món bán chạy (`name`, `total_quantity`). |
+| `__tests__/admin-email-send.test.js` | Kiểm thử tích hợp gửi email báo cáo ngay lập tức và phân quyền gửi email của vai trò Admin. |
+| `__tests__/daily-revenue-email.test.js` | Dịch vụ gửi email báo cáo doanh thu tự động qua SMTP/Mailtrap, xử lý lỗi cấu hình và chống trùng lặp báo cáo. |
+| `__tests__/app-static.test.js` | Kiểm tra việc phục vụ tệp tĩnh (như uploads ảnh món ăn) và định tuyến trang Swagger UI. |
+| `__tests__/auth-middleware.test.js` | Kiểm tra hoạt động của Middleware xác thực, bao gồm xác thực Token Staff và xác thực Session Token của khách hàng. |
+| `__tests__/checkout-bank.test.js` | Luồng thanh toán tiền mặt/chuyển khoản ngân hàng (`BANK_TRANSFER`) của nhân viên, đối chiếu và đóng bàn. |
+| `__tests__/error-response.test.js` | Đảm bảo cấu trúc phản hồi lỗi của hệ thống đồng bộ (`{ success, message, errors }`) ở các môi trường. |
+| `__tests__/invoice.test.js` | Luồng quản lý hóa đơn (In hóa đơn mới, in đè hóa đơn bị thay đổi, in lại REPRINT, ghi vết audit trail chống thất thoát tài chính). |
+| `__tests__/keepalive-bot.test.js` | Kiểm tra hoạt động của keepalive bot gọi định kỳ public health endpoint để chống Render spin down. |
+| `__tests__/migration-history.test.js` | Kiểm tra tính toàn vẹn của lịch sử các migrations cơ sở dữ liệu. |
+| `__tests__/secret-hygiene.test.js` | Kiểm tra an toàn bảo mật, đảm bảo không có file cấu hình nhạy cảm `.env` bị track trong Git. |
+| `__tests__/socket-notification.test.js` | Đảm bảo server phát các sự kiện socket thông báo tới staff khi có bàn thay đổi trạng thái hoặc khách gọi hỗ trợ. |
+| `__tests__/socket-session.test.js` | Xác thực và kết nối thời gian thực theo từng phiên cụ thể của khách hàng, phòng chống join bừa phòng. |
+| `__tests__/staff-table-contract.test.js` | Đảm bảo cấu trúc dữ liệu trả về cho sơ đồ bàn ăn của nhân viên vận hành đồng bộ. |
 
 ## Test Helpers
 

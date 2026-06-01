@@ -66,7 +66,9 @@ src/
 │   ├── kds.service.js       # Queue bếp, xác nhận món
 │   ├── payment.service.js   # VNPay URL, webhook idempotency
 │   ├── report.service.js    # Thống kê, export Excel
-│   └── admin.service.js     # Admin CRUD users/tables/QR/menu
+│   ├── admin.service.js     # Admin CRUD users/tables/QR/menu
+│   ├── dailyRevenueEmail.service.js # Quản lý gửi mail báo cáo doanh thu tự động / thủ công
+│   └── email.service.js               # Đóng gói Nodemailer SMTP/Mailtrap API
 │
 ├── middlewares/
 │   ├── auth.middleware.js         # JWT verify, session token verify
@@ -140,8 +142,19 @@ Schema đầy đủ: [src/BE_THLTW/src/config/schema.sql](../src/BE_THLTW/src/co
 | `order_items` | Chi tiết món, status (PENDING/PREPARING/READY/SERVED/CANCELLED) |
 | `payments` | Giao dịch thanh toán, transaction_id, status |
 | `customer_requests` | Yêu cầu gọi nhân viên / xin thanh toán |
+| `invoices` | Hóa đơn đối soát giao dịch và in ấn, chống gian lận |
+| `invoice_line_items` | Chi tiết từng món ăn trong hóa đơn đã phát hành |
+| `invoice_print_events` | Nhật ký in ấn hóa đơn của nhân viên (PRINT/REPRINT) |
+| `restaurant_settings` | Bảng cấu hình lưu trữ JSONB toàn hệ thống (như tài khoản ngân hàng) |
 
 Lưu ý schema hiện tại dùng PostgreSQL `SERIAL`, nên API IDs là integer. `tables.status` chỉ có `AVAILABLE` và `OCCUPIED`; không có `CLEANING`/`RESERVED`.
+
+#### Hóa đơn & Cấu hình ngân hàng (Mới bổ sung)
+
+- **`INVOICES`**: Lưu trữ thông tin hóa đơn chính thức khi kết thúc phiên. Trạng thái `status` gồm `ISSUED`, `SUPERSEDED` (khi in lại do hóa đơn thay đổi), `CANCELLED`. Trạng thái thanh toán `payment_status` gồm `UNPAID`, `PENDING`, `PAID`. Sử dụng `bill_fingerprint` để phát hiện sự thay đổi món ăn trong phiên.
+- **`INVOICE_LINE_ITEMS`**: Bản sao lưu cấu trúc và đơn giá của các món ăn thời điểm xuất hóa đơn, phục vụ cho việc đối chiếu doanh thu không lo biến động giá thực tế của món ăn trong thực đơn.
+- **`INVOICE_PRINT_EVENTS`**: Ghi vết mỗi lần in hóa đơn của nhân viên (`printed_by_name`, `print_type` là `PRINT` hoặc `REPRINT`).
+- **`RESTAURANT_SETTINGS`**: Lưu trữ cấu hình dạng khóa - giá trị JSONB. Khóa `'bank_config'` lưu cấu hình ngân hàng (`bank_id`, `account_number`, `account_owner`) dùng để sinh mã QR chuyển khoản động trên giao diện.
 
 ### Indexes (30+)
 
@@ -208,6 +221,8 @@ Subsequent requests:
 
 - **Daily quota reset** — `0 0 * * *` (Asia/Ho_Chi_Minh)
   - Reset `daily_quota = daily_quota_default` cho tất cả menu items
+- **Daily revenue report email** — `5 0 * * *` (Asia/Ho_Chi_Minh)
+  - Tự động tổng hợp và gửi báo cáo doanh thu của ngày hôm trước qua email (SMTP / Mailtrap API).
 
 ## Deployment Notes (Render.com)
 

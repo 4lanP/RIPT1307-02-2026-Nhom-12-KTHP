@@ -66,7 +66,7 @@ Request ID dùng `crypto.randomUUID()` để tránh lỗi `uuid@14` ESM-only tro
 | `/api/customer` | `routes/customer.routes.js` | Scan QR, menu, session, order, request, VNPay URL |
 | `/api/kds` | `routes/kds.routes.js` | Chỉ role `KITCHEN` cho HTTP endpoints |
 | `/api/staff` | `routes/staff.routes.js` | WAITER/CASHIER/MANAGER/ADMIN for table/session/request handling; CASHIER/MANAGER/ADMIN for checkout/cancel; MANAGER/ADMIN for force-close |
-| `/api/admin` | `routes/admin.routes.js` | Report, export, reset quota, CRUD users/tables/QR/menu |
+| `/api/admin` | `routes/admin.routes.js` | Report, export, reset quota, CRUD users/tables/QR/menu, gửi email báo cáo doanh thu (`/reports/daily-email/*`), cấu hình ngân hàng (`/settings/bank`) |
 | `/api/webhooks` | `routes/webhook.routes.js` | VNPay IPN |
 
 ## Services
@@ -80,6 +80,8 @@ Request ID dùng `crypto.randomUUID()` để tránh lỗi `uuid@14` ESM-only tro
 | Payment | `services/payment.service.js` | Tạo VNPay URL, xử lý webhook |
 | Report | `services/report.service.js` | Revenue/menu/KDS report, Excel export, reset quota |
 | Admin | `services/admin.service.js` | CRUD users, tables, QR codes, menu categories/items/options |
+| Daily Revenue Email | `services/dailyRevenueEmail.service.js` | Thiết lập mẫu email, quản lý cron job gửi báo cáo tự động lúc 00:05 sáng, APIs gửi thủ công, và theo dõi trạng thái |
+| Email | `services/email.service.js` | Gói kết nối Nodemailer cho SMTP và HTTPS API Mailtrap |
 
 ## Database
 
@@ -92,6 +94,15 @@ Quan trọng:
 - `SESSIONS.status`: `ACTIVE`, `CLOSED`.
 - `MENU_CATEGORIES.station`: `GRILL`, `BAR`, `COLD`.
 - `ORDER_ITEMS.status`: `PENDING`, `PREPARING`, `READY`, `SERVED`, `CANCELLED`.
+
+#### Các bảng mới bổ sung phục vụ hóa đơn & đối soát:
+
+Hệ thống đã bổ sung các bảng sau thông qua cơ chế database migrations (tại `src/config/migrateInvoices.js` và `migrateBankSettings.js`):
+
+- **`INVOICES`**: Lưu thông tin hóa đơn khi đóng phiên bàn. Các trạng thái `status` gồm `ISSUED`, `SUPERSEDED` (khi hóa đơn bị in đè do thay đổi món trong phiên), và `CANCELLED`. Kiểu `payment_status` gồm `UNPAID`, `PENDING`, `PAID`. Dùng cột `bill_fingerprint` để theo dõi sự thay đổi của đơn hàng.
+- **`INVOICE_LINE_ITEMS`**: Bản sao của chi tiết món ăn tại thời điểm in hóa đơn để cố định doanh thu đối soát (dù sau đó giá món ăn trong thực đơn có thể bị thay đổi).
+- **`INVOICE_PRINT_EVENTS`**: Ghi vết nhật ký in hóa đơn của nhân viên (loại `PRINT` hoặc `REPRINT`).
+- **`RESTAURANT_SETTINGS`**: Lưu cấu hình toàn hệ thống dạng JSONB. Khóa `'bank_config'` chứa thông tin ngân hàng (`bank_id`, `account_number`, `account_owner`) dùng để tạo QR chuyển khoản.
 
 Indexes: [src/BE_THLTW/src/config/indexes.sql](../src/BE_THLTW/src/config/indexes.sql)
 

@@ -54,6 +54,10 @@ Các bảng chính:
 | `order_items` | Chi tiết món trong đơn |
 | `payments` | Giao dịch thanh toán, trạng thái VNPay |
 | `sessions` | Phiên làm việc của khách tại bàn |
+| `invoices` | Hóa đơn đối soát giao dịch và in ấn, chống gian lận |
+| `invoice_line_items` | Chi tiết từng món ăn trong hóa đơn đã phát hành |
+| `invoice_print_events` | Nhật ký in ấn hóa đơn của nhân viên (PRINT/REPRINT) |
+| `restaurant_settings` | Bảng cấu hình lưu trữ JSONB toàn hệ thống (như tài khoản ngân hàng) |
 
 ## API Routes
 
@@ -90,3 +94,4 @@ Các bảng chính:
 ## Scheduled Jobs
 
 - **Daily quota reset** — chạy lúc 00:00 Asia/Ho_Chi_Minh, reset quota hàng ngày (node-cron)
+- **Daily revenue report email** — chạy lúc 00:05 Asia/Ho_Chi_Minh, tự động gửi báo cáo doanh thu ngày trước qua email (Nodemailer SMTP / Mailtrap API)

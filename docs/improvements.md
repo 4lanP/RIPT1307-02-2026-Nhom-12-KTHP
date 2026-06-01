@@ -269,3 +269,25 @@ Tests:       27 passed, 27 total
 **Vấn đề:** `src/middlewares/validation.middleware.js` không được import ở bất kỳ đâu (routes dùng `validate.middleware.js`).
 
 **Fix:** Xóa file.
+
+---
+
+## Giai đoạn 3 — Tính năng Mới & Cải tiến Bàn giao (2026-06-01)
+
+### 1. Quản lý & Gửi báo cáo Doanh thu hằng ngày qua Email (`feature-sendemail` & `012-daily-revenue-email`)
+- Tích hợp dịch vụ gửi mail tự động thông qua giao thức SMTP hoặc qua Mailtrap Email API (đảm bảo không bị chặn cổng bởi nhà mạng hoặc host đám mây như Render).
+- Thiết lập cron job tự động chạy vào lúc 00:05 mỗi ngày để gửi báo cáo của ngày hôm trước.
+- Thêm bộ API quản trị để gửi báo cáo thủ công qua route `/api/reports/daily-email/send` và `/send-now`, cũng như theo dõi lịch sử và trạng thái các lần gửi qua `/status`.
+- Xây dựng giao diện trang `/admin/email-send` phục vụ việc nhập tay email nhận báo cáo nhanh chóng của Admin.
+
+### 2. Cấu hình Ngân hàng & Thanh toán QR Transfer (`migrateBankSettings.js`)
+- Thêm bảng `RESTAURANT_SETTINGS` để cấu hình thông tin ngân hàng phục vụ việc sinh mã QR chuyển khoản động trên frontend.
+- Thêm phương thức thanh toán `'BANK_TRANSFER'` vào kiểu dữ liệu enum của hệ thống.
+- Xây dựng giao diện cấu hình ngân hàng tại `/admin/settings/bank`.
+
+### 3. Quản lý & In Hóa đơn chuyên nghiệp (`migrateInvoices.js`)
+- Thiết kế các bảng cơ sở dữ liệu `INVOICES`, `INVOICE_LINE_ITEMS` và `INVOICE_PRINT_EVENTS` để lưu trữ và truy vết chi tiết từng hóa đơn, quản lý trạng thái thanh toán và in ấn (PRINT, REPRINT) nhằm chống gian lận và tối ưu hóa quy trình kế toán.
+
+### 4. Di chuyển Frontend sang TypeScript & Tích hợp Ant Design (Lê Minh Đạo)
+- Chuyển đổi toàn bộ mã nguồn Frontend từ JavaScript sang **TypeScript** để tăng cường tính an toàn kiểu dữ liệu và giảm thiểu lỗi runtime.
+- Tích hợp hệ thống Ant Design (antd) chất lượng cao cho các chức năng quản trị ở Admin Dashboard.

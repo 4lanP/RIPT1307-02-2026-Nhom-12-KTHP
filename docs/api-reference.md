@@ -233,6 +233,11 @@ Admin endpoints đã implement:
 | `GET` | `/admin/reports/kds` | ADMIN/MANAGER | Báo cáo KDS |
 | `GET` | `/admin/reports/export` | ADMIN/MANAGER | Export Excel vận hành |
 | `POST` | `/admin/menu/reset-quota` | ADMIN/MANAGER | Reset quota món |
+| `POST` | `/admin/reports/daily-email/send` | ADMIN | Gửi email báo cáo doanh thu thủ công theo ngày |
+| `POST` | `/admin/reports/daily-email/send-now` | ADMIN | Gửi ngay lập tức báo cáo doanh thu tới một email nhập tay |
+| `GET` | `/admin/reports/daily-email/status` | ADMIN | Kiểm tra cấu hình và lịch sử gửi báo cáo doanh thu |
+| `GET` | `/admin/settings/bank` | ADMIN | Lấy thông tin tài khoản ngân hàng phục vụ QR Payment |
+| `POST` | `/admin/settings/bank` | ADMIN | Lưu thông tin tài khoản ngân hàng phục vụ QR Payment |
 
 Revenue report response data:
 
@@ -349,6 +354,127 @@ Response thành công:
 Frontend lưu `data.image_url` vào `image_url` khi tạo hoặc cập nhật món.
 Endpoint này chỉ nhận JPEG/PNG, validate nội dung sau khi giải mã Base64,
 không tạo file ảnh mới, và không ghi full payload Base64 vào log.
+
+### Quản lý Báo cáo Doanh thu qua Email
+
+#### 1. Gửi email báo cáo ngày thủ công
+- **Path**: `POST /api/admin/reports/daily-email/send`
+- **Auth**: `ADMIN`
+- **Body**:
+  ```json
+  {
+    "report_date": "2026-05-30"
+  }
+  ```
+  *(Lưu ý: `report_date` phải đúng định dạng `YYYY-MM-DD` và không được là ngày trong tương lai)*
+- **Response thành công**:
+  ```json
+  {
+    "success": true,
+    "message": "Daily revenue email sent",
+    "data": {
+      "status": "success",
+      "report_date": "2026-05-30",
+      "message_id": "mail-12345"
+    }
+  }
+  ```
+
+#### 2. Gửi ngay lập tức tới email nhập tay
+- **Path**: `POST /api/admin/reports/daily-email/send-now`
+- **Auth**: `ADMIN`
+- **Body**:
+  ```json
+  {
+    "recipient_email": "custom-owner@example.com",
+    "report_date": "2026-05-30"
+  }
+  ```
+  *(Lưu ý: Nếu không truyền `report_date`, hệ thống tự lấy ngày hoàn tất gần nhất)*
+- **Response thành công**:
+  ```json
+  {
+    "success": true,
+    "message": "Daily revenue email sent",
+    "data": {
+      "status": "success",
+      "report_date": "2026-05-30",
+      "recipient": "custom-owner@example.com",
+      "message_id": "mail-12345"
+    }
+  }
+  ```
+
+#### 3. Kiểm tra trạng thái và lịch sử gửi email
+- **Path**: `GET /api/admin/reports/daily-email/status`
+- **Auth**: `ADMIN`
+- **Response thành công**:
+  ```json
+  {
+    "success": true,
+    "message": "Daily revenue email status loaded",
+    "data": {
+      "status": "configured",
+      "cron_schedule": "5 0 * * *",
+      "recipients": ["admin@restaurant.com", "manager@restaurant.com"],
+      "last_attempt": {
+        "time": "2026-06-01T00:05:12.345Z",
+        "status": "success",
+        "report_date": "2026-05-31",
+        "error": null
+      },
+      "history": [
+        {
+          "time": "2026-06-01T00:05:12.345Z",
+          "status": "success",
+          "report_date": "2026-05-31"
+        }
+      ]
+    }
+  }
+  ```
+
+### Cấu hình Thông tin Ngân hàng (QR Payment)
+
+#### 1. Lấy thông tin tài khoản ngân hàng
+- **Path**: `GET /api/admin/settings/bank`
+- **Auth**: `ADMIN`
+- **Response thành công**:
+  ```json
+  {
+    "success": true,
+    "message": "Bank settings loaded",
+    "data": {
+      "bank_id": "vcb",
+      "account_number": "1234567890",
+      "account_owner": "NGUYEN VAN A"
+    }
+  }
+  ```
+
+#### 2. Lưu/Cập nhật thông tin tài khoản ngân hàng
+- **Path**: `POST /api/admin/settings/bank`
+- **Auth**: `ADMIN`
+- **Body**:
+  ```json
+  {
+    "bank_id": "vcb",
+    "account_number": "1234567890",
+    "account_owner": "NGUYEN VAN A"
+  }
+  ```
+- **Response thành công**:
+  ```json
+  {
+    "success": true,
+    "message": "Bank settings saved successfully",
+    "data": {
+      "bank_id": "vcb",
+      "account_number": "1234567890",
+      "account_owner": "NGUYEN VAN A"
+    }
+  }
+  ```
 
 Manager được phép dùng các endpoint vận hành phía trên nhưng luôn nhận `403`
 ở user-management (`/admin/users`) và không được truy cập dữ liệu tài khoản,
