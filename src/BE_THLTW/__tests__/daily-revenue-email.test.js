@@ -362,4 +362,19 @@ describe('email service helpers', () => {
     });
     expect(emailService.categorizeDeliveryError({ code: 'ETIMEDOUT' })).toBe('provider-timeout');
   });
+
+  it('builds bounded SMTP timeout configuration', () => {
+    const config = emailService.buildSmtpConfig({
+      ...validEnv,
+      SMTP_TIMEOUT_MS: '12000',
+    });
+
+    expect(config.timeoutMs).toBe(12000);
+
+    const invalid = emailService.buildSmtpConfig({
+      ...validEnv,
+      SMTP_TIMEOUT_MS: '120000',
+    });
+    expect(invalid.startupError).toContain('SMTP_TIMEOUT_MS');
+  });
 });

@@ -34,6 +34,7 @@ const optionalEnvVars = [
   'REPORT_EMAIL_HISTORY_LIMIT',
   'SMTP_HOST',
   'SMTP_PORT',
+  'SMTP_TIMEOUT_MS',
   'SMTP_SECURE',
   'SMTP_USER',
   'SMTP_PASS',

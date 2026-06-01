@@ -189,6 +189,7 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `REPORT_EMAIL_HISTORY_LIMIT` | `20`; số attempt gần nhất giữ trong memory |
 | `SMTP_HOST` | SMTP host của Mailtrap/Gmail/provider |
 | `SMTP_PORT` | `587` cho STARTTLS phổ biến |
+| `SMTP_TIMEOUT_MS` | `15000`; giới hạn thời gian chờ kết nối/greeting/socket SMTP để request không treo quá lâu |
 | `SMTP_SECURE` | `false` với port `587`, `true` với port `465` |
 | `SMTP_USER` | Tài khoản SMTP, để trống nếu provider không yêu cầu |
 | `SMTP_PASS` | Mật khẩu/app password SMTP; không commit hoặc chụp màn hình |
@@ -248,6 +249,7 @@ REPORT_EMAIL_TIMEZONE=Asia/Ho_Chi_Minh
 REPORT_EMAIL_HISTORY_LIMIT=20
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
+SMTP_TIMEOUT_MS=15000
 SMTP_SECURE=false
 SMTP_USER=<smtp-user>
 SMTP_PASS=<smtp-password>
@@ -258,6 +260,7 @@ Quy tắc vận hành:
 
 - Email chỉ gồm tổng doanh thu, số giao dịch thành công, và doanh thu theo phương thức thanh toán.
 - Không đưa token, SMTP secret, thông tin cá nhân khách hàng, hoặc metadata thanh toán thô vào email/log/status.
+- Render Free web services có thể không gửi được SMTP qua các port chuẩn `25`, `465`, `587`; nếu gặp `provider-timeout`, dùng provider hỗ trợ port `2525`, nâng cấp Render, hoặc chuyển sang email provider HTTP API.
 - Gửi thử bằng `POST /api/admin/reports/daily-email/send` với tài khoản `ADMIN`.
 - Gửi ngay tới email nhập tay bằng trang frontend `/admin/email-send` hoặc `POST /api/admin/reports/daily-email/send-now`; endpoint này chỉ nhận một `recipient_email`, không thay đổi `REPORT_EMAIL_RECIPIENTS`, và vẫn yêu cầu `REPORT_EMAIL_ENABLED=true` cùng SMTP hợp lệ.
 - Xem trạng thái bằng `GET /api/admin/reports/daily-email/status`.

@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DEFAULT_SMTP_TIMEOUT_MS = 15000;
+const MAX_SMTP_TIMEOUT_MS = 60000;
 
 function parseBoolean(value) {
   if (value === undefined || value === null || value === '') {
@@ -51,9 +53,14 @@ function buildSmtpConfig(env = process.env) {
   const enabled = parseBoolean(env.REPORT_EMAIL_ENABLED);
   const errors = [];
   const port = parseInteger(env.SMTP_PORT, 587, 'SMTP_PORT');
+  const timeout = parseInteger(env.SMTP_TIMEOUT_MS, DEFAULT_SMTP_TIMEOUT_MS, 'SMTP_TIMEOUT_MS');
 
   if (port.error) errors.push(port.error);
+  if (timeout.error) errors.push(timeout.error);
   if (port.value <= 0) errors.push('SMTP_PORT must be a positive integer');
+  if (timeout.value <= 0 || timeout.value > MAX_SMTP_TIMEOUT_MS) {
+    errors.push(`SMTP_TIMEOUT_MS must be between 1 and ${MAX_SMTP_TIMEOUT_MS}`);
+  }
 
   const { recipients, errors: recipientErrors } = normalizeRecipients(env.REPORT_EMAIL_RECIPIENTS);
   errors.push(...recipientErrors);
@@ -79,6 +86,7 @@ function buildSmtpConfig(env = process.env) {
     user: env.SMTP_USER || '',
     pass: env.SMTP_PASS || '',
     from: env.SMTP_FROM || '',
+    timeoutMs: timeout.value,
     startupError: errors.length > 0 ? errors.join('; ') : null,
   };
 }
@@ -107,6 +115,9 @@ function createTransport(config) {
     host: config.host,
     port: config.port,
     secure: config.secure,
+    connectionTimeout: config.timeoutMs || DEFAULT_SMTP_TIMEOUT_MS,
+    greetingTimeout: config.timeoutMs || DEFAULT_SMTP_TIMEOUT_MS,
+    socketTimeout: config.timeoutMs || DEFAULT_SMTP_TIMEOUT_MS,
     auth: config.user || config.pass ? {
       user: config.user,
       pass: config.pass,
@@ -158,6 +169,7 @@ async function sendMail(message, options = {}) {
 }
 
 module.exports = {
+  DEFAULT_SMTP_TIMEOUT_MS,
   buildSmtpConfig,
   buildDeliveryConfig,
   normalizeRecipients,
