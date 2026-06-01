@@ -115,11 +115,12 @@ function buildSmtpConfig(env = process.env) {
 
 function buildDeliveryConfig(config, recipientOverride) {
   const errors = [];
+  const useMailtrapApi = !!config.mailtrapApiToken;
   const { recipients, errors: recipientErrors } = normalizeRecipients(
     Array.isArray(recipientOverride) ? recipientOverride.join(',') : recipientOverride
   );
 
-  if (!config.host) errors.push('SMTP_HOST is required when REPORT_EMAIL_ENABLED=true');
+  if (!useMailtrapApi && !config.host) errors.push('SMTP_HOST is required when REPORT_EMAIL_ENABLED=true');
   if (!config.from) errors.push('SMTP_FROM is required when REPORT_EMAIL_ENABLED=true');
   if (!Number.isFinite(config.port) || config.port <= 0) errors.push('SMTP_PORT must be a positive integer');
   if (recipients.length === 0) errors.push('recipient_email is required');

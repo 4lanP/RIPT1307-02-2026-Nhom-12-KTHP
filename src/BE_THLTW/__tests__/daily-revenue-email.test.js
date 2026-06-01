@@ -395,6 +395,22 @@ describe('email service helpers', () => {
     expect(config.startupError).toBeNull();
   });
 
+  it('allows request-scoped recipients with Mailtrap API and no SMTP host', () => {
+    const config = emailService.buildSmtpConfig({
+      ...validEnv,
+      MAILTRAP_API_TOKEN: 'mailtrap-token',
+      MAILTRAP_FROM_EMAIL: 'no-reply@example.com',
+      SMTP_HOST: '',
+      SMTP_FROM: '',
+    });
+
+    const deliveryConfig = emailService.buildDeliveryConfig(config, ['owner@example.com']);
+
+    expect(deliveryConfig.deliveryProvider).toBe('mailtrap-api');
+    expect(deliveryConfig.recipients).toEqual(['owner@example.com']);
+    expect(deliveryConfig.startupError).toBeNull();
+  });
+
   it('parses display-name sender values', () => {
     expect(emailService.parseSender('"QR Restaurant" <no-reply@example.com>')).toEqual({
       name: 'QR Restaurant',
