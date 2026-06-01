@@ -100,6 +100,9 @@ async function sendDailyRevenueEmail(req, res, next) {
     return send(res, 200, 'Daily revenue email sent', result);
   } catch (err) {
     if (err.failureCategory) {
+      if (err.failureCategory === 'configuration') {
+        return next(new ValidationError('Daily revenue email configuration is invalid'));
+      }
       return next(new ExternalServiceError('Daily revenue email', err.failureCategory, err));
     }
     return next(err);
@@ -121,6 +124,9 @@ async function sendImmediateDailyRevenueEmail(req, res, next) {
     return send(res, 200, 'Daily revenue email sent', result);
   } catch (err) {
     if (err.failureCategory) {
+      if (err.failureCategory === 'configuration') {
+        return next(new ValidationError('Daily revenue email configuration is invalid'));
+      }
       return next(new ExternalServiceError('Daily revenue email', err.failureCategory, err));
     }
     return next(err);
