@@ -30,6 +30,7 @@ import AdminMenuPage from './pages/admin/AdminMenuPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminQRPage from './pages/admin/AdminQRPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
+import AdminEmailSendPage from './pages/admin/AdminEmailSendPage'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -94,6 +95,11 @@ const AppRoutes = () => {
         <Route path="admin/reports" element={
           <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
             <AdminReportsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/email-send" element={
+          <ProtectedRoute roles={['ADMIN']}>
+            <AdminEmailSendPage />
           </ProtectedRoute>
         } />
         <Route path="admin/qr" element={

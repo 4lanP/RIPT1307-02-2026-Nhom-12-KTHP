@@ -106,6 +106,27 @@ async function sendDailyRevenueEmail(req, res, next) {
   }
 }
 
+async function sendImmediateDailyRevenueEmail(req, res, next) {
+  try {
+    const result = await dailyRevenueEmailService.sendImmediateRecipientReport(
+      req.body.report_date,
+      req.body.recipient_email,
+      { requestedByUserId: req.user?.id }
+    );
+
+    if (result.status === 'configuration-error' || result.status === 'skipped') {
+      return next(new ValidationError(result.startup_error || 'Daily revenue email is not available'));
+    }
+
+    return send(res, 200, 'Daily revenue email sent', result);
+  } catch (err) {
+    if (err.failureCategory) {
+      return next(new ExternalServiceError('Daily revenue email', err.failureCategory, err));
+    }
+    return next(err);
+  }
+}
+
 async function getDailyRevenueEmailStatus(req, res, next) {
   try {
     return send(res, 200, 'Daily revenue email status loaded', dailyRevenueEmailService.getStatus());
@@ -135,6 +156,7 @@ module.exports = {
   uploadBase64MenuImage,
   getKeepaliveStatus,
   sendDailyRevenueEmail,
+  sendImmediateDailyRevenueEmail,
   getDailyRevenueEmailStatus,
 
   listUsers: handler(adminService.listUsers, 200, 'Users loaded', () => []),

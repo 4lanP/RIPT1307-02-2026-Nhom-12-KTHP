@@ -259,6 +259,7 @@ Quy tắc vận hành:
 - Email chỉ gồm tổng doanh thu, số giao dịch thành công, và doanh thu theo phương thức thanh toán.
 - Không đưa token, SMTP secret, thông tin cá nhân khách hàng, hoặc metadata thanh toán thô vào email/log/status.
 - Gửi thử bằng `POST /api/admin/reports/daily-email/send` với tài khoản `ADMIN`.
+- Gửi ngay tới email nhập tay bằng trang frontend `/admin/email-send` hoặc `POST /api/admin/reports/daily-email/send-now`; endpoint này chỉ nhận một `recipient_email`, không thay đổi `REPORT_EMAIL_RECIPIENTS`, và vẫn yêu cầu `REPORT_EMAIL_ENABLED=true` cùng SMTP hợp lệ.
 - Xem trạng thái bằng `GET /api/admin/reports/daily-email/status`.
 - Rollback bằng `REPORT_EMAIL_ENABLED=false` rồi redeploy/restart backend; không có migration DB cần rollback.
 

@@ -83,6 +83,25 @@ function buildSmtpConfig(env = process.env) {
   };
 }
 
+function buildDeliveryConfig(config, recipientOverride) {
+  const errors = [];
+  const { recipients, errors: recipientErrors } = normalizeRecipients(
+    Array.isArray(recipientOverride) ? recipientOverride.join(',') : recipientOverride
+  );
+
+  if (!config.host) errors.push('SMTP_HOST is required when REPORT_EMAIL_ENABLED=true');
+  if (!config.from) errors.push('SMTP_FROM is required when REPORT_EMAIL_ENABLED=true');
+  if (!Number.isFinite(config.port) || config.port <= 0) errors.push('SMTP_PORT must be a positive integer');
+  if (recipients.length === 0) errors.push('recipient_email is required');
+  errors.push(...recipientErrors);
+
+  return {
+    ...config,
+    recipients,
+    startupError: errors.length > 0 ? errors.join('; ') : null,
+  };
+}
+
 function createTransport(config) {
   return nodemailer.createTransport({
     host: config.host,
@@ -115,7 +134,8 @@ function categorizeDeliveryError(error) {
 }
 
 async function sendMail(message, options = {}) {
-  const config = options.config || buildSmtpConfig(options.env || process.env);
+  const baseConfig = options.config || buildSmtpConfig(options.env || process.env);
+  const config = options.recipients ? buildDeliveryConfig(baseConfig, options.recipients) : baseConfig;
   if (config.startupError) {
     const error = new Error(config.startupError);
     error.category = 'configuration';
@@ -139,6 +159,7 @@ async function sendMail(message, options = {}) {
 
 module.exports = {
   buildSmtpConfig,
+  buildDeliveryConfig,
   normalizeRecipients,
   sendMail,
   categorizeDeliveryError,

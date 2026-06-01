@@ -158,6 +158,7 @@ Gợi ý demo an toàn:
 - Dùng Mailtrap hoặc inbox sandbox trước khi bật Gmail/SMTP thật.
 - Chỉ đặt `REPORT_EMAIL_ENABLED=true` sau khi đã có `REPORT_EMAIL_RECIPIENTS`, `SMTP_HOST`, `SMTP_PORT`, và `SMTP_FROM`.
 - Gửi thử bằng tài khoản `ADMIN` qua `POST /api/admin/reports/daily-email/send` với body `{"report_date":"YYYY-MM-DD"}`.
+- Admin có thể gửi ngay tới một email nhập tay trong frontend tại `/admin/email-send`, hoặc gọi `POST /api/admin/reports/daily-email/send-now` với body `{"recipient_email":"owner@example.com","report_date":"YYYY-MM-DD"}`. Nếu bỏ `report_date`, backend dùng ngày kinh doanh đã hoàn tất gần nhất.
 - Xem trạng thái gần nhất qua `GET /api/admin/reports/daily-email/status`.
 - Rollback nhanh bằng `REPORT_EMAIL_ENABLED=false` rồi restart backend.
 

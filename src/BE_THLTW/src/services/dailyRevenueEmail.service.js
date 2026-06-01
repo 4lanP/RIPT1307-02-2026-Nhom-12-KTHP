@@ -193,7 +193,7 @@ async function buildReport(reportDate, options = {}) {
 
 function publicAttempt(attempt) {
   if (!attempt) return null;
-  return {
+  const result = {
     attempt_id: attempt.attemptId,
     report_date: attempt.reportDate,
     trigger_type: attempt.triggerType,
@@ -203,6 +203,10 @@ function publicAttempt(attempt) {
     started_at: attempt.startedAt,
     finished_at: attempt.finishedAt,
   };
+  if (attempt.recipientEmail) {
+    result.recipient_email = attempt.recipientEmail;
+  }
+  return result;
 }
 
 function getStatus() {
@@ -220,13 +224,17 @@ function getStatus() {
 }
 
 async function sendReport(reportDate, triggerType, options = {}) {
+  const recipientEmail = options.recipientEmail || null;
+  const recipientCount = recipientEmail ? 1 : currentConfig.recipients.length;
+
   if (!currentConfig.enabled) {
     const attempt = {
       attemptId: makeAttemptId(reportDate),
       reportDate,
       triggerType,
+      recipientEmail,
       requestedByUserId: options.requestedByUserId || null,
-      recipientCount: currentConfig.recipients.length,
+      recipientCount,
       status: currentConfig.status === 'configuration-error' ? 'configuration-error' : 'skipped',
       failureCategory: currentConfig.startupError ? 'configuration' : null,
       startedAt: new Date().toISOString(),
@@ -259,8 +267,9 @@ async function sendReport(reportDate, triggerType, options = {}) {
     attemptId: makeAttemptId(reportDate),
     reportDate,
     triggerType,
+    recipientEmail,
     requestedByUserId: options.requestedByUserId || null,
-    recipientCount: currentConfig.recipients.length,
+    recipientCount,
     status: 'failed',
     failureCategory: null,
     startedAt: new Date().toISOString(),
@@ -275,6 +284,7 @@ async function sendReport(reportDate, triggerType, options = {}) {
     const delivery = await mailer.sendMail(message, {
       config: currentConfig.smtpConfig,
       transporter: options.transporter,
+      recipients: recipientEmail ? [recipientEmail] : undefined,
     });
 
     attempt.status = 'sent';
@@ -313,6 +323,14 @@ async function sendScheduledReport(options = {}) {
 
 async function sendManualReport(reportDate, options = {}) {
   return sendReport(reportDate, 'manual', options);
+}
+
+async function sendImmediateRecipientReport(reportDate, recipientEmail, options = {}) {
+  const resolvedReportDate = reportDate || getPreviousReportDate(options.now || new Date(), currentConfig.timezone);
+  return sendReport(resolvedReportDate, 'immediate-recipient', {
+    ...options,
+    recipientEmail,
+  });
 }
 
 function start(options = {}) {
@@ -375,6 +393,7 @@ module.exports = {
   buildReport,
   sendScheduledReport,
   sendManualReport,
+  sendImmediateRecipientReport,
   getStatus,
   start,
   stop,

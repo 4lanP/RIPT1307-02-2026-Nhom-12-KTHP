@@ -124,6 +124,17 @@ const sendDailyRevenueEmailSchema = z.object({
   }).strict(),
 });
 
+const sendImmediateDailyRevenueEmailSchema = z.object({
+  body: z.object({
+    recipient_email: z.string()
+      .trim()
+      .toLowerCase()
+      .email('Recipient email is invalid')
+      .max(255, 'Recipient email is too long'),
+    report_date: notFutureDate.optional(),
+  }).strict(),
+});
+
 const createItemSchema = z.object({
   body: z.object({
     category_id: id,
@@ -211,5 +222,6 @@ module.exports = {
   revenueReportSchema,
   exportReportSchema,
   sendDailyRevenueEmailSchema,
+  sendImmediateDailyRevenueEmailSchema,
   saveBankSettingsSchema,
 };
