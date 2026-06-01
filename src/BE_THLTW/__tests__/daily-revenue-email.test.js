@@ -377,4 +377,28 @@ describe('email service helpers', () => {
     });
     expect(invalid.startupError).toContain('SMTP_TIMEOUT_MS');
   });
+
+  it('uses Mailtrap API config when MAILTRAP_API_TOKEN is provided', () => {
+    const config = emailService.buildSmtpConfig({
+      ...validEnv,
+      MAILTRAP_API_TOKEN: 'mailtrap-token',
+      MAILTRAP_FROM_EMAIL: 'no-reply@example.com',
+      MAILTRAP_FROM_NAME: 'QR Restaurant',
+      SMTP_HOST: '',
+      SMTP_FROM: '',
+    });
+
+    expect(config.deliveryProvider).toBe('mailtrap-api');
+    expect(config.mailtrapApiUrl).toBe(emailService.DEFAULT_MAILTRAP_API_URL);
+    expect(config.from).toBe('no-reply@example.com');
+    expect(config.fromName).toBe('QR Restaurant');
+    expect(config.startupError).toBeNull();
+  });
+
+  it('parses display-name sender values', () => {
+    expect(emailService.parseSender('"QR Restaurant" <no-reply@example.com>')).toEqual({
+      name: 'QR Restaurant',
+      email: 'no-reply@example.com',
+    });
+  });
 });

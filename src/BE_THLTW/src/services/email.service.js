@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEFAULT_SMTP_TIMEOUT_MS = 15000;
 const MAX_SMTP_TIMEOUT_MS = 60000;
+const DEFAULT_MAILTRAP_API_URL = 'https://send.api.mailtrap.io/api/send';
 
 function parseBoolean(value) {
   if (value === undefined || value === null || value === '') {
@@ -49,11 +50,28 @@ function normalizeRecipients(value) {
   return { recipients, errors };
 }
 
+function parseSender(value) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(.*)<([^>]+)>$/);
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^"|"$/g, '').trim() || undefined,
+      email: match[2].trim(),
+    };
+  }
+  return { email: raw };
+}
+
 function buildSmtpConfig(env = process.env) {
   const enabled = parseBoolean(env.REPORT_EMAIL_ENABLED);
   const errors = [];
   const port = parseInteger(env.SMTP_PORT, 587, 'SMTP_PORT');
   const timeout = parseInteger(env.SMTP_TIMEOUT_MS, DEFAULT_SMTP_TIMEOUT_MS, 'SMTP_TIMEOUT_MS');
+  const mailtrapApiToken = env.MAILTRAP_API_TOKEN || '';
+  const mailtrapApiUrl = env.MAILTRAP_API_URL || DEFAULT_MAILTRAP_API_URL;
+  const from = env.MAILTRAP_FROM_EMAIL || env.SMTP_FROM || '';
+  const fromName = env.MAILTRAP_FROM_NAME || '';
+  const useMailtrapApi = !!mailtrapApiToken;
 
   if (port.error) errors.push(port.error);
   if (timeout.error) errors.push(timeout.error);
@@ -67,8 +85,8 @@ function buildSmtpConfig(env = process.env) {
 
   const requiredWhenEnabled = [
     ['REPORT_EMAIL_RECIPIENTS', recipients.length > 0],
-    ['SMTP_HOST', !!env.SMTP_HOST],
-    ['SMTP_FROM', !!env.SMTP_FROM],
+    [useMailtrapApi ? 'MAILTRAP_API_TOKEN' : 'SMTP_HOST', useMailtrapApi ? !!mailtrapApiToken : !!env.SMTP_HOST],
+    [useMailtrapApi ? 'MAILTRAP_FROM_EMAIL or SMTP_FROM' : 'SMTP_FROM', !!from],
   ];
 
   requiredWhenEnabled.forEach(([name, present]) => {
@@ -85,8 +103,12 @@ function buildSmtpConfig(env = process.env) {
     secure: parseBoolean(env.SMTP_SECURE),
     user: env.SMTP_USER || '',
     pass: env.SMTP_PASS || '',
-    from: env.SMTP_FROM || '',
+    from,
+    fromName,
     timeoutMs: timeout.value,
+    mailtrapApiToken,
+    mailtrapApiUrl,
+    deliveryProvider: useMailtrapApi ? 'mailtrap-api' : 'smtp',
     startupError: errors.length > 0 ? errors.join('; ') : null,
   };
 }
@@ -125,6 +147,55 @@ function createTransport(config) {
   });
 }
 
+async function sendMailtrapApi(message, config) {
+  const sender = parseSender(config.from);
+  if (config.fromName) {
+    sender.name = config.fromName;
+  }
+
+  const response = await fetch(config.mailtrapApiUrl || DEFAULT_MAILTRAP_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Api-Token': config.mailtrapApiToken,
+    },
+    body: JSON.stringify({
+      from: {
+        email: sender.email,
+        ...(sender.name ? { name: sender.name } : {}),
+      },
+      to: config.recipients.map((email) => ({ email })),
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+      category: 'Daily Revenue Report',
+    }),
+  });
+
+  let body = null;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+
+  if (!response.ok) {
+    const error = new Error(`Mailtrap API failed with HTTP ${response.status}`);
+    error.responseCode = response.status;
+    error.category = response.status === 401 || response.status === 403
+      ? 'provider-auth'
+      : response.status === 429
+        ? 'provider-rate-limit'
+        : 'provider-rejected';
+    throw error;
+  }
+
+  return {
+    messageId: body?.message_ids?.[0] || body?.message_id || null,
+    response: body,
+  };
+}
+
 function categorizeDeliveryError(error) {
   const code = String(error?.code || error?.responseCode || '').toUpperCase();
   const message = String(error?.message || '').toLowerCase();
@@ -153,6 +224,15 @@ async function sendMail(message, options = {}) {
     throw error;
   }
 
+  if (config.mailtrapApiToken) {
+    try {
+      return await sendMailtrapApi(message, config);
+    } catch (error) {
+      error.category = error.category || categorizeDeliveryError(error);
+      throw error;
+    }
+  }
+
   const transporter = options.transporter || createTransport(config);
   try {
     return await transporter.sendMail({
@@ -170,8 +250,11 @@ async function sendMail(message, options = {}) {
 
 module.exports = {
   DEFAULT_SMTP_TIMEOUT_MS,
+  DEFAULT_MAILTRAP_API_URL,
   buildSmtpConfig,
   buildDeliveryConfig,
+  parseSender,
+  sendMailtrapApi,
   normalizeRecipients,
   sendMail,
   categorizeDeliveryError,

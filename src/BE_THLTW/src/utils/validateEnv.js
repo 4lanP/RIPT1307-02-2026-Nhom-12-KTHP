@@ -39,6 +39,10 @@ const optionalEnvVars = [
   'SMTP_USER',
   'SMTP_PASS',
   'SMTP_FROM',
+  'MAILTRAP_API_TOKEN',
+  'MAILTRAP_API_URL',
+  'MAILTRAP_FROM_EMAIL',
+  'MAILTRAP_FROM_NAME',
 ];
 
 function validateEnv() {

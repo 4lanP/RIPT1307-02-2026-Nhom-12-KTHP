@@ -194,6 +194,10 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `SMTP_USER` | Tài khoản SMTP, để trống nếu provider không yêu cầu |
 | `SMTP_PASS` | Mật khẩu/app password SMTP; không commit hoặc chụp màn hình |
 | `SMTP_FROM` | Sender hiển thị, ví dụ `"QR Restaurant <no-reply@example.com>"` |
+| `MAILTRAP_API_TOKEN` | Token Mailtrap Email API production; nếu đặt biến này backend gửi qua HTTPS API thay vì SMTP |
+| `MAILTRAP_API_URL` | `https://send.api.mailtrap.io/api/send` |
+| `MAILTRAP_FROM_EMAIL` | Email sender thuộc domain đã verify trong Mailtrap |
+| `MAILTRAP_FROM_NAME` | Tên sender hiển thị, ví dụ `QR Restaurant` |
 | `VNPAY_TMNCODE` | *Mã Merchant VNPay Sandbox của bạn* |
 | `VNPAY_HASHSECRET` | *Chuỗi Hash Secret VNPay Sandbox của bạn* |
 | `VNPAY_URL` | `https://sandbox.vnpay.vn/paymentv2/vpcpay.html` |
@@ -254,6 +258,12 @@ SMTP_SECURE=false
 SMTP_USER=<smtp-user>
 SMTP_PASS=<smtp-password>
 SMTP_FROM="QR Restaurant <no-reply@example.com>"
+
+# Mailtrap Email API production alternative
+MAILTRAP_API_TOKEN=
+MAILTRAP_API_URL=https://send.api.mailtrap.io/api/send
+MAILTRAP_FROM_EMAIL=no-reply@your-verified-domain.com
+MAILTRAP_FROM_NAME=QR Restaurant
 ```
 
 Quy tắc vận hành:
@@ -261,6 +271,7 @@ Quy tắc vận hành:
 - Email chỉ gồm tổng doanh thu, số giao dịch thành công, và doanh thu theo phương thức thanh toán.
 - Không đưa token, SMTP secret, thông tin cá nhân khách hàng, hoặc metadata thanh toán thô vào email/log/status.
 - Render Free web services có thể không gửi được SMTP qua các port chuẩn `25`, `465`, `587`; nếu gặp `provider-timeout`, dùng provider hỗ trợ port `2525`, nâng cấp Render, hoặc chuyển sang email provider HTTP API.
+- Với Mailtrap Email API production, phải verify sending domain trong Mailtrap và đặt `MAILTRAP_FROM_EMAIL` theo domain đã verify trước khi gửi thật.
 - Gửi thử bằng `POST /api/admin/reports/daily-email/send` với tài khoản `ADMIN`.
 - Gửi ngay tới email nhập tay bằng trang frontend `/admin/email-send` hoặc `POST /api/admin/reports/daily-email/send-now`; endpoint này chỉ nhận một `recipient_email`, không thay đổi `REPORT_EMAIL_RECIPIENTS`, và vẫn yêu cầu `REPORT_EMAIL_ENABLED=true` cùng SMTP hợp lệ.
 - Xem trạng thái bằng `GET /api/admin/reports/daily-email/status`.

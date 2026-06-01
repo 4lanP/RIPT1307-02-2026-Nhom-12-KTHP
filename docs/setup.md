@@ -152,6 +152,12 @@ SMTP_SECURE=false
 SMTP_USER=<smtp-user>
 SMTP_PASS=<smtp-password>
 SMTP_FROM="QR Restaurant <no-reply@example.com>"
+
+# Tùy chọn production qua Mailtrap Email API, tránh SMTP port bị chặn trên một số host
+MAILTRAP_API_TOKEN=
+MAILTRAP_API_URL=https://send.api.mailtrap.io/api/send
+MAILTRAP_FROM_EMAIL=
+MAILTRAP_FROM_NAME=QR Restaurant
 ```
 
 Gợi ý demo an toàn:
@@ -159,6 +165,7 @@ Gợi ý demo an toàn:
 - Dùng Mailtrap hoặc inbox sandbox trước khi bật Gmail/SMTP thật.
 - Chỉ đặt `REPORT_EMAIL_ENABLED=true` sau khi đã có `REPORT_EMAIL_RECIPIENTS`, `SMTP_HOST`, `SMTP_PORT`, và `SMTP_FROM`.
 - `SMTP_TIMEOUT_MS=15000` giúp request gửi email fail nhanh sau khoảng 15 giây nếu Render/provider không kết nối được SMTP.
+- Nếu dùng Mailtrap Email API production, đặt `MAILTRAP_API_TOKEN`, `MAILTRAP_FROM_EMAIL`, và `MAILTRAP_FROM_NAME`; khi có token này backend sẽ gửi qua HTTPS API thay vì SMTP.
 - Gửi thử bằng tài khoản `ADMIN` qua `POST /api/admin/reports/daily-email/send` với body `{"report_date":"YYYY-MM-DD"}`.
 - Admin có thể gửi ngay tới một email nhập tay trong frontend tại `/admin/email-send`, hoặc gọi `POST /api/admin/reports/daily-email/send-now` với body `{"recipient_email":"owner@example.com","report_date":"YYYY-MM-DD"}`. Nếu bỏ `report_date`, backend dùng ngày kinh doanh đã hoàn tất gần nhất.
 - Xem trạng thái gần nhất qua `GET /api/admin/reports/daily-email/status`.
