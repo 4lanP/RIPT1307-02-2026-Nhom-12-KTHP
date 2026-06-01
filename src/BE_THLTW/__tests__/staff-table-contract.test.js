@@ -71,4 +71,28 @@ describe('Staff table contract', () => {
     expect(query).toMatch(/LEFT JOIN\s+SESSIONS\s+s/i);
     expect(query).toMatch(/s\.status\s*=\s*'ACTIVE'/i);
   });
+
+  it('only returns open customer requests for active sessions', async () => {
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 11,
+          session_id: 35,
+          request_type: 'REQUEST_BILL',
+          status: 'OPEN',
+          table_id: 1,
+          table_name: 'Bàn 01',
+        },
+      ],
+    });
+
+    const result = await sessionService.getRequests();
+
+    expect(result).toHaveLength(1);
+    const { query, params } = lastQuery();
+    expect(params).toBeUndefined();
+    expect(query).toMatch(/JOIN\s+SESSIONS\s+s\s+ON\s+s\.id\s*=\s*cr\.session_id/i);
+    expect(query).toMatch(/cr\.status\s*=\s*'OPEN'/i);
+    expect(query).toMatch(/s\.status\s*=\s*'ACTIVE'/i);
+  });
 });

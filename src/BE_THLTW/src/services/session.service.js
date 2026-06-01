@@ -334,7 +334,8 @@ async function getRequests() {
      FROM CUSTOMER_REQUESTS cr
      JOIN SESSIONS s ON s.id = cr.session_id
      JOIN TABLES t ON t.id = s.table_id
-     WHERE cr.status = 'OPEN' ORDER BY cr.created_at ASC`
+     WHERE cr.status = 'OPEN' AND s.status = 'ACTIVE'
+     ORDER BY cr.created_at ASC`
   );
   return rows;
 }
