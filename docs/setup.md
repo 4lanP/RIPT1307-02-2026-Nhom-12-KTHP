@@ -135,6 +135,33 @@ Quy tắc an toàn:
 - Không dùng URL localhost, private IP, query token, credential trong URL, hoặc endpoint admin/auth/payment/order/session.
 - Nếu cấu hình sai, scheduler không chạy và admin có thể xem lỗi tại `GET /api/admin/keepalive/status`.
 
+### Email báo cáo doanh thu hằng ngày
+
+Backend có thể gửi email tổng hợp doanh thu của ngày trước đó cho admin/maintainer. Tính năng này mặc định tắt để tránh gửi email khi chưa cấu hình SMTP:
+
+```env
+REPORT_EMAIL_ENABLED=false
+REPORT_EMAIL_RECIPIENTS=admin@restaurant.com
+REPORT_EMAIL_CRON=5 0 * * *
+REPORT_EMAIL_TIMEZONE=Asia/Ho_Chi_Minh
+REPORT_EMAIL_HISTORY_LIMIT=20
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<smtp-user>
+SMTP_PASS=<smtp-password>
+SMTP_FROM="QR Restaurant <no-reply@example.com>"
+```
+
+Gợi ý demo an toàn:
+
+- Dùng Mailtrap hoặc inbox sandbox trước khi bật Gmail/SMTP thật.
+- Chỉ đặt `REPORT_EMAIL_ENABLED=true` sau khi đã có `REPORT_EMAIL_RECIPIENTS`, `SMTP_HOST`, `SMTP_PORT`, và `SMTP_FROM`.
+- Gửi thử bằng tài khoản `ADMIN` qua `POST /api/admin/reports/daily-email/send` với body `{"report_date":"YYYY-MM-DD"}`.
+- Admin có thể gửi ngay tới một email nhập tay trong frontend tại `/admin/email-send`, hoặc gọi `POST /api/admin/reports/daily-email/send-now` với body `{"recipient_email":"owner@example.com","report_date":"YYYY-MM-DD"}`. Nếu bỏ `report_date`, backend dùng ngày kinh doanh đã hoàn tất gần nhất.
+- Xem trạng thái gần nhất qua `GET /api/admin/reports/daily-email/status`.
+- Rollback nhanh bằng `REPORT_EMAIL_ENABLED=false` rồi restart backend.
+
 Tạo DB và schema:
 
 ```powershell

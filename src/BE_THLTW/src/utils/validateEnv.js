@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const keepaliveService = require('../services/keepalive.service');
+const dailyRevenueEmailService = require('../services/dailyRevenueEmail.service');
 
 const requiredEnvVars = [
   'DATABASE_URL',
@@ -26,6 +27,17 @@ const optionalEnvVars = [
   'KEEPALIVE_TIMEOUT_MS',
   'KEEPALIVE_RETRY_LIMIT',
   'KEEPALIVE_HISTORY_LIMIT',
+  'REPORT_EMAIL_ENABLED',
+  'REPORT_EMAIL_RECIPIENTS',
+  'REPORT_EMAIL_CRON',
+  'REPORT_EMAIL_TIMEZONE',
+  'REPORT_EMAIL_HISTORY_LIMIT',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_SECURE',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'SMTP_FROM',
 ];
 
 function validateEnv() {
@@ -91,12 +103,20 @@ function validateEnv() {
     });
   }
 
+  const reportEmailConfig = dailyRevenueEmailService.buildConfig(process.env);
+  if (reportEmailConfig.status === 'configuration-error') {
+    logger.warn('Daily revenue email configuration invalid; scheduler will not start', {
+      error: reportEmailConfig.startupError,
+    });
+  }
+
   logger.info('Environment validation passed', {
     nodeEnv: process.env.NODE_ENV,
     port: process.env.PORT || 5000,
     hasRedis: !!process.env.REDIS_URL,
     hasDishImageStorage: !!process.env.DISH_IMAGE_STORAGE_DIR,
     keepaliveStatus: keepaliveConfig.status,
+    reportEmailStatus: reportEmailConfig.status,
   });
 }
 

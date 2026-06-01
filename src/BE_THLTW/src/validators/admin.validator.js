@@ -12,6 +12,10 @@ const imageValue = z.union([
 ]);
 const optionalImageValue = imageValue.optional().nullable();
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD');
+const notFutureDate = dateOnly.refine((value) => {
+  const today = new Date().toISOString().slice(0, 10);
+  return value <= today;
+}, 'Report date cannot be in the future');
 const emptySchema = z.object({
   body: z.object({}).strict().optional(),
   query: z.object({}).strict().optional(),
@@ -114,6 +118,23 @@ const exportReportSchema = z.object({
   }),
 });
 
+const sendDailyRevenueEmailSchema = z.object({
+  body: z.object({
+    report_date: notFutureDate,
+  }).strict(),
+});
+
+const sendImmediateDailyRevenueEmailSchema = z.object({
+  body: z.object({
+    recipient_email: z.string()
+      .trim()
+      .toLowerCase()
+      .email('Recipient email is invalid')
+      .max(255, 'Recipient email is too long'),
+    report_date: notFutureDate.optional(),
+  }).strict(),
+});
+
 const createItemSchema = z.object({
   body: z.object({
     category_id: id,
@@ -200,5 +221,7 @@ module.exports = {
   emptySchema,
   revenueReportSchema,
   exportReportSchema,
+  sendDailyRevenueEmailSchema,
+  sendImmediateDailyRevenueEmailSchema,
   saveBankSettingsSchema,
 };

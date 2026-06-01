@@ -11,6 +11,7 @@ const cron = require('node-cron');
 const db = require('./config/db');
 const { ensureMenuImageColumnSupportsBase64 } = require('./config/migrateMenuImageColumn');
 const keepaliveService = require('./services/keepalive.service');
+const dailyRevenueEmailService = require('./services/dailyRevenueEmail.service');
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
@@ -51,6 +52,7 @@ async function startServer() {
       pid: process.pid,
     });
     keepaliveService.start({ runImmediately: true });
+    dailyRevenueEmailService.start();
   });
 }
 

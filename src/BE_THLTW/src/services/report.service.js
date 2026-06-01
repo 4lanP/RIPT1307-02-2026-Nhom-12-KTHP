@@ -18,6 +18,28 @@ async function getRevenueReport(from, to, groupBy) {
   return rows;
 }
 
+async function getDailyRevenueSummary(periodStart, periodEnd) {
+  const query = `
+    SELECT method, COALESCE(SUM(amount), 0) as total_revenue, COUNT(id)::int as transaction_count
+    FROM PAYMENTS
+    WHERE status = 'COMPLETED' AND paid_at >= $1 AND paid_at < $2
+    GROUP BY method
+    ORDER BY method
+  `;
+  const { rows } = await pool.query(query, [periodStart, periodEnd]);
+  const paymentMethods = rows.map((row) => ({
+    method: row.method,
+    total_revenue: Number(row.total_revenue) || 0,
+    transaction_count: Number(row.transaction_count) || 0,
+  }));
+
+  return {
+    total_revenue: paymentMethods.reduce((sum, row) => sum + row.total_revenue, 0),
+    transaction_count: paymentMethods.reduce((sum, row) => sum + row.transaction_count, 0),
+    payment_methods: paymentMethods,
+  };
+}
+
 async function getMenuReport() {
   const query = `
     SELECT mi.name, COALESCE(SUM(oi.quantity), 0)::int as total_quantity
@@ -101,6 +123,7 @@ async function resetMenuQuota() {
 
 module.exports = {
   getRevenueReport,
+  getDailyRevenueSummary,
   getMenuReport,
   getKdsReport,
   generateExcelReport,

@@ -118,6 +118,10 @@ async function processVNPayWebhook(queryData) {
       const table_id = sessionRes.rows[0].table_id;
 
       await client.query(`UPDATE TABLES SET status = 'AVAILABLE' WHERE id = $1`, [table_id]);
+      await client.query(
+        `UPDATE CUSTOMER_REQUESTS SET status = 'RESOLVED', resolved_at = NOW() WHERE session_id = $1 AND status = 'OPEN'`,
+        [session_id]
+      );
 
       const { getIO } = require('../sockets/io');
       const io = getIO();

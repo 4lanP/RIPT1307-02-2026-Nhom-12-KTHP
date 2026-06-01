@@ -5,7 +5,7 @@ import { staffApi } from '../lib/api'
 import { getStaffSocket } from '../lib/socket'
 import {
   LayoutGrid, Users, UtensilsCrossed, BarChart3, QrCode,
-  Table2, Bell, LogOut, ChefHat, Menu, X, Search, Landmark
+  Table2, Bell, LogOut, ChefHat, Menu, X, Search, Landmark, Mail
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -19,6 +19,7 @@ const navItems = [
   { to: '/requests', icon: Bell, label: 'Yêu cầu', roles: ['ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
   { to: '/admin/dashboard', icon: LayoutGrid, label: 'Dashboard', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/reports', icon: BarChart3, label: 'Báo cáo', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/admin/email-send', icon: Mail, label: 'Gửi báo cáo', roles: ['ADMIN'] },
   { to: '/admin/menu', icon: UtensilsCrossed, label: 'Menu', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/users', icon: Users, label: 'Nhân viên', roles: ['ADMIN'] },
   { to: '/admin/tables', icon: Table2, label: 'Cấu hình bàn', roles: ['ADMIN', 'MANAGER'] },

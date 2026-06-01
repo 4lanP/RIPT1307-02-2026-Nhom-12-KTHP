@@ -143,6 +143,27 @@ Expected coverage:
 - Empty revenue/menu datasets return empty arrays rather than undefined chart values.
 - Admin report routes keep existing ADMIN/MANAGER access and reject non-operational roles.
 
+## Daily Revenue Email Verification
+
+Run focused daily revenue email tests:
+
+```powershell
+cd src/BE_THLTW
+npm test -- --runInBand --forceExit daily-revenue-email.test.js
+npm test -- --runInBand --forceExit admin-email-send.test.js
+```
+
+Expected coverage:
+
+- `REPORT_EMAIL_ENABLED=false` skips scheduled delivery safely.
+- Invalid enabled SMTP/recipient config reports `configuration-error` without exposing `SMTP_PASS`.
+- Scheduled delivery sends the previous-day revenue summary with total revenue, transaction count, and payment-method breakdown.
+- `POST /admin/reports/daily-email/send` works for `ADMIN`, rejects `MANAGER`, and rejects future `report_date` values.
+- Provider failures return the unified error response and do not break existing report/payment workflows.
+- `GET /admin/reports/daily-email/status` exposes state and recipient counts without leaking addresses or SMTP credentials.
+- `POST /admin/reports/daily-email/send-now` sends to one entered email for `ADMIN`, trims/normalizes that email, rejects invalid email/future date/non-admin users before delivery, and does not mutate scheduled recipients.
+- Frontend checks for the admin immediate-send page run through `cd src/FE_THLTW && npm test`, covering the API wrapper, ADMIN-only route/sidebar entry, loading state, validation state, unavailable/provider failure text, and duplicate-submit guard.
+
 ## Backend Hardening Test Scope
 
 - Secret hygiene tests verify tracked files do not include local `.env` files and that `.env.example` contains placeholders only.
