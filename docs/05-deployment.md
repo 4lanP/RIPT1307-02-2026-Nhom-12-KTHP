@@ -129,6 +129,36 @@ Response:
 curl https://your-api-domain/api/health
 ```
 
+## Frontend Build And Bundle Validation
+
+Frontend production validation runs from `src/FE_THLTW`:
+
+```powershell
+cd src/FE_THLTW
+npm run build
+npm run bundle:check
+```
+
+`npm run bundle:check` executes a production build and fails if the build emits
+an oversized initial-bundle warning. Route-level screens are lazy-loaded and
+large vendor groups are split so admin, staff, customer, and kitchen surfaces do
+not force unrelated first-load downloads.
+
+If a bundle warning must be accepted temporarily, document it before handoff:
+
+```markdown
+## Bundle Exception: main application bundle
+
+- Affected flow:
+- Initial-load impact:
+- Reason:
+- Owner:
+- Mitigation:
+- Follow-up date:
+```
+
+An exception missing any field is not valid for deployment handoff.
+
 ## Deploy thực tế lên Render và Vercel
 
 Dự án đã được cấu hình và kiểm thử thành công khi deploy **Backend + PostgreSQL + Redis lên Render** và **Frontend (React + Vite) lên Vercel**. Dưới đây là hướng dẫn cấu hình chi tiết cho từng dịch vụ:

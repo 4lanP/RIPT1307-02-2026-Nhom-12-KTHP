@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { AlertCircle, CheckCircle2, Mail, RefreshCw, Send } from 'lucide-react'
 import { adminApi } from '../../lib/api'
+import {
+  buildImmediateSendPayload,
+  createSuccessStatus,
+  formatCurrency,
+  getDefaultErrorMessage,
+  getStatusLoadErrorMessage,
+  getStatusTone,
+  validateEmail,
+} from './AdminEmailSendPage.logic.js'
 
 type SendResult = {
   attempt_id?: string
@@ -20,32 +29,6 @@ type EmailStatus = {
   last_attempt?: SendResult
 }
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-const formatCurrency = (value: number | undefined) => new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-}).format(Number(value) || 0)
-
-const getDefaultErrorMessage = (error: any) => {
-  const message = error?.message || 'Không gửi được báo cáo doanh thu'
-  if (message.includes('provider-timeout')) return 'Nhà cung cấp email phản hồi quá thời gian.'
-  if (message.includes('provider-auth')) return 'Cấu hình xác thực email chưa hợp lệ.'
-  if (message.includes('provider-rejected')) return 'Nhà cung cấp email đã từ chối yêu cầu gửi.'
-  if (message.includes('provider-rate-limit')) return 'Nhà cung cấp email đang giới hạn lượt gửi.'
-  if (error?.errors?.length) return error.errors[0].message || message
-  return message
-}
-
-const validateEmail = (value: string) => {
-  const normalized = value.trim().toLowerCase()
-  if (!normalized) return 'Vui lòng nhập email nhận báo cáo.'
-  if (!emailPattern.test(normalized)) return 'Email nhận báo cáo không hợp lệ.'
-  if (normalized.includes(',')) return 'Chỉ được gửi đến một email mỗi lần.'
-  return ''
-}
-
 const AdminEmailSendPage = () => {
   const [recipientEmail, setRecipientEmail] = useState('')
   const [reportDate, setReportDate] = useState('')
@@ -57,9 +40,7 @@ const AdminEmailSendPage = () => {
   const [failureMessage, setFailureMessage] = useState('')
 
   const statusTone = useMemo(() => {
-    if (!status) return 'neutral'
-    if (status.enabled) return 'ready'
-    return 'unavailable'
+    return getStatusTone(status)
   }, [status])
 
   const loadStatus = async () => {
@@ -68,11 +49,7 @@ const AdminEmailSendPage = () => {
       const response = await adminApi.getDailyRevenueEmailStatus()
       setStatus(response.data || null)
     } catch (error: any) {
-      if (error?.message?.includes('Khong co quyen') || error?.message?.includes('quyền')) {
-        setFailureMessage('Bạn không có quyền xem trạng thái gửi email.')
-      } else {
-        setFailureMessage('Không tải được trạng thái gửi email.')
-      }
+      setFailureMessage(getStatusLoadErrorMessage(error))
     } finally {
       setIsStatusLoading(false)
     }
@@ -98,21 +75,11 @@ const AdminEmailSendPage = () => {
     setIsSubmitting(true)
 
     try {
-      const payload: Record<string, string> = {
-        recipient_email: recipientEmail.trim().toLowerCase(),
-      }
-      if (reportDate) {
-        payload.report_date = reportDate
-      }
+      const payload = buildImmediateSendPayload({ recipientEmail, reportDate })
 
       const response = await adminApi.sendDailyRevenueEmailNow(payload)
       setLastResult(response.data)
-      setStatus((current) => ({
-        ...(current || {}),
-        enabled: true,
-        status: response.data?.status,
-        last_attempt: response.data,
-      }))
+      setStatus((current) => createSuccessStatus(current, response.data))
       toast.success('Đã gửi báo cáo doanh thu')
     } catch (error: any) {
       const message = getDefaultErrorMessage(error)

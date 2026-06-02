@@ -108,6 +108,64 @@ Frontend validation remains `npm run build` in `src/FE_THLTW`, followed by
 manual route checks for manager default routing, hidden user management, and
 role-appropriate redirects on direct URLs.
 
+## Frontend Quality Gate
+
+Run the complete frontend handoff gate from `src/FE_THLTW`:
+
+```powershell
+cd src/FE_THLTW
+npm run quality
+```
+
+The quality gate runs:
+
+- `npm run lint` for frontend source lint validation;
+- `npm test` for API wrapper, layout, contract fixture, and user-facing behavior checks;
+- `npm run bundle:check` for a production build plus bundle warning validation.
+
+Frontend tests must not require live backend services. Contract fixtures should
+use the standard response envelope:
+
+```json
+{
+  "success": true,
+  "message": "Operation completed",
+  "data": {}
+}
+```
+
+For errors, tests should use safe categories and avoid secrets or raw provider
+diagnostics:
+
+```json
+{
+  "success": false,
+  "message": "Operation failed",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "category": "provider-timeout"
+  }
+}
+```
+
+Expected frontend coverage now includes:
+
+- admin daily revenue email validation, duplicate-submit guard, success state,
+  unavailable/configuration state, provider failure state, and authorization
+  status messaging;
+- HTTP envelope and safe error category fixture assertions;
+- route lazy-loading and bundle policy assertions.
+
+Before handoff, run:
+
+```powershell
+cd src/FE_THLTW
+npm run lint
+npm test
+npm run build
+npm run quality
+```
+
 ## Dish Image Upload Verification
 
 Run focused upload tests:

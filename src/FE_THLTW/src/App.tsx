@@ -1,36 +1,25 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
-// Layouts
-import StaffLayout from './layouts/StaffLayout'
-
-// Auth
-import LoginPage from './pages/auth/LoginPage'
-
-// Customer
-import CustomerScanPage from './pages/customer/CustomerScanPage'
-import CustomerMenuPage from './pages/customer/CustomerMenuPage'
-
-// KDS
-import KDSPage from './pages/kds/KDSPage'
-
-// Staff
-import StaffTablesPage from './pages/staff/StaffTablesPage'
-import StaffTableDetailPage from './pages/staff/StaffTableDetailPage'
-import StaffRequestsPage from './pages/staff/StaffRequestsPage'
-import StaffInvoicePage from './pages/staff/StaffInvoicePage'
-
-// Admin
-import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AdminUsersPage from './pages/admin/AdminUsersPage'
-import AdminTablesPage from './pages/admin/AdminTablesPage'
-import AdminMenuPage from './pages/admin/AdminMenuPage'
-import AdminReportsPage from './pages/admin/AdminReportsPage'
-import AdminQRPage from './pages/admin/AdminQRPage'
-import AdminSettingsPage from './pages/admin/AdminSettingsPage'
-import AdminEmailSendPage from './pages/admin/AdminEmailSendPage'
+const StaffLayout = React.lazy(() => import('./layouts/StaffLayout'))
+const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'))
+const CustomerScanPage = React.lazy(() => import('./pages/customer/CustomerScanPage'))
+const CustomerMenuPage = React.lazy(() => import('./pages/customer/CustomerMenuPage'))
+const KDSPage = React.lazy(() => import('./pages/kds/KDSPage'))
+const StaffTablesPage = React.lazy(() => import('./pages/staff/StaffTablesPage'))
+const StaffTableDetailPage = React.lazy(() => import('./pages/staff/StaffTableDetailPage'))
+const StaffRequestsPage = React.lazy(() => import('./pages/staff/StaffRequestsPage'))
+const StaffInvoicePage = React.lazy(() => import('./pages/staff/StaffInvoicePage'))
+const AdminDashboardPage = React.lazy(() => import('./pages/admin/AdminDashboardPage'))
+const AdminUsersPage = React.lazy(() => import('./pages/admin/AdminUsersPage'))
+const AdminTablesPage = React.lazy(() => import('./pages/admin/AdminTablesPage'))
+const AdminMenuPage = React.lazy(() => import('./pages/admin/AdminMenuPage'))
+const AdminReportsPage = React.lazy(() => import('./pages/admin/AdminReportsPage'))
+const AdminQRPage = React.lazy(() => import('./pages/admin/AdminQRPage'))
+const AdminSettingsPage = React.lazy(() => import('./pages/admin/AdminSettingsPage'))
+const AdminEmailSendPage = React.lazy(() => import('./pages/admin/AdminEmailSendPage'))
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -48,81 +37,83 @@ const AppRoutes = () => {
   const { user } = useAuth()
 
   return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={user ? <Navigate to={getDefaultRoute(user.role)} /> : <LoginPage />} />
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" aria-label="Đang tải trang" />}>
+      <Routes>
+        {/* Public */}
+        <Route path="/login" element={user ? <Navigate to={getDefaultRoute(user.role)} /> : <LoginPage />} />
 
-      {/* Customer QR flow */}
-      <Route path="/scan" element={<CustomerScanPage />} />
-      <Route path="/menu" element={<CustomerMenuPage />} />
+        {/* Customer QR flow */}
+        <Route path="/scan" element={<CustomerScanPage />} />
+        <Route path="/menu" element={<CustomerMenuPage />} />
 
-      {/* KDS */}
-      <Route path="/kds" element={
-        <ProtectedRoute roles={['KITCHEN', 'ADMIN']}>
-          <KDSPage />
-        </ProtectedRoute>
-      } />
+        {/* KDS */}
+        <Route path="/kds" element={
+          <ProtectedRoute roles={['KITCHEN', 'ADMIN']}>
+            <KDSPage />
+          </ProtectedRoute>
+        } />
 
-      {/* Staff */}
-      <Route path="/" element={
-        <ProtectedRoute roles={['ADMIN', 'MANAGER', 'CASHIER', 'WAITER']}>
-          <StaffLayout />
-        </ProtectedRoute>
-      }>
-        <Route path="tables" element={<StaffTablesPage />} />
-        <Route path="tables/:id" element={<StaffTableDetailPage />} />
-        <Route path="requests" element={<StaffRequestsPage />} />
-        <Route path="admin/dashboard" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AdminDashboardPage />
+        {/* Staff */}
+        <Route path="/" element={
+          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'CASHIER', 'WAITER']}>
+            <StaffLayout />
           </ProtectedRoute>
-        } />
-        <Route path="admin/users" element={
-          <ProtectedRoute roles={['ADMIN']}>
-            <AdminUsersPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/tables" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AdminTablesPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/menu" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AdminMenuPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/reports" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AdminReportsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/email-send" element={
-          <ProtectedRoute roles={['ADMIN']}>
-            <AdminEmailSendPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/qr" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AdminQRPage />
-          </ProtectedRoute>
-        } />
-        <Route path="admin/settings" element={
-          <ProtectedRoute roles={['ADMIN']}>
-            <AdminSettingsPage />
-          </ProtectedRoute>
-        } />
-        <Route index element={<Navigate to="/tables" replace />} />
-      </Route>
+        }>
+          <Route path="tables" element={<StaffTablesPage />} />
+          <Route path="tables/:id" element={<StaffTableDetailPage />} />
+          <Route path="requests" element={<StaffRequestsPage />} />
+          <Route path="admin/dashboard" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/users" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AdminUsersPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/tables" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <AdminTablesPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/menu" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <AdminMenuPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/reports" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <AdminReportsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/email-send" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AdminEmailSendPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/qr" element={
+            <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
+              <AdminQRPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/settings" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AdminSettingsPage />
+            </ProtectedRoute>
+          } />
+          <Route index element={<Navigate to="/tables" replace />} />
+        </Route>
 
-      <Route path="/invoices/:id" element={
-        <ProtectedRoute roles={['ADMIN', 'MANAGER', 'CASHIER', 'WAITER']}>
-          <StaffInvoicePage />
-        </ProtectedRoute>
-      } />
+        <Route path="/invoices/:id" element={
+          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'CASHIER', 'WAITER']}>
+            <StaffInvoicePage />
+          </ProtectedRoute>
+        } />
 
-      <Route path="*" element={<Navigate to={user ? getDefaultRoute(user.role) : '/scan'} replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to={user ? getDefaultRoute(user.role) : '/scan'} replace />} />
+      </Routes>
+    </Suspense>
   )
 }
 
