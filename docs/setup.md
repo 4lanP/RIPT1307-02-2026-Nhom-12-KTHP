@@ -121,7 +121,7 @@ Khi cần bật trên Render, trỏ target tới health endpoint public của ba
 
 ```env
 KEEPALIVE_ENABLED=true
-KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kth.onrender.com/api/health
+KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health
 KEEPALIVE_INTERVAL_SECONDS=600
 KEEPALIVE_TIMEOUT_MS=5000
 KEEPALIVE_RETRY_LIMIT=1

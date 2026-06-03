@@ -102,12 +102,3 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [x] **TypeScript Migration**: Di trú toàn bộ 21 file React sang TypeScript (TS/TSX) đảm bảo an toàn kiểu dữ liệu.
 - [x] **Ant Design Integration**: Tích hợp thư viện cao cấp Ant Design v5 (Modal, Form, Input, Select, Button) vào Admin Users page.
 
-## Chưa implement / Cần cải thiện
-
-- [ ] Frontend: ESLint, tests, bundle optimization
-- [ ] Frontend: Form validation, error handling improvements
-- [ ] Frontend: API/socket contract alignment với backend
-- [ ] CI/CD pipeline
-- [ ] Reverse proxy (Nginx)
-- [ ] Push notifications
-- [ ] Multi-language support

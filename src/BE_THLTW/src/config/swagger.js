@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       { url: 'http://localhost:5000/api', description: 'Local Development' },
-      { url: 'https://ript1307-02-2026-nhom-12-kth.onrender.com/api', description: 'Production' },
+      { url: 'https://ript1307-02-2026-nhom-12-kthp.onrender.com/api', description: 'Production' },
     ],
     components: {
       securitySchemes: {

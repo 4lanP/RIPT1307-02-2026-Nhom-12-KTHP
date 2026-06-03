@@ -175,8 +175,8 @@ server: {
 ### 2. Production Deployment (Vercel Rewrite Proxy)
 Vercel hỗ trợ xử lý Single Page Application bằng cách chuyển hướng toàn bộ route ảo về `index.html`. Dự án đã được đóng gói cấu hình chuyển tiếp request trong file `src/FE_THLTW/public/vercel.json`:
 ```text
-/api/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/api/:splat  200
-/socket.io/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/socket.io/:splat  200
+/api/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/:splat  200
+/socket.io/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/socket.io/:splat  200
 /* /index.html 200
 ```
 * **Lợi ích**: Frontend chỉ cần gọi API thông qua URL tương đối (ví dụ `/api/customer/menu` hoặc `/socket.io`). Hệ thống định tuyến Vercel sẽ tự động proxy ngầm tới Render Backend mà không cần cấu hình CORS mở rộng ở Backend, đảm bảo an toàn tuyệt đối cho ứng dụng.

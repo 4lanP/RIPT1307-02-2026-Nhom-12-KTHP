@@ -204,10 +204,10 @@ Trước tiên, cần tạo các tài nguyên lưu trữ trên Render để lấ
 | `JWT_REFRESH_SECRET` | *Chuỗi mã khóa ngẫu nhiên bảo mật cao (tối thiểu 32 ký tự)* |
 | `FRONTEND_URL` | `https://ript-1307-02-2026-nhom-12-kthp.vercel.app` (URL Frontend Vercel của bạn) |
 | `DISH_IMAGE_STORAGE_DIR` | `./uploads/dish-images` cho flow upload file legacy |
-| `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kth.onrender.com/uploads/dish-images` cho ảnh file legacy |
+| `DISH_IMAGE_PUBLIC_BASE_URL` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/uploads/dish-images` cho ảnh file legacy |
 | `DISH_IMAGE_MAX_BYTES` | `5242880`; áp dụng cho cả Base64 JPG/PNG lưu DB và upload file legacy |
 | `KEEPALIVE_ENABLED` | `false` mặc định; đặt `true` để bật bot keepalive cho Render Free |
-| `KEEPALIVE_TARGETS` | `https://ript1307-02-2026-nhom-12-kth.onrender.com/api/health` khi bật keepalive |
+| `KEEPALIVE_TARGETS` | `https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health` khi bật keepalive |
 | `KEEPALIVE_INTERVAL_SECONDS` | `600`; tối thiểu `300` giây để tránh traffic quá dày |
 | `KEEPALIVE_TIMEOUT_MS` | `5000` |
 | `KEEPALIVE_RETRY_LIMIT` | `1`; retry có giới hạn để tránh retry storm |
@@ -247,7 +247,7 @@ trường demo, có thể bật keepalive bot để gọi `GET /api/health` đ�
 
 ```env
 KEEPALIVE_ENABLED=true
-KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kth.onrender.com/api/health
+KEEPALIVE_TARGETS=https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health
 KEEPALIVE_INTERVAL_SECONDS=600
 KEEPALIVE_TIMEOUT_MS=5000
 KEEPALIVE_RETRY_LIMIT=1
@@ -342,14 +342,14 @@ node src/config/applyIndexes.js
    - **Build command**: `npm run build`
    - **Publish directory**: `src/FE_THLTW/dist`
 3. Cấu hình biến môi trường tại **Site settings** -> **Environment variables**:
-   - `VITE_API_URL`: `https://ript1307-02-2026-nhom-12-kth.onrender.com/api` (hoặc để trống/mặc định `/api` nhờ cơ chế proxy)
-   - `VITE_SOCKET_URL`: `https://ript1307-02-2026-nhom-12-kth.onrender.com`
+   - `VITE_API_URL`: `https://ript1307-02-2026-nhom-12-kthp.onrender.com/api` (hoặc để trống/mặc định `/api` nhờ cơ chế proxy)
+   - `VITE_SOCKET_URL`: `https://ript1307-02-2026-nhom-12-kthp.onrender.com`
 
 #### Cơ chế Single Page Application (SPA) Routing & Proxy trên Vercel
 Trong thư mục `src/FE_THLTW/public/vercel.json` đã có sẵn cấu hình giúp Vercel chuyển tiếp request API và tránh lỗi reload trang 404 của React Router:
 ```text
-/api/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/api/:splat  200
-/socket.io/*  https://ript1307-02-2026-nhom-12-kth.onrender.com/socket.io/:splat  200
+/api/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/:splat  200
+/socket.io/*  https://ript1307-02-2026-nhom-12-kthp.onrender.com/socket.io/:splat  200
 /* /index.html 200
 ```
 > [!TIP]

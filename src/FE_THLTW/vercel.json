@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd src/FE_THLTW && npm install && npm run build",
-  "outputDirectory": "src/FE_THLTW/dist",
   "rewrites": [
     {
       "source": "/api/:path*",
