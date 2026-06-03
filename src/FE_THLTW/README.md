@@ -36,12 +36,12 @@ Vì máy hiện tại gặp vấn đề về kết nối mạng khi chạy `npm 
 
 ## 🔗 Kết nối Backend
 
-- Frontend đã được cấu hình Proxy để kết nối với Backend chạy tại `http://localhost:5000`.
+- Frontend đã được cấu hình Proxy để kết nối với Backend chạy tại `http://localhost:5001`.
 - Đảm bảo Backend đã được khởi chạy (Docker hoặc Local) trước khi sử dụng.
 - File `.env` chứa cấu hình URL:
   ```env
-  VITE_API_URL=http://localhost:5000/api
-  VITE_SOCKET_URL=http://localhost:5000
+  VITE_API_URL=/api
+  VITE_SOCKET_URL=http://localhost:5001
   ```
 
 ## 👥 Tài khoản Demo

@@ -19,12 +19,16 @@ const StaffTableDetailPage = () => {
   const [loading, setLoading] = useState(true)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [bankConfirmOpen, setBankConfirmOpen] = useState(false)
+  const [forceCloseConfirmOpen, setForceCloseConfirmOpen] = useState(false)
+  const [cancelItemConfirmOpen, setCancelItemConfirmOpen] = useState(false)
+  const [cancellingItemId, setCancellingItemId] = useState<any>(null)
   const [amount, setAmount] = useState('')
   const [processing, setProcessing] = useState(false)
   const [forceClosing, setForceClosing] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
 
   const canCheckout = isAdmin || isManager || user?.role === 'CASHIER'
+  const canCancelItem = isAdmin || isManager || user?.role === 'CASHIER'
 
   useEffect(() => {
     loadSession()
@@ -39,9 +43,20 @@ const StaffTableDetailPage = () => {
     socket.on('bank_transfer_requested', handleUpdate)
     socket.on('table_status_changed', handleUpdate)
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setCheckoutOpen(false)
+        setBankConfirmOpen(false)
+        setForceCloseConfirmOpen(false)
+        setCancelItemConfirmOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
     return () => {
       socket.off('bank_transfer_requested', handleUpdate)
       socket.off('table_status_changed', handleUpdate)
+      window.removeEventListener('keydown', handleKeyDown)
     }
   }, [id])
 
@@ -87,23 +102,25 @@ const StaffTableDetailPage = () => {
   }
 
   const handleForceClose = async () => {
-    if (!confirm('Đóng phiên khẩn cấp?')) return
     setForceClosing(true)
     try {
       await staffApi.forceClose(session.id)
       toast.success('Đã đóng phiên')
+      setForceCloseConfirmOpen(false)
       navigate('/tables')
-    } catch { toast.error('Lỗi') }
+    } catch { toast.error('Lỗi đóng phiên') }
     finally { setForceClosing(false) }
   }
 
-  const handleCancelItem = async (itemId) => {
-    if (!confirm('Hủy món này?')) return
+  const handleCancelItem = async () => {
+    if (!cancellingItemId) return
     try {
-      await staffApi.cancelItem(itemId)
+      await staffApi.cancelItem(cancellingItemId)
       toast.success('Đã hủy món')
+      setCancelItemConfirmOpen(false)
+      setCancellingItemId(null)
       loadSession()
-    } catch { toast.error('Lỗi') }
+    } catch { toast.error('Lỗi hủy món') }
   }
 
   const handleConfirmBankTransfer = async () => {
@@ -179,7 +196,7 @@ const StaffTableDetailPage = () => {
           </button>
           {(isAdmin || isManager) && (
             <button
-              onClick={handleForceClose}
+              onClick={() => setForceCloseConfirmOpen(true)}
               disabled={forceClosing}
               className="flex items-center gap-2 bg-red-50 text-red-500 border border-red-100 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
             >
@@ -292,10 +309,15 @@ const StaffTableDetailPage = () => {
                           {formatCurrency(Number(item.unit_price ?? item.price ?? 0) * item.quantity)}
                         </td>
                         <td className="py-5 text-right">
-                          {!['SERVED', 'CANCELLED'].includes(item.status) && (
+                          {!['SERVED', 'CANCELLED'].includes(item.status) && canCancelItem && (
                             <button
-                              onClick={() => handleCancelItem(item.id)}
+                              onClick={() => {
+                                setCancellingItemId(item.id)
+                                setCancelItemConfirmOpen(true)
+                              }}
                               className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                              title="Hủy món"
+                              aria-label="Hủy món"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -444,7 +466,7 @@ const StaffTableDetailPage = () => {
       {/* Modern Confirm Modal */}
       {checkoutOpen && (
         <ModalPortal>
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setCheckoutOpen(false)} />
           <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
             <div className="w-20 h-20 bg-emerald-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100 text-emerald-500">
@@ -485,7 +507,7 @@ const StaffTableDetailPage = () => {
       {/* Modern Bank Transfer Confirm Modal */}
       {bankConfirmOpen && (
         <ModalPortal>
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setBankConfirmOpen(false)} />
           <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
             <div className="w-20 h-20 bg-emerald-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100 text-emerald-500">
@@ -517,6 +539,65 @@ const StaffTableDetailPage = () => {
                 className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
               >
                 {processing ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Xác nhận đã nhận'}
+              </button>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      )}
+      {/* Custom Force Close Confirm Modal */}
+      {forceCloseConfirmOpen && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setForceCloseConfirmOpen(false)} />
+          <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
+            <div className="w-20 h-20 bg-red-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-red-100 text-red-500">
+               <AlertTriangle className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-center text-gray-900 mb-4 tracking-tight">Đóng phiên khẩn cấp?</h3>
+            <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed">
+              Hành động này sẽ đóng phiên hiện tại của bàn ngay lập tức mà không cần hoàn tất thanh toán.
+              Bạn có chắc chắn muốn tiếp tục?
+            </p>
+            <div className="flex gap-4">
+              <button onClick={() => setForceCloseConfirmOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleForceClose}
+                disabled={forceClosing}
+                className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {forceClosing ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Xác nhận đóng'}
+              </button>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {/* Custom Cancel Item Confirm Modal */}
+      {cancelItemConfirmOpen && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md animate-fade-in" onClick={() => setCancelItemConfirmOpen(false)} />
+          <div className="relative bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out]">
+            <div className="w-20 h-20 bg-red-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-red-100 text-red-500">
+               <X className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-center text-gray-900 mb-4 tracking-tight">Hủy món ăn?</h3>
+            <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed">
+              Bạn có chắc chắn muốn hủy món ăn này khỏi danh sách gọi món của bàn?
+            </p>
+            <div className="flex gap-4">
+              <button onClick={() => setCancelItemConfirmOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+                Quay lại
+              </button>
+              <button
+                onClick={handleCancelItem}
+                className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                Xác nhận hủy
               </button>
             </div>
           </div>

@@ -134,6 +134,10 @@ const AdminDashboardPage = () => {
 
   const totalRevenue = revenue.reduce((sum, r) => sum + (r.total || 0), 0)
   const occupiedTables = tables.filter(t => t.status === 'OCCUPIED').length
+  const halfLength = Math.ceil(revenue.length / 2)
+  const firstHalf = revenue.slice(0, halfLength).reduce((sum: number, r: any) => sum + (r.total || 0), 0)
+  const secondHalf = revenue.slice(halfLength).reduce((sum: number, r: any) => sum + (r.total || 0), 0)
+  const revenueTrend = firstHalf > 0 ? Number(((secondHalf - firstHalf) / firstHalf * 100).toFixed(1)) : 0
 
   return (
     <div className="space-y-10 pb-10">
@@ -169,14 +173,14 @@ const AdminDashboardPage = () => {
           label="Tổng Doanh Thu" 
           value={formatCurrency(totalRevenue)} 
           color="bg-emerald-500 text-white" 
-          trend={12.5}
+          trend={revenueTrend || undefined}
         />
         <StatCard 
           icon={Table2} 
           label="Bàn Đang Phục Vụ" 
           value={`${occupiedTables}/${tables.length}`} 
           color="bg-blue-500 text-white" 
-          trend={-2.4}
+          trend={undefined}
         />
         <StatCard 
           icon={ShoppingBag} 

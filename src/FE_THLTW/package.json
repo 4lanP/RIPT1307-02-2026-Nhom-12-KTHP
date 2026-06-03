@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint .",
-    "test": "node src/lib/api.test.mjs && node src/layouts/StaffLayout.test.mjs && node src/test/frontendQualityGate.test.mjs && node src/pages/admin/AdminEmailSendPage.test.mjs",
+    "test": "node src/layouts/StaffLayout.test.mjs && node src/lib/api.test.mjs && node src/pages/admin/adminMenuImage.test.mjs && node src/pages/admin/AdminReportsPage.test.mjs && node src/pages/admin/AdminEmailSendPage.test.mjs && node src/pages/staff/StaffInvoicePage.test.mjs && node src/pages/staff/StaffTablesPage.test.mjs && node src/test/frontendQualityGate.test.mjs",
     "build": "vite build",
     "bundle:check": "node scripts/check-build-output.mjs",
     "quality": "npm run lint && npm test && npm run bundle:check",

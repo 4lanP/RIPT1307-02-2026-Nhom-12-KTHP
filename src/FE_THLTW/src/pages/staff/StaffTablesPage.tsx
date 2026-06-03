@@ -11,7 +11,7 @@ const TableCard = ({ table }) => {
   const isOccupied = table.status === 'OCCUPIED'
   return (
     <Link
-      to={`/tables/${table.id}`}
+      to={`/tables/${table.table_id || table.id}`}
       className={`bg-white border rounded-[24px] p-5 transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer block ${
         isOccupied
           ? 'border-emerald-200 shadow-sm shadow-emerald-500/5 hover:border-emerald-300'
@@ -28,7 +28,7 @@ const TableCard = ({ table }) => {
           {getStatusLabel(table.status)}
         </span>
       </div>
-      <h3 className="text-gray-900 font-bold text-lg mb-1">{table.name}</h3>
+      <h3 className="text-gray-900 font-bold text-lg mb-1">{table.table_name || table.name}</h3>
       {table.capacity && (
         <div className="flex items-center gap-1.5 text-gray-500 text-sm font-medium">
           <Users className="w-4 h-4" />

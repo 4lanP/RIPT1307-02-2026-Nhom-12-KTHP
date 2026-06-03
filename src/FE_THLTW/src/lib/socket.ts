@@ -1,26 +1,36 @@
 import { io } from 'socket.io-client'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000'
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001'
 
-let customerSocket = null
-let kitchenSocket = null
-let staffSocket = null
+let customerSocket: any = null
+let kitchenSocket: any = null
+let staffSocket: any = null
 
-export const getCustomerSocket = (sessionId) => {
+export const getCustomerSocket = (sessionId: any, sessionToken?: string) => {
   if (!customerSocket) {
     customerSocket = io(`${SOCKET_URL}/customer`, {
       transports: ['websocket', 'polling'],
     })
-    customerSocket.on('connect', () => {
-      if (sessionId) {
-        const sessionToken = sessionStorage.getItem('session_token')
-        customerSocket.emit('join_session', {
-          session_id: sessionId,
-          session_token: sessionToken
-        })
-      }
-    })
   }
+
+  const token = sessionToken || sessionStorage.getItem('session_token') || localStorage.getItem('accessToken')
+
+  const join = () => {
+    if (sessionId && token) {
+      customerSocket.emit('join_session', {
+        session_id: sessionId,
+        session_token: token
+      })
+    }
+  }
+
+  if (customerSocket.connected) {
+    join()
+  } else {
+    customerSocket.off('connect', join)
+    customerSocket.on('connect', join)
+  }
+
   return customerSocket
 }
 

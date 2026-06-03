@@ -90,7 +90,7 @@ const CustomerMenuPage = () => {
 
   useEffect(() => {
     if (!session) return
-    const socket = getCustomerSocket(session.id)
+    const socket = getCustomerSocket(session.id, sessionToken || undefined)
     socket.on('order_status_updated', (data) => {
       toast.success(`Đơn #${data.order_id}: ${getStatusLabel(data.new_status)}`)
       loadOrders()
@@ -119,6 +119,8 @@ const CustomerMenuPage = () => {
       setSession(sessionRes.data)
       setOrders(ordersRes.data || [])
     } catch {
+      toast.error('Phiên làm việc của bạn không hợp lệ hoặc đã hết hạn. Vui lòng quét lại mã QR tại bàn!')
+      sessionStorage.removeItem('session_token')
       navigate('/scan')
     } finally {
       setLoading(false)

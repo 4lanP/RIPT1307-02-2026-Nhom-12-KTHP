@@ -125,7 +125,7 @@ const AdminReportsPage = () => {
   const handleExport = async () => {
     setExporting(true)
     try {
-      const res = await adminApi.exportReport()
+      const res = await adminApi.exportReport({ from, to })
       const url = URL.createObjectURL(new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
       const a = document.createElement('a')
       a.href = url

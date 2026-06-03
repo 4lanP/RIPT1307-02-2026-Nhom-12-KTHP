@@ -146,7 +146,7 @@ export const adminApi = {
   getRevenueReport: (params) => api.get('/admin/reports/revenue', { params }),
   getMenuReport: () => api.get('/admin/reports/menu'),
   getKdsReport: () => api.get('/admin/reports/kds'),
-  exportReport: () => api.get('/admin/reports/export', { responseType: 'blob' }),
+  exportReport: (params?: any) => api.get('/admin/reports/export', { params, responseType: 'blob' }),
   sendDailyRevenueEmailNow: (data) => api.post('/admin/reports/daily-email/send-now', data),
   getDailyRevenueEmailStatus: () => api.get('/admin/reports/daily-email/status'),
 

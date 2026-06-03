@@ -68,7 +68,10 @@ const AdminTablesPage = () => {
       }
       setModalOpen(false)
       loadTables()
-    } catch (err) { toast.error('Lỗi lưu dữ liệu') }
+    } catch (err: any) {
+      const message = err?.errors?.[0]?.message || err?.message || 'Lỗi lưu dữ liệu'
+      toast.error(message)
+    }
     finally { setSaving(false) }
   }
 

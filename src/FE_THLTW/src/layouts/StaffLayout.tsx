@@ -102,15 +102,15 @@ const StaffLayout = () => {
       )
     }
     
-    socket.on('new_request', handleNewRequest)
-    socket.on('table:status_update', handleNewRequest)
+    socket.on('new_customer_request', handleNewRequest)
+    socket.on('table_status_changed', handleNewRequest)
     socket.on('bank_transfer_requested', handleBankTransferRequested)
     
     const interval = setInterval(loadRequestsCount, 10000)
     
     return () => {
-      socket.off('new_request', handleNewRequest)
-      socket.off('table:status_update', handleNewRequest)
+      socket.off('new_customer_request', handleNewRequest)
+      socket.off('table_status_changed', handleNewRequest)
       socket.off('bank_transfer_requested', handleBankTransferRequested)
       clearInterval(interval)
     }
@@ -221,17 +221,10 @@ const StaffLayout = () => {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
+              aria-label={sidebarOpen ? "Đóng menu" : "Mở menu"}
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <div className="hidden md:flex items-center gap-2 text-gray-400 bg-gray-50/50 px-4 py-2.5 rounded-2xl border border-gray-100 w-80">
-              <Search className="w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Tìm kiếm..." 
-                className="bg-transparent border-none focus:outline-none text-sm w-full text-gray-700 placeholder-gray-400"
-              />
-            </div>
           </div>
           
           <div className="flex items-center gap-5">
@@ -239,6 +232,7 @@ const StaffLayout = () => {
               onClick={() => navigate('/requests')}
               className="relative p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
               title="Xem yêu cầu từ khách hàng"
+              aria-label="Xem yêu cầu từ khách hàng"
             >
               <Bell className="w-5.5 h-5.5" />
               {activeRequestsCount > 0 && (
