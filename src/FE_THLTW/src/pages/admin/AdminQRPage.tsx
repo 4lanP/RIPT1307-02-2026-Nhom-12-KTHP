@@ -244,9 +244,9 @@ const AdminQRPage = () => {
               <div class="table-badge">${(qr.table_name || 'Bàn ' + qr.table_id).toUpperCase()}</div>
             </div>
             <script>
-              window.onload = function() {
+              setTimeout(function() {
                 window.print();
-              }
+              }, 300);
             </script>
           </body>
         </html>

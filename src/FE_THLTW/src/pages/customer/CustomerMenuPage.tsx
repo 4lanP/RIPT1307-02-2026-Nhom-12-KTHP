@@ -37,6 +37,109 @@ const CustomerMenuPage = () => {
   const [bankModalOpen, setBankModalOpen] = useState(false)
   const [confirmingBank, setConfirmingBank] = useState(false)
 
+  // Options states
+  const [activeItemWithOptions, setActiveItemWithOptions] = useState(null)
+  const [selectedOptions, setSelectedOptions] = useState({})
+  const [modalQuantity, setModalQuantity] = useState(1)
+
+  const isMultiSelectGroup = (groupName) => {
+    const name = (groupName || '').toLowerCase()
+    return name.includes('topping') || name.includes('thêm') || name.includes('add-on') || name.includes('addon')
+  }
+
+  const groupOptions = (options) => {
+    return (options || []).reduce((acc, opt) => {
+      const g = opt.option_group
+      if (!acc[g]) acc[g] = []
+      acc[g].push(opt)
+      return acc
+    }, {})
+  }
+
+  const openOptionsModal = (item) => {
+    setActiveItemWithOptions(item)
+    setModalQuantity(1)
+    
+    const grouped = groupOptions(item.options)
+    const initial = {}
+    Object.entries(grouped).forEach(([groupName, opts]) => {
+      if (!isMultiSelectGroup(groupName)) {
+        initial[groupName] = opts[0] // Select first option by default for radio
+      } else {
+        initial[groupName] = [] // Empty array for checkboxes
+      }
+    })
+    setSelectedOptions(initial)
+  }
+
+  const handleSelectSingleOption = (groupName, option) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [groupName]: option
+    }))
+  }
+
+  const handleToggleMultiOption = (groupName, option) => {
+    setSelectedOptions(prev => {
+      const current = prev[groupName] || []
+      const exists = current.find(o => o.id === option.id)
+      const updated = exists 
+        ? current.filter(o => o.id !== option.id)
+        : [...current, option]
+      return {
+        ...prev,
+        [groupName]: updated
+      }
+    })
+  }
+
+  const getModalItemPrice = () => {
+    if (!activeItemWithOptions) return 0
+    let price = Number(activeItemWithOptions.price)
+    Object.values(selectedOptions).forEach(val => {
+      if (Array.isArray(val)) {
+        val.forEach(o => { price += Number(o.extra_price || 0) })
+      } else if (val) {
+        price += Number(val.extra_price || 0)
+      }
+    })
+    return price
+  }
+
+  const addWithOptionsToCart = () => {
+    if (!activeItemWithOptions) return
+    
+    const flatSelected = []
+    Object.values(selectedOptions).forEach(val => {
+      if (Array.isArray(val)) {
+        flatSelected.push(...val)
+      } else if (val) {
+        flatSelected.push(val)
+      }
+    })
+    
+    const sortedOptionIds = flatSelected.map(o => o.id).sort().join(',')
+    const cartId = `${activeItemWithOptions.id}-${sortedOptionIds}`
+    
+    setCart(prev => {
+      const existingIndex = prev.findIndex(c => c.cartId === cartId)
+      if (existingIndex > -1) {
+        const updated = [...prev]
+        updated[existingIndex].quantity += modalQuantity
+        return updated
+      }
+      return [...prev, {
+        ...activeItemWithOptions,
+        cartId,
+        selectedOptions: flatSelected,
+        quantity: modalQuantity
+      }]
+    })
+    
+    toast.success(`Đã thêm ${activeItemWithOptions.name} vào giỏ hàng`, { duration: 800, position: 'bottom-center' })
+    setActiveItemWithOptions(null)
+  }
+
   const openPaymentModal = async () => {
     setPaymentModalOpen(true)
     try {
@@ -154,28 +257,38 @@ const CustomerMenuPage = () => {
   }
 
   const addToCart = (item) => {
+    if (item.options && item.options.length > 0) {
+      openOptionsModal(item)
+      return
+    }
+
     setCart(prev => {
-      const existing = prev.find(c => c.id === item.id)
+      const cartId = String(item.id)
+      const existing = prev.find(c => c.cartId === cartId)
       if (existing) {
-        return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c)
+        return prev.map(c => c.cartId === cartId ? { ...c, quantity: c.quantity + 1 } : c)
       }
-      return [...prev, { ...item, quantity: 1 }]
+      return [...prev, { ...item, cartId, quantity: 1, selectedOptions: [] }]
     })
     toast.success(`Đã thêm ${item.name}`, { duration: 800, position: 'bottom-center' })
   }
 
-  const updateQty = (id, delta) => {
+  const updateQty = (cartId, delta) => {
     setCart(prev => {
-      const updated = prev.map(c => c.id === id ? { ...c, quantity: Math.max(0, c.quantity + delta) } : c)
+      const updated = prev.map(c => c.cartId === cartId ? { ...c, quantity: Math.max(0, c.quantity + delta) } : c)
       return updated.filter(c => c.quantity > 0)
     })
   }
 
-  const removeFromCart = (id) => {
-    setCart(prev => prev.filter(c => c.id !== id))
+  const removeFromCart = (cartId) => {
+    setCart(prev => prev.filter(c => c.cartId !== cartId))
   }
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const cartTotal = cart.reduce((sum, item) => {
+    const optionsCost = (item.selectedOptions || []).reduce((s, o) => s + Number(o.extra_price || 0), 0)
+    return sum + (Number(item.price) + optionsCost) * item.quantity
+  }, 0)
+
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   const placeOrder = async () => {
@@ -189,8 +302,11 @@ const CustomerMenuPage = () => {
         items: cart.map(item => ({
           menu_item_id: item.id,
           quantity: item.quantity,
-          note: note[item.id] || '',
-          options: [],
+          note: note[item.cartId] || '',
+          options: (item.selectedOptions || []).map(opt => ({
+            option_id: opt.id,
+            quantity: 1
+          })),
         })),
       })
       setCart([])
@@ -330,7 +446,7 @@ const CustomerMenuPage = () => {
               
               <div className="grid gap-4">
                 {items.map(item => {
-                  const inCart = cart.find(c => c.id === item.id)
+                  const itemInCartCount = cart.filter(c => c.id === item.id).reduce((sum, c) => sum + c.quantity, 0)
                   const isAvailable = item.is_available && (item.daily_quota === null || item.daily_quota > 0)
                   return (
                     <div 
@@ -371,23 +487,42 @@ const CustomerMenuPage = () => {
                           </div>
                           
                           {isAvailable && (
-                            inCart ? (
-                              <div className="flex items-center bg-emerald-50 rounded-full p-1 border border-emerald-100 scale-105 shadow-sm">
-                                <button onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-600 hover:text-emerald-700 active:scale-90">
-                                  <Minus className="w-4 h-4" strokeWidth={3} />
-                                </button>
-                                <span className="w-8 text-center font-black text-emerald-700 text-sm">{inCart.quantity}</span>
-                                <button onClick={() => addToCart(item)} className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm text-white hover:bg-emerald-600 active:scale-90">
-                                  <Plus className="w-4 h-4" strokeWidth={3} />
+                            item.options && item.options.length > 0 ? (
+                              <div className="flex items-center gap-2">
+                                {itemInCartCount > 0 && (
+                                  <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
+                                    Đã chọn: {itemInCartCount}
+                                  </span>
+                                )}
+                                <button
+                                  onClick={() => openOptionsModal(item)}
+                                  className="px-4 py-2.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-90"
+                                >
+                                  Tùy chọn
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={() => addToCart(item)}
-                                className="w-12 h-12 rounded-[20px] bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 hover:-rotate-12 transition-all active:scale-90"
-                              >
-                                <Plus className="w-6 h-6" strokeWidth={3} />
-                              </button>
+                              (() => {
+                                const inCart = cart.find(c => c.cartId === String(item.id))
+                                return inCart ? (
+                                  <div className="flex items-center bg-emerald-50 rounded-full p-1 border border-emerald-100 scale-105 shadow-sm">
+                                    <button onClick={() => updateQty(inCart.cartId, -1)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-600 hover:text-emerald-700 active:scale-90">
+                                      <Minus className="w-4 h-4" strokeWidth={3} />
+                                    </button>
+                                    <span className="w-8 text-center font-black text-emerald-700 text-sm">{inCart.quantity}</span>
+                                    <button onClick={() => addToCart(item)} className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm text-white hover:bg-emerald-600 active:scale-90">
+                                      <Plus className="w-4 h-4" strokeWidth={3} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => addToCart(item)}
+                                    className="w-12 h-12 rounded-[20px] bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 hover:-rotate-12 transition-all active:scale-90"
+                                  >
+                                    <Plus className="w-6 h-6" strokeWidth={3} />
+                                  </button>
+                                )
+                              })()
                             )
                           )}
                         </div>
@@ -446,42 +581,56 @@ const CustomerMenuPage = () => {
             </div>
             
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-              {cart.map(item => (
-                <div key={item.id} className="group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-[20px] bg-emerald-50 flex items-center justify-center text-2xl border border-emerald-100">
-                      {item.station === 'GRILL' ? '🍖' : item.station === 'BAR' ? '🍹' : '🥗'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className="font-black text-gray-900">{item.name}</p>
-                        <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                          <Trash2 className="w-4 h-4" />
+              {cart.map(item => {
+                const itemPrice = Number(item.price) + (item.selectedOptions || []).reduce((s, o) => s + Number(o.extra_price || 0), 0)
+                return (
+                  <div key={item.cartId} className="group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-[20px] bg-emerald-50 flex items-center justify-center text-2xl border border-emerald-100">
+                        {item.station === 'GRILL' ? '🍖' : item.station === 'BAR' ? '🍹' : '🥗'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-black text-gray-900">{item.name}</p>
+                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {item.selectedOptions.map(opt => (
+                                  <span key={opt.id} className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {opt.option_name} {Number(opt.extra_price) > 0 && `(+${formatCurrency(opt.extra_price)})`}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button onClick={() => removeFromCart(item.cartId)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <p className="text-emerald-600 font-bold text-sm mt-1">{formatCurrency(itemPrice)}</p>
+                      </div>
+                      <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-100">
+                        <button onClick={() => updateQty(item.cartId, -1)} className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm text-gray-400 hover:text-emerald-500">
+                          <Minus className="w-3.5 h-3.5" strokeWidth={3} />
+                        </button>
+                        <span className="w-8 text-center font-black text-gray-700 text-xs">{item.quantity}</span>
+                        <button onClick={() => updateQty(item.cartId, 1)} className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm text-gray-400 hover:text-emerald-500">
+                          <Plus className="w-3.5 h-3.5" strokeWidth={3} />
                         </button>
                       </div>
-                      <p className="text-emerald-600 font-bold text-sm">{formatCurrency(item.price)}</p>
                     </div>
-                    <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-100">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm text-gray-400 hover:text-emerald-500">
-                        <Minus className="w-3.5 h-3.5" strokeWidth={3} />
-                      </button>
-                      <span className="w-8 text-center font-black text-gray-700 text-xs">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm text-gray-400 hover:text-emerald-500">
-                        <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-                      </button>
+                    <div className="mt-3 relative">
+                      <input
+                        type="text"
+                        placeholder="Ghi chú món ăn..."
+                        value={note[item.cartId] || ''}
+                        onChange={e => setNote(n => ({ ...n, [item.cartId]: e.target.value }))}
+                        className="w-full bg-[#F9FBF9] border border-gray-100 rounded-xl px-4 py-2 text-xs text-gray-600 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+                      />
                     </div>
                   </div>
-                  <div className="mt-3 relative">
-                    <input
-                      type="text"
-                      placeholder="Ghi chú món ăn..."
-                      value={note[item.id] || ''}
-                      onChange={e => setNote(n => ({ ...n, [item.id]: e.target.value }))}
-                      className="w-full bg-[#F9FBF9] border border-gray-100 rounded-xl px-4 py-2 text-xs text-gray-600 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="p-8 border-t border-gray-50 bg-[#F9FBF9]/50 rounded-b-[40px] space-y-6">
@@ -784,6 +933,112 @@ const CustomerMenuPage = () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
+      )}
+
+      {/* Customization Modal */}
+      {activeItemWithOptions && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+            <div className="absolute inset-0 bg-emerald-950/40 backdrop-blur-sm" onClick={() => setActiveItemWithOptions(null)} />
+            <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md animate-[bounce-in_0.4s_ease-out] overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">{activeItemWithOptions.name}</h3>
+                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Chọn tùy chọn theo sở thích</p>
+                </div>
+                <button onClick={() => setActiveItemWithOptions(null)} className="w-10 h-10 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl flex items-center justify-center transition-all">
+                  <X className="w-5 h-5" strokeWidth={3} />
+                </button>
+              </div>
+
+              {/* Options Content */}
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-none">
+                {Object.entries(groupOptions(activeItemWithOptions.options)).map(([groupName, opts]: [string, any]) => {
+                  const isMulti = isMultiSelectGroup(groupName)
+                  return (
+                    <div key={groupName} className="space-y-3">
+                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">{groupName}</h4>
+                      <div className="grid gap-2">
+                        {opts.map((opt) => {
+                          const isSelected = isMulti
+                            ? (selectedOptions[groupName] || []).some(o => o.id === opt.id)
+                            : selectedOptions[groupName]?.id === opt.id
+
+                          return (
+                            <label
+                              key={opt.id}
+                              onClick={() => {
+                                if (isMulti) {
+                                  handleToggleMultiOption(groupName, opt)
+                                } else {
+                                  handleSelectSingleOption(groupName, opt)
+                                }
+                              }}
+                              className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer select-none
+                                ${isSelected
+                                  ? 'bg-emerald-50/70 border-emerald-500 text-emerald-900 font-bold shadow-sm'
+                                  : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type={isMulti ? "checkbox" : "radio"}
+                                  name={isMulti ? undefined : groupName}
+                                  checked={isSelected}
+                                  readOnly
+                                  className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                />
+                                <span className="text-sm font-semibold">{opt.option_name}</span>
+                              </div>
+                              {Number(opt.extra_price) > 0 && (
+                                <span className="text-xs font-black text-emerald-600">+{formatCurrency(opt.extra_price)}</span>
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Footer / Actions */}
+              <div className="p-8 border-t border-gray-50 bg-[#F9FBF9]/50 rounded-b-[40px] space-y-6 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center bg-white rounded-full p-1 border border-gray-100 shadow-sm">
+                    <button
+                      onClick={() => setModalQuantity(q => Math.max(1, q - 1))}
+                      className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                      <Minus className="w-4 h-4" strokeWidth={3} />
+                    </button>
+                    <span className="w-10 text-center font-black text-gray-850 text-sm">{modalQuantity}</span>
+                    <button
+                      onClick={() => setModalQuantity(q => q + 1)}
+                      className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-550 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" strokeWidth={3} />
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tổng tiền món</p>
+                    <p className="text-2xl font-black text-emerald-600 tracking-tight">
+                      {formatCurrency(getModalItemPrice() * modalQuantity)}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={addWithOptionsToCart}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4.5 rounded-[24px] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 transition-all active:scale-95"
+                >
+                  <Plus className="w-5 h-5" strokeWidth={3} />
+                  Thêm vào giỏ hàng
+                </button>
+              </div>
+            </div>
+          </div>
         </ModalPortal>
       )}
 

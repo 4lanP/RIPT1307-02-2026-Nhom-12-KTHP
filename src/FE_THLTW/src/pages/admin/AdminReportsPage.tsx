@@ -249,7 +249,7 @@ const AdminReportsPage = () => {
           </div>
 
           {/* Distribution Pie */}
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+          <div className="bg-white p-6 sm:p-10 rounded-[40px] border border-gray-100 shadow-sm">
              <div className="flex items-center justify-between mb-10">
                 <div>
                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Tỷ Trọng Món Ăn</h2>
@@ -277,8 +277,8 @@ const AdminReportsPage = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={78}
-                        outerRadius={118}
+                        innerRadius="65%"
+                        outerRadius="90%"
                         paddingAngle={1}
                         startAngle={90}
                         endAngle={-270}

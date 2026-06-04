@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import ModalPortal from '../../components/ModalPortal'
-import { buildImagePreviewSrc, getImageInputValidationMessage, resolveMenuImageUrl } from './adminMenuImage'
+import { buildImagePreviewSrc, getImageInputValidationMessage, resolveMenuImageUrl, isBase64ImageInput } from './adminMenuImage'
 import { UtensilsCrossed, Plus, Edit2, Trash2, X, RefreshCw, Flame, Wine, Salad, Search, Image as ImageIcon, Upload, ChevronDown, Coins, FileText, Layers, Sliders } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -695,13 +695,14 @@ const AdminMenuPage = () => {
                         </p>
                         <input 
                           type="text" 
-                          value={form.image_url} 
+                          value={isBase64ImageInput(form.image_url) ? 'Đã tải ảnh lên từ thiết bị' : form.image_url} 
+                          disabled={isBase64ImageInput(form.image_url)}
                           onChange={e => {
                             const value = e.target.value
                             setForm(f => ({ ...f, image_url: value }))
                             setImageError(getImageInputValidationMessage(value))
                           }} 
-                          className={`w-full bg-slate-50/50 border rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 transition-all outline-none ${imageError ? 'border-red-200 focus:ring-red-500/10' : 'border-slate-100 focus:ring-emerald-500/5'}`} 
+                          className={`w-full bg-slate-50/50 border rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 transition-all outline-none ${imageError ? 'border-red-200 focus:ring-red-500/10' : 'border-slate-100 focus:ring-emerald-500/5'} ${isBase64ImageInput(form.image_url) ? 'opacity-70 cursor-not-allowed select-none' : ''}`} 
                           placeholder="https://example.com/image.jpg" 
                         />
                         {imageError && <p className="text-[10px] text-red-500 font-black uppercase tracking-wide px-1 mt-1">{imageError}</p>}
