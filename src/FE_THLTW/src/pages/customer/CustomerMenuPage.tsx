@@ -411,7 +411,7 @@ const CustomerMenuPage = () => {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tạm tính</p>
-              <p className="text-lg font-black text-gray-900">{formatCurrency(session?.subtotal || 0)}</p>
+              <p className="text-lg font-black text-gray-900">{formatCurrency((session?.subtotal || 0) + cartTotal)}</p>
             </div>
             <button onClick={openPaymentModal} className="ml-auto w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all" title="Thanh toán hóa đơn">
               <ChevronRight className="w-5 h-5" />
