@@ -230,8 +230,8 @@ Log format:
 ## Test Results
 
 ```
-Test Suites: 6 passed, 6 total
-Tests:       27 passed, 27 total
+Test Suites: 22 passed, 22 total
+Tests:       175 passed, 175 total
 ```
 
 ---

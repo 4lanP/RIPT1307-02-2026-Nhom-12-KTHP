@@ -63,7 +63,7 @@ Hệ thống quản lý nhà hàng hiện đại với các tính năng:
 | **Validation** | Zod 4.4 |
 | **Logging** | Winston |
 | **API Docs** | Swagger UI (swagger-jsdoc) |
-| **Testing** | Jest (27 tests, 6 suites) |
+| **Testing** | Jest (175 tests, 22 suites) |
 | **Container** | Docker + Docker Compose |
 
 ## 📁 Cấu trúc dự án
@@ -98,7 +98,7 @@ KTHP-LTW/
 │   │   │   ├── sockets/
 │   │   │   ├── config/
 │   │   │   └── utils/
-│   │   ├── __tests__/       # Jest tests (27 tests)
+│   │   ├── __tests__/       # Jest tests (175 tests)
 │   │   ├── Dockerfile
 │   │   ├── docker-compose.yml
 │   │   └── package.json
@@ -121,7 +121,7 @@ Xem chi tiết tại [docs/features.md](docs/features.md)
 - ✅ **Backend**: Express 5 API với JWT auth, Socket.IO realtime, VNPay integration
 - ✅ **Frontend**: React + Vite với customer, staff, KDS, admin interfaces
 - ✅ **Database**: PostgreSQL với 30+ indexes, optimistic locking, quota management
-- ✅ **Testing**: 27 Jest tests covering auth, orders, sessions, KDS, payments, permissions
+- ✅ **Testing**: 175 Jest tests covering auth, orders, sessions, KDS, payments, permissions
 - ✅ **Security**: Token rotation, session tokens, webhook idempotency, role-based access
 - ✅ **DevOps**: Docker Compose, health checks, structured logging, seed data
 - ✅ **Frontend Migration**: Di trú toàn bộ React Frontend sang **TypeScript** và tích hợp thư viện **Ant Design** ở các trang Admin.

@@ -86,7 +86,7 @@ Danh sách tính năng đã implement trong hệ thống quản lý nhà hàng.
 - [x] Structured logging (Winston)
 - [x] Request ID tracking
 - [x] Environment validation on startup
-- [x] Jest test suite: 6 suites, 27 tests (auth, order, session, kds, vnpay, validation, manager-permissions)
+- [x] Jest test suite: 22 suites, 175 tests (auth, order, session, kds, vnpay, validation, manager-permissions, daily-email, bank-settings, invoices, upload, keepalive, etc.)
 - [x] Backend hardening: secret hygiene, socket auth, migration safety
 
 ## Frontend (React + Vite)
