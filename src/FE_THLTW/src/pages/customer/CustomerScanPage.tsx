@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { customerApi } from '../../lib/api'
-import { QrCode, Scan, ArrowRight, UtensilsCrossed } from 'lucide-react'
+import { QrCode, ArrowRight, UtensilsCrossed } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const CustomerScanPage = () => {
@@ -40,12 +40,6 @@ const CustomerScanPage = () => {
     await autoScan(qrCode.trim())
   }
 
-  const demoQRs = [
-    'QR-Bàn-01-ABC123',
-    'QR-Bàn-02-DEF456',
-    'QR-Bàn-03-GHI789',
-  ]
-
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Premium Background */}
@@ -63,29 +57,17 @@ const CustomerScanPage = () => {
           <p className="text-gray-500 font-medium px-4">Trải nghiệm ẩm thực cao cấp tại bàn của bạn</p>
         </div>
 
-        {/* Scan UI */}
+        {/* Enter Table Code UI */}
         <div className="bg-white/80 backdrop-blur-2xl border border-gray-100 p-8 rounded-[40px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)]">
-          <div className="flex justify-center mb-8">
-            <div className="relative group cursor-pointer">
-              <div className="w-40 h-40 border-2 border-emerald-100 rounded-[32px] flex items-center justify-center bg-emerald-50/30 overflow-hidden">
-                <QrCode className="w-20 h-20 text-emerald-500 opacity-80 group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent" />
-              </div>
-              
-              {/* Animated Scan Line */}
-              <div className="absolute top-4 left-4 right-4 h-[2px] bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-[scan_2s_ease-in-out_infinite] z-10" />
-              
-              {/* Corner Accents */}
-              <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-emerald-500 rounded-tl-2xl" />
-              <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-emerald-500 rounded-tr-2xl" />
-              <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-500 rounded-bl-2xl" />
-              <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-500 rounded-br-2xl" />
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-emerald-50 rounded-[24px] flex items-center justify-center">
+              <QrCode className="w-10 h-10 text-emerald-500" />
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Quét để đặt món</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Nhập mã bàn</h2>
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-            Quét mã QR dán tại bàn để xem thực đơn và gọi món ngay lập tức.
+            Nhập mã bàn được ghi trên thẻ QR tại bàn của bạn để xem thực đơn và gọi món.
           </p>
 
           <form onSubmit={handleScan} className="space-y-4">
@@ -110,29 +92,12 @@ const CustomerScanPage = () => {
                 <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <Scan className="w-5 h-5 group-hover:rotate-90 transition-transform" />
                   <span className="text-lg">Tiếp tục</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
-        </div>
-
-        {/* Demo Section */}
-        <div className="mt-10">
-          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Trải nghiệm thử</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {demoQRs.map(qr => (
-              <button
-                key={qr}
-                onClick={() => setQrCode(qr)}
-                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-xs font-bold text-gray-500 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50/50 transition-all shadow-sm"
-              >
-                {qr.split('-')[1]}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Footer */}
@@ -142,14 +107,6 @@ const CustomerScanPage = () => {
           </a>
         </div>
       </div>
-      
-      <style>{`
-        @keyframes scan {
-          0%, 100% { top: 16px; opacity: 0; }
-          10%, 90% { opacity: 1; }
-          50% { top: calc(100% - 18px); }
-        }
-      `}</style>
     </div>
   )
 }
