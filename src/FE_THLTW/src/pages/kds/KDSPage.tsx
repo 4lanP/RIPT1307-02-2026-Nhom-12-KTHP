@@ -70,7 +70,7 @@ const OrderCard = ({ order, onUpdateItem }) => {
                     <span className="w-6 h-6 bg-gray-900 text-white text-xs font-black rounded-lg flex items-center justify-center">
                       {item.quantity}
                     </span>
-                    <span className="text-gray-900 font-black text-sm">{item.menu_item_name}</span>
+                    <span className="text-gray-900 font-black text-sm">{item.name || item.menu_item_name}</span>
                   </div>
                   {item.note && (
                     <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-xl text-[11px] font-bold mt-1 border border-amber-100/50">
