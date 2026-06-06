@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import toast from 'react-hot-toast'
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899', '#14b8a6', '#f59e0b']
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#f43f5e', '#06b6d4', '#84cc16']
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
@@ -83,6 +83,7 @@ const AdminReportsPage = () => {
   const [menuReport, setMenuReport] = useState([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [activePieIndex, setActivePieIndex] = useState<number | null>(null)
   const [from, setFrom] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 30)
@@ -262,13 +263,6 @@ const AdminReportsPage = () => {
                {menuChartRows.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs tracking-widest bg-[#F9FBF9] rounded-[32px] border border-dashed border-gray-200">Chưa có dữ liệu</div>
                ) : (
-                <>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                      <p className="text-3xl font-black text-gray-900 leading-none">{totalMenuQuantity}</p>
-                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-400">lượt bán</p>
-                    </div>
-                  </div>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
                       <Pie
@@ -277,43 +271,65 @@ const AdminReportsPage = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius="65%"
+                        innerRadius="0%"
                         outerRadius="90%"
-                        paddingAngle={1}
+                        paddingAngle={0}
                         startAngle={90}
                         endAngle={-270}
-                        isAnimationActive={false}
+                        isAnimationActive={true}
+                        onMouseEnter={(_, index) => setActivePieIndex(index)}
+                        onMouseLeave={() => setActivePieIndex(null)}
                       >
                         {menuChartRows.map((_, index) => (
                           <Cell
                             key={index}
                             fill={COLORS[index % COLORS.length]}
                             stroke="#ffffff"
-                            strokeWidth={4}
+                            strokeWidth={activePieIndex === index ? 3 : 1.5}
+                            style={{
+                              filter: activePieIndex === index ? 'drop-shadow(0px 8px 16px rgba(0,0,0,0.15))' : 'none',
+                              opacity: activePieIndex === null || activePieIndex === index ? 1 : 0.6,
+                              transition: 'all 0.3s ease',
+                              cursor: 'pointer',
+                              transform: activePieIndex === index ? 'scale(1.03)' : 'scale(1)',
+                              transformOrigin: '50% 50%'
+                            }}
                           />
                         ))}
                       </Pie>
                       <Tooltip content={<MenuShareTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
-                </>
                )}
              </div>
              
-             <div className="grid grid-cols-2 gap-x-6 gap-y-3 mt-6">
-               {menuChartRows.slice(0, 8).map((item, i) => (
-                 <div key={i} className="min-w-0 flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="truncate text-[11px] font-black text-gray-500 uppercase">{item.name}</span>
-                 </div>
-               ))}
+             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-6">
+                {menuChartRows.slice(0, 8).map((item, i) => (
+                  <div 
+                    key={i} 
+                    className={`min-w-0 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200 border border-transparent ${activePieIndex === i ? 'bg-gray-50 border-gray-100 scale-[1.02]' : ''}`}
+                    onMouseEnter={() => setActivePieIndex(i)}
+                    onMouseLeave={() => setActivePieIndex(null)}
+                  >
+                     <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                        <span className="truncate text-[11px] font-black text-gray-500 uppercase">{item.name}</span>
+                     </div>
+                     <span className="text-[10px] font-black text-gray-400 shrink-0">
+                       {item.percent_of_total.toFixed(1)}%
+                     </span>
+                  </div>
+                ))}
              </div>
           </div>
 
           {/* Ranking List */}
           <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-10">
-               <h2 className="text-2xl font-black text-gray-900 tracking-tight">Bảng Xếp Hạng</h2>
+               <div>
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">Bảng Xếp Hạng</h2>
+                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Tổng cộng: {totalMenuQuantity} lượt bán</p>
+               </div>
                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
                   <UtensilsCrossed className="w-5 h-5" />
                </div>
@@ -326,7 +342,14 @@ const AdminReportsPage = () => {
                   <div key={idx} className="group">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-gray-300">0{idx + 1}</span>
+                        <span className={`w-6 h-6 rounded-lg font-black text-[10px] flex items-center justify-center border transition-all duration-200
+                          ${idx === 0 ? 'bg-amber-50 text-amber-600 border-amber-200/50 shadow-sm shadow-amber-500/5' :
+                            idx === 1 ? 'bg-slate-50 text-slate-500 border-slate-200/50 shadow-sm shadow-slate-500/5' :
+                            idx === 2 ? 'bg-orange-50/70 text-orange-600 border-orange-200/50 shadow-sm shadow-orange-500/5' :
+                            'bg-gray-50/50 text-gray-400 border-gray-100'}`}
+                        >
+                          {idx + 1}
+                        </span>
                         <span className="text-sm font-black text-gray-900 group-hover:text-emerald-600 transition-colors">{item.name}</span>
                       </div>
                       <span className="text-xs font-black text-gray-400">{item.total_quantity} Lượt</span>
