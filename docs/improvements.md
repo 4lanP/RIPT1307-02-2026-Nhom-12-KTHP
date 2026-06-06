@@ -291,3 +291,28 @@ Tests:       175 passed, 175 total
 ### 4. Di chuyển Frontend sang TypeScript & Tích hợp Ant Design (Lê Minh Đạo)
 - Chuyển đổi toàn bộ mã nguồn Frontend từ JavaScript sang **TypeScript** để tăng cường tính an toàn kiểu dữ liệu và giảm thiểu lỗi runtime.
 - Tích hợp hệ thống Ant Design (antd) chất lượng cao cho các chức năng quản trị ở Admin Dashboard.
+
+---
+
+## Giai đoạn 4 — Khắc phục lỗi kiểm thử Frontend & Chuẩn hóa Bàn giao (2026-06-05)
+
+### 1. Sửa lỗi hiển thị tiền Tạm tính và giỏ hàng của Khách hàng (`fix(customer)`)
+- Cập nhật số tiền tạm tính hiển thị tức thời khi khách hàng chọn món/thêm món vào giỏ hàng (`CustomerMenuPage.tsx`). Tổng tiền tạm tính = tiền các món đã đặt + tiền các món trong giỏ hàng hiện tại.
+
+### 2. Sửa lỗi Customization Modal & Product Options (`fix`)
+- Thêm Customization Modal hỗ trợ chọn tùy chọn (Options) cho món ăn có cấu hình tùy chọn.
+- Cho phân nhóm và xử lý tùy chọn chọn một (Radio) hoặc chọn nhiều (Checkbox) theo nghiệp vụ.
+- Tách biệt `cartId` theo tổ hợp món ăn + danh sách tùy chọn đã chọn, tránh đè giỏ hàng khi cùng một món có nhiều tùy chọn khác nhau.
+
+### 3. Khắc phục lỗi In QR Code (`fix`)
+- Thay đổi cơ chế gọi lệnh in ấn ở cửa sổ in QR Code từ sự kiện `window.onload` sang `setTimeout(..., 300)`. Điều này giúp đảm bảo ảnh QR Code và CSS layout được tải hoàn tất và hiển thị đầy đủ trước khi kích hoạt giao diện in của trình duyệt.
+
+### 4. Khắc phục CSS Scaling cho biểu đồ tròn (`fix`)
+- Chỉnh sửa bán kính trong và ngoài (`innerRadius="65%"`, `outerRadius="90%"`) của Pie Chart tỷ trọng món ăn (`AdminReportsPage.tsx`) thành dạng phần trăm, kết hợp padding responsive. Giúp biểu đồ tự co giãn mượt mà trên mọi kích thước màn hình mà không bị vỡ bố cục.
+
+### 5. Cải thiện trải nghiệm tải ảnh Menu (`fix`)
+- Kiểm tra dữ liệu hình ảnh dạng Base64 (`isBase64ImageInput`). Khi người dùng chọn tải ảnh lên từ thiết bị, trường nhập URL sẽ tự động hiển thị chuỗi thông báo "Đã tải ảnh lên từ thiết bị" và chuyển sang trạng thái khóa (`disabled`), tránh nhầm lẫn dữ liệu.
+
+### 6. Cấu hình kiểm thử tự động & Quality Gates cho Frontend (`update-tests`)
+- Thêm ESLint và các script kiểm tra chất lượng tự động: `npm run lint`, `npm test`, `npm run bundle:check`.
+- Tích hợp pipeline kiểm tra toàn diện `npm run quality` đảm bảo code không có lỗi logic/runtime và dung lượng bundle trong giới hạn cho phép trước khi deploy.

@@ -241,8 +241,6 @@ Authorization: Bearer <accessToken>
 ```text
 Authorization: Bearer <session_token>
 ```
-Authorization: Bearer <session_token>
-```
 
 ## 🧪 Testing
 
@@ -341,7 +339,7 @@ npm run docker:reset     # Reset DB và rebuild
 - [Testing](docs/04-testing.md) — Hướng dẫn testing
 - [Improvements](docs/improvements.md) — Lịch sử fixes và improvements
 - [Frontend Handoff](docs/frontend-handoff.md) — Tài liệu bàn giao frontend
-- [Frontend Issues](docs/07-bug-after-test(FE).md) — Known issues frontend cần fix
+- [Frontend Issues](docs/06-bug-after-test(FE).md) — Known issues frontend cần fix
 
 ## 🤝 Contributing
 
