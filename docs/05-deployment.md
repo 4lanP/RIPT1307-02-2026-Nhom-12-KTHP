@@ -387,3 +387,11 @@ Rotate credentials immediately after removing tracked env files from Git history
 - Database: rotate `DB_PASSWORD` or `DATABASE_URL`, update the deployment secret store, then restart the backend.
 - VNPay: rotate `VNPAY_HASHSECRET` and merchant credentials in coordination with the payment provider.
 - Redis: rotate `REDIS_URL` credentials when Redis auth is enabled, then restart workers/backends that use webhook locks.
+
+## CI/CD & Redeployment
+
+Hệ thống được cấu hình tự động triển khai (Automatic Deployment) khi có các thay đổi được đẩy lên repository chính (như GitHub):
+
+- **Frontend (Vercel)**: Bất kỳ commit nào thay đổi mã nguồn trong frontend (`src/FE_THLTW`) hoặc tài liệu hướng dẫn (`docs/`) đều kích hoạt tiến trình build và deploy lại tự động trên Vercel thông qua build command cấu hình ở root level.
+- **Backend (Render)**: Các commit thay đổi backend (`src/BE_THLTW`) sẽ kích hoạt tự động deploy lại trên Render.
+
