@@ -159,9 +159,16 @@ If a bundle warning must be accepted temporarily, document it before handoff:
 
 An exception missing any field is not valid for deployment handoff.
 
-## Deploy thực tế lên Render và Vercel
+## Deploy thực tế lên Render và Vercel {#deploy-thuc-te-len-render-va-vercel}
 
 Dự án đã được cấu hình và kiểm thử thành công khi deploy **Backend + PostgreSQL + Redis lên Render** và **Frontend (React + Vite) lên Vercel**. Dưới đây là hướng dẫn cấu hình chi tiết cho từng dịch vụ:
+
+| Dịch vụ | URL |
+| ------- | --- |
+| **Frontend** | <https://ript-1307-02-2026-nhom-12-kthp.vercel.app> |
+| **Backend API** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com> |
+| **Swagger UI** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/docs> |
+| **Health Check** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health> |
 
 ### 1. Cấu hình Cơ sở dữ liệu & Caching trên Render
 

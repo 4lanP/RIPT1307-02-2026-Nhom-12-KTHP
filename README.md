@@ -200,6 +200,13 @@ Hệ thống đã được cấu hình và kiểm thử thành công khi deploy 
 - **Backend (Express) + PostgreSQL + Redis**: Deploy lên **Render**.
 - **Frontend (React + Vite)**: Deploy lên **Vercel**.
 
+| Dịch vụ | URL |
+| ------- | --- |
+| **Frontend** | <https://ript-1307-02-2026-nhom-12-kthp.vercel.app> |
+| **Backend API** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com> |
+| **Swagger UI** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/docs> |
+| **Health Check** | <https://ript1307-02-2026-nhom-12-kthp.onrender.com/api/health> |
+
 Chi tiết các bước cài đặt, cấu hình biến môi trường, proxy chuyển đổi request `/api/*` và `/socket.io/*` xem tại:
 👉 **[Tài liệu hướng dẫn Deploy thực tế (Render & Vercel)](docs/05-deployment.md#deploy-thuc-te-len-render-va-vercel)**
 
