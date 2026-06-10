@@ -51,7 +51,13 @@ async function startServer() {
       nodeEnv: process.env.NODE_ENV,
       pid: process.pid,
     });
-    keepaliveService.start({ runImmediately: true });
+    
+    // Wait for 10 seconds before starting the keepalive service to allow Render's load
+    // balancers to register this instance and route traffic, avoiding an initial 502 error.
+    setTimeout(() => {
+      keepaliveService.start({ runImmediately: true });
+    }, 10000);
+
     dailyRevenueEmailService.start();
   });
 }
